@@ -42,7 +42,7 @@ export function SettingsCardFooter({
   return (
     <div
       className={cn(
-        "flex min-h-14 w-full items-center justify-between rounded-b-lg border-t border-border bg-muted px-6",
+        "flex min-h-14 w-full flex-wrap items-center justify-between gap-3 rounded-b-lg border-t border-border bg-muted px-6 py-3",
         className,
       )}
     >
@@ -61,7 +61,9 @@ export function SettingsCardHeader({
   return (
     <div className="flex flex-col gap-1">
       <h2 className="text-lg font-medium">{title}</h2>
-      <p className="text-sm text-muted-foreground">{description}</p>
+      {description && (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      )}
     </div>
   );
 }

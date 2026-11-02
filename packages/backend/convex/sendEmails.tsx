@@ -39,13 +39,12 @@ function ResetPasswordEmail({ url }: { url: string }) {
               marginBottom: "16px",
             }}
           >
-            Reset your password
+            Votre mot de passe the page
           </Text>
           <Text
             style={{ fontSize: "14px", color: "#555", marginBottom: "24px" }}
           >
-            Click the button below to reset your password. This link will expire
-            shortly.
+            Choisissez un nouveau mot de passe pour votre compte.
           </Text>
           <Section style={{ textAlign: "center" as const }}>
             <Button
@@ -59,12 +58,11 @@ function ResetPasswordEmail({ url }: { url: string }) {
                 textDecoration: "none",
               }}
             >
-              Reset password
+              Réinitialiser le mot de passe
             </Button>
           </Section>
           <Text style={{ fontSize: "12px", color: "#999", marginTop: "24px" }}>
-            If you didn't request a password reset, you can safely ignore this
-            email.
+            Vous n’êtes pas à l’origine de cette demande ? Ignorez cet email.
           </Text>
         </Container>
       </Body>
@@ -84,7 +82,7 @@ export const sendResetPasswordEmail = internalAction({
     await resend.sendEmail(ctx, {
       from,
       to,
-      subject: "Reset your password",
+      subject: "Votre mot de passe the page",
       html,
     });
   },
@@ -111,13 +109,12 @@ function VerificationEmail({ url }: { url: string }) {
               marginBottom: "16px",
             }}
           >
-            Verify your email
+            Vérifiez votre email — the page
           </Text>
           <Text
             style={{ fontSize: "14px", color: "#555", marginBottom: "24px" }}
           >
-            Click the button below to verify your email address. This link will
-            expire shortly.
+            Confirmez votre adresse email pour rejoindre the page.
           </Text>
           <Section style={{ textAlign: "center" as const }}>
             <Button
@@ -131,11 +128,11 @@ function VerificationEmail({ url }: { url: string }) {
                 textDecoration: "none",
               }}
             >
-              Verify email
+              Vérifier mon email
             </Button>
           </Section>
           <Text style={{ fontSize: "12px", color: "#999", marginTop: "24px" }}>
-            If you didn't create an account, you can safely ignore this email.
+            Vous n’avez pas créé ce compte ? Ignorez cet email.
           </Text>
         </Container>
       </Body>
@@ -156,7 +153,7 @@ export const sendVerificationEmail = internalAction({
     await resend.sendEmail(ctx, {
       from,
       to,
-      subject: "Verify your email",
+      subject: "Vérifiez votre email — the page",
       html,
     });
   },

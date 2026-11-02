@@ -4,16 +4,16 @@ import SignUpForm from "@/components/sign-up-form";
 export const Route = createFileRoute("/(auth)/sign-up")({
   head: () => ({
     meta: [
-      { title: "Sign Up — Toma Stack" },
+      { title: "Inscription — the page" },
       {
         name: "description",
-        content: "Create a new Toma Stack account.",
+        content: "Créez votre compte the page.",
       },
     ],
   }),
   beforeLoad: async ({ context }) => {
     if (context.isAuthenticated) {
-      throw redirect({ to: "/dashboard" });
+      throw redirect({ to: "/" });
     }
   },
   component: RouteComponent,

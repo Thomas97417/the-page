@@ -9,13 +9,13 @@ export default function ErrorBoundary({ error, reset }: ErrorComponentProps) {
     <div className="flex h-full flex-col items-center justify-center gap-6 px-4 text-center">
       <div className="flex flex-col items-center gap-2">
         <span className="text-muted-foreground text-8xl leading-none font-bold tracking-tighter select-none">
-          Oops
+          Oups
         </span>
         <h1 className="text-foreground text-xl font-semibold">
-          Something went wrong
+          Une erreur est survenue
         </h1>
         <p className="text-muted-foreground max-w-sm text-sm">
-          An unexpected error occurred. Please try again.
+          Réessayez dans un instant.
         </p>
         {import.meta.env.DEV && error instanceof Error && (
           <pre className="mt-4 max-w-lg overflow-auto rounded-lg border bg-muted/50 p-4 text-left text-xs text-destructive">
@@ -33,11 +33,11 @@ export default function ErrorBoundary({ error, reset }: ErrorComponentProps) {
             router.invalidate();
           }}
         >
-          Try again
+          Réessayer
         </Button>
         <Link to="/">
           <Button variant="ghost" size="lg" className="hover:cursor-pointer">
-            Go back home
+            Retour à la page
           </Button>
         </Link>
       </div>
