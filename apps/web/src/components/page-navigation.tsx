@@ -25,20 +25,25 @@ export function PageNavigation({ pageId }: { pageId: PageId }) {
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label={`Choisir une page, page actuelle : ${getPage(pageId).label}`}
-        className="group inline-flex min-h-11 items-center gap-1 px-0.5 font-serif text-sm tracking-[-0.025em] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-popup-open:text-foreground sm:text-base"
+        className="group inline-flex min-h-11 items-center gap-1 pr-0.5 font-serif text-sm tracking-[-0.025em] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-popup-open:text-foreground sm:text-base"
       >
-        {PAGE_SUFFIXES[pageId]}
+        <span>.{PAGE_SUFFIXES[pageId]}</span>
         <ChevronDown
           aria-hidden="true"
           className="size-3 transition-transform group-data-popup-open:rotate-180 motion-reduce:transition-none"
           strokeWidth={1.5}
         />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" sideOffset={4} className="w-40 p-1">
+      <DropdownMenuContent
+        align="start"
+        alignOffset={-8}
+        sideOffset={0}
+        className="w-22 min-w-0 p-1"
+      >
         {PAGES.map((page) => (
           <DropdownMenuItem
             key={page.id}
-            aria-label={`the page.${PAGE_SUFFIXES[page.id]} — ${page.label}`}
+            aria-label={`.${PAGE_SUFFIXES[page.id]} — ${page.label}`}
             render={
               <Link
                 to={page.id === DEFAULT_PAGE_ID ? "/" : "/$page"}
@@ -47,10 +52,10 @@ export function PageNavigation({ pageId }: { pageId: PageId }) {
                 aria-current={pageId === page.id ? "page" : undefined}
               />
             }
-            className="min-h-8 cursor-pointer justify-between gap-2 px-2 py-1"
+            className="min-h-8 cursor-pointer justify-between gap-2 px-1 py-1"
           >
-            <span className="whitespace-nowrap font-serif text-base tracking-[-0.055em]">
-              the page.<span className="text-xs tracking-[-0.025em]">{PAGE_SUFFIXES[page.id]}</span>
+            <span className="whitespace-nowrap font-serif text-sm tracking-[-0.025em] sm:text-base">
+              .{PAGE_SUFFIXES[page.id]}
             </span>
             <span className="flex size-3 shrink-0 items-center justify-center">
               {pageId === page.id && <Check aria-hidden="true" className="size-3" />}

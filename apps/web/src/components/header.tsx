@@ -23,7 +23,7 @@ export default function Header() {
           aria-label={`the page, accueil ${getPage(pageId).label}`}
           className="py-2 font-serif text-[26px] leading-none tracking-[-0.055em]"
         >
-          the page.
+          the page
         </Link>
         <PageNavigation pageId={pageId} />
       </div>
