@@ -72,6 +72,7 @@ async function reserve(
   userId = "buyer",
   position = 1,
   word = "Bonjour",
+  description?: string,
 ) {
   const slot = (await t.query(api.slots.list)).find(
     (s) => s.position === position,
@@ -82,6 +83,7 @@ async function reserve(
     acquisition: slot.acquisitions,
     word,
     url: "https://example.com/",
+    description,
   });
 }
 function order(p: Doc<"purchases">, overrides = {}) {
@@ -125,8 +127,34 @@ describe("content", () => {
     expect(validateContent("Cafe\u0301", " https://example.com ")).toEqual({
       word: "Café",
       url: "https://example.com/",
+      description: undefined,
     });
     expect(validateContent("Été", "").url).toBeUndefined();
+  });
+  it.each([undefined, "", " \n\t "])(
+    "allows an omitted or blank description: %j",
+    (description) => {
+      expect(validateContent("Mot", undefined, description)).toEqual({
+        word: "Mot",
+        url: undefined,
+        description: undefined,
+      });
+    },
+  );
+  it("normalizes descriptions and counts Unicode characters up to 160", () => {
+    expect(
+      validateContent("Mot", undefined, "  Un cafe\u0301 à partager.  "),
+    ).toEqual({
+      word: "Mot",
+      url: undefined,
+      description: "Un café à partager.",
+    });
+    expect(validateContent("Mot", undefined, "🌻".repeat(160)).description).toBe(
+      "🌻".repeat(160),
+    );
+    expect(() => validateContent("Mot", undefined, "a".repeat(161))).toThrow(
+      "160 caractères",
+    );
   });
   it.each(["", "deux mots", "mot\n", "mot\u200b", "a".repeat(25)])(
     "rejects invalid words: %j",
@@ -175,18 +203,26 @@ describe("purchases and ownership", () => {
     const t = setup();
     await t.mutation(internal.slots.initialize);
     const owner = await account(t, "first");
-    const p = await reserve(t, owner.id);
+    const p = await reserve(t, owner.id, 1, "Bonjour", "Une première histoire.");
     await paid(t, p);
+    expect((await t.query(api.slots.list))[0].description).toBe(
+      "Une première histoire.",
+    );
     await owner.client.mutation(api.slots.updateContent, {
       slotId: p.slotId,
       purchaseId: p._id,
       word: "Libre",
       url: "https://new.example/",
+      description: "Une nouvelle histoire.",
     });
     expect((await t.query(api.slots.list))[0]).toMatchObject({
       word: "Libre",
+      description: "Une nouvelle histoire.",
       price: 200,
     });
+    expect((await owner.client.query(api.purchases.mine))[0].description).toBe(
+      "Une nouvelle histoire.",
+    );
     const next = await reserve(t, "second", 1, "Suivant");
     await paid(t, next);
     await expect(
@@ -200,8 +236,68 @@ describe("purchases and ownership", () => {
       word: "Suivant",
       price: 300,
     });
-    expect((await owner.client.query(api.purchases.mine))[0].word).toBe(
-      "Bonjour",
+    expect((await t.query(api.slots.list))[0].description).toBeUndefined();
+    expect((await owner.client.query(api.purchases.mine))[0]).toMatchObject({
+      word: "Bonjour",
+      description: "Une première histoire.",
+    });
+  });
+  it("lets an existing owner add and clear a description", async () => {
+    const t = setup();
+    await t.mutation(internal.slots.initialize);
+    const owner = await account(t, "owner");
+    const p = await reserve(t, owner.id);
+    await paid(t, p);
+    const args = { slotId: p.slotId, purchaseId: p._id, word: p.word };
+    await owner.client.mutation(api.slots.updateContent, {
+      ...args,
+      description: "Une dédicace.",
+    });
+    expect((await t.query(api.slots.list))[0].description).toBe("Une dédicace.");
+    await expect(
+      owner.client.mutation(api.slots.updateContent, {
+        ...args,
+        description: "a".repeat(161),
+      }),
+    ).rejects.toThrow("160 caractères");
+    expect((await t.query(api.slots.list))[0].description).toBe("Une dédicace.");
+    await owner.client.mutation(api.slots.updateContent, {
+      ...args,
+      description: " \n ",
+    });
+    expect((await t.query(api.slots.list))[0].description).toBeUndefined();
+    expect(
+      (await owner.client.query(api.purchases.mine))[0].description,
+    ).toBeUndefined();
+  });
+  it("validates descriptions on reservation and includes them when matching retries", async () => {
+    const t = setup();
+    await t.mutation(internal.slots.initialize);
+    await expect(reserve(t, "buyer", 1, "Mot", "a".repeat(161))).rejects.toThrow(
+      "160 caractères",
+    );
+    expect((await t.query(api.slots.list))[0].reserved).toBe(false);
+    const p = await reserve(t, "buyer", 1, "Mot", "Mon projet.");
+    expect((await reserve(t, "buyer", 1, "Mot", "Mon projet."))._id).toBe(p._id);
+    await expect(
+      reserve(t, "buyer", 1, "Mot", "Un autre projet."),
+    ).rejects.toThrow("paiement en cours");
+  });
+  it("clears a current description on a full refund", async () => {
+    const t = setup();
+    await t.mutation(internal.slots.initialize);
+    const p = await reserve(t, "buyer", 1, "Mot", "Une dédicace.");
+    await paid(t, p);
+    await t.mutation(internal.purchases.markRefunded, {
+      orderId: order(p).id,
+      refundedAmount: p.amount,
+    });
+    const slot = (await t.query(api.slots.list))[0];
+    expect(slot.word).toBeUndefined();
+    expect(slot.description).toBeUndefined();
+    expect(slot.price).toBe(200);
+    expect(await t.run((ctx) => ctx.db.get(p.slotId))).not.toHaveProperty(
+      "description",
     );
   });
   it("serializes competing reservations and preserves the previous word during checkout", async () => {
@@ -342,13 +438,13 @@ describe("purchases and ownership", () => {
 });
 
 describe("moderation", () => {
-  it("checks admin permissions server-side and hides both word and link", async () => {
+  it("checks admin permissions server-side and hides word, description and link", async () => {
     const t = setup();
     await t.mutation(internal.slots.initialize);
     const owner = await account(t, "owner");
     const admin = await account(t, "admin");
     vi.stubEnv("ADMIN_USER_IDS", admin.id);
-    const p = await reserve(t, owner.id);
+    const p = await reserve(t, owner.id, 1, "Bonjour", "Mon histoire.");
     await paid(t, p);
     await expect(owner.client.query(api.slots.adminList)).rejects.toThrow(
       "administration",
@@ -368,6 +464,7 @@ describe("moderation", () => {
     const publicSlot = (await t.query(api.slots.list))[0];
     expect(publicSlot.word).toBeUndefined();
     expect(publicSlot.url).toBeUndefined();
+    expect(publicSlot.description).toBeUndefined();
     expect(publicSlot.price).toBe(200);
     await expect(
       owner.client.mutation(api.slots.updateContent, {
@@ -381,7 +478,10 @@ describe("moderation", () => {
       purchaseId: p._id,
       action: "restore",
     });
-    expect((await t.query(api.slots.list))[0].word).toBe("Bonjour");
+    expect((await t.query(api.slots.list))[0]).toMatchObject({
+      word: "Bonjour",
+      description: "Mon histoire.",
+    });
     await admin.client.mutation(api.slots.moderate, {
       slotId: p.slotId,
       purchaseId: p._id,
@@ -391,6 +491,10 @@ describe("moderation", () => {
       price: 200,
       acquisitions: 1,
     });
+    expect((await t.query(api.slots.list))[0].description).toBeUndefined();
+    expect(await t.run((ctx) => ctx.db.get(p.slotId))).not.toHaveProperty(
+      "description",
+    );
     expect(
       await t.query(internal.purchases.get, { purchaseId: p._id }),
     ).not.toBeNull();
@@ -662,7 +766,11 @@ describe("reconciliation", () => {
       slotId: slot.id,
       acquisition: 0,
       word: "Mot",
+      description: "Une histoire à partager.",
     });
+    expect((await buyer.client.query(api.purchases.mine))[0].description).toBe(
+      "Une histoire à partager.",
+    );
     const call = vi.mocked(checkoutsCreate).mock.calls[0];
     expect(call[1]).toMatchObject({
       externalCustomerId: buyer.id,

@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle } from "./ui/sheet";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { WordDescriptionField } from "./word-description-field";
 import { euros, errorMessage } from "@/lib/page";
 
 type Purchase = FunctionReturnType<typeof api.purchases.mine>[number];
@@ -25,6 +26,7 @@ function OwnedWord({ purchase }: { purchase: Purchase }) {
   const [editing, setEditing] = useState(false);
   const [word, setWord] = useState(purchase.word ?? "");
   const [url, setUrl] = useState(purchase.url ?? "");
+  const [description, setDescription] = useState(purchase.description ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const update = useMutation(api.slots.updateContent);
@@ -32,7 +34,7 @@ function OwnedWord({ purchase }: { purchase: Purchase }) {
     event.preventDefault();
     setError("");
     try {
-      const content = validateContent(word, url);
+      const content = validateContent(word, url, description);
       setBusy(true);
       await update({
         slotId: purchase.slotId,
@@ -68,6 +70,7 @@ function OwnedWord({ purchase }: { purchase: Purchase }) {
             onClick={() => {
               setWord(purchase.word ?? "");
               setUrl(purchase.url ?? "");
+              setDescription(purchase.description ?? "");
               setEditing(!editing);
             }}
           >
@@ -75,6 +78,11 @@ function OwnedWord({ purchase }: { purchase: Purchase }) {
           </Button>
         )}
       </div>
+      {!editing && purchase.description && (
+        <p className="mt-3 whitespace-pre-line break-words text-sm leading-relaxed text-muted-foreground">
+          {purchase.description}
+        </p>
+      )}
       {editing && (
         <form onSubmit={save} className="mt-5 space-y-4">
           <div className="space-y-2">
@@ -86,6 +94,11 @@ function OwnedWord({ purchase }: { purchase: Purchase }) {
               required
             />
           </div>
+          <WordDescriptionField
+            id={`description-${purchase.id}`}
+            value={description}
+            onChange={setDescription}
+          />
           <div className="space-y-2">
             <Label htmlFor={`url-${purchase.id}`}>Lien</Label>
             <Input

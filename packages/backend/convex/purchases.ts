@@ -50,6 +50,7 @@ export const mine = query({
           position: purchase.position,
           word: current ? slot.word : purchase.word,
           url: current ? slot.url : purchase.url,
+          description: current ? slot.description : purchase.description,
           status: purchase.status,
           amount: purchase.amount,
           createdAt: purchase._creationTime,
@@ -113,9 +114,10 @@ export const reserve = internalMutation({
     acquisition: v.number(),
     word: v.string(),
     url: v.optional(v.string()),
+    description: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<Doc<"purchases">> => {
-    const content = validateContent(args.word, args.url);
+    const content = validateContent(args.word, args.url, args.description);
     const slot = await ctx.db.get(args.slotId);
     if (!slot) throw new ConvexError("Emplacement introuvable.");
     if (slot.currentPurchaseId) {
@@ -140,6 +142,7 @@ export const reserve = internalMutation({
         active.slotId === slot._id &&
         active.word === content.word &&
         active.url === content.url &&
+        active.description === content.description &&
         active.reservedUntil > Date.now()
       )
         return active;
@@ -284,6 +287,7 @@ export const applyPaidOrder = internalMutation({
       currentPurchaseId: purchase._id,
       word: purchase.word,
       url: purchase.url,
+      description: purchase.description,
       visibility: "visible",
       reservationId: undefined,
       reservedUntil: undefined,
@@ -322,6 +326,7 @@ export const markRefunded = internalMutation({
         currentPurchaseId: undefined,
         word: undefined,
         url: undefined,
+        description: undefined,
         visibility: "visible",
       });
     }

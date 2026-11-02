@@ -35,6 +35,7 @@ export const list = query({
       price: priceFor(slot.acquisitions),
       word: slot.visibility === "visible" ? slot.word : undefined,
       url: slot.visibility === "visible" ? slot.url : undefined,
+      description: slot.visibility === "visible" ? slot.description : undefined,
       // Expiry is reconciled with Polar before a reservation is released.
       reserved: !!slot.reservationId,
     }));
@@ -55,6 +56,7 @@ export const updateContent = mutation({
     purchaseId: v.id("purchases"),
     word: v.string(),
     url: v.optional(v.string()),
+    description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await requireUser(ctx);
@@ -72,7 +74,7 @@ export const updateContent = mutation({
       throw new ConvexError("Ce mot a été retiré par la modération.");
     let content;
     try {
-      content = validateContent(args.word, args.url);
+      content = validateContent(args.word, args.url, args.description);
     } catch (error) {
       throw new ConvexError((error as Error).message);
     }
@@ -110,6 +112,7 @@ export const moderate = mutation({
         currentPurchaseId: undefined,
         word: undefined,
         url: undefined,
+        description: undefined,
       });
     } else {
       await ctx.db.patch(slotId, {

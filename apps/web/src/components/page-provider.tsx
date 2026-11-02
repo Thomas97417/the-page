@@ -18,6 +18,7 @@ export type WordDraft = {
   acquisition: number;
   word: string;
   url: string;
+  description?: string;
 };
 type PageContextValue = {
   buy: (draft: WordDraft) => void;
@@ -51,6 +52,8 @@ export function PageProvider({ children }: { children: ReactNode }) {
         typeof saved.slotId === "string" &&
         typeof saved.word === "string" &&
         typeof saved.url === "string" &&
+        (saved.description === undefined ||
+          typeof saved.description === "string") &&
         Number.isInteger(saved.position) &&
         Number.isInteger(saved.acquisition)
       )
@@ -92,8 +95,8 @@ export function PageProvider({ children }: { children: ReactNode }) {
               <span className="mb-2 block font-mono text-xs text-primary">
                 01
               </span>
-              Choisissez une place et écrivez votre mot. Ajoutez un lien si vous
-              le souhaitez.
+              Choisissez une place et écrivez votre mot. Ajoutez une description
+              et un lien si vous le souhaitez.
             </li>
             <li>
               <span className="mb-2 block font-mono text-xs text-primary">

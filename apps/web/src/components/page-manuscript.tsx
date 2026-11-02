@@ -50,10 +50,15 @@ function WordDetails({ slot }: { slot: Slot }) {
       <Popover.Title className="mt-4 break-words font-serif text-3xl leading-tight tracking-tight">
         {slot.word || "Votre mot ici."}
       </Popover.Title>
-      {slot.reserved && (
-        <Popover.Description className="mt-2 text-xs leading-relaxed text-muted-foreground">
-          Un paiement est en cours sur cette place.
+      {slot.description && (
+        <Popover.Description className="mt-3 whitespace-pre-line break-words text-sm leading-relaxed text-muted-foreground">
+          {slot.description}
         </Popover.Description>
+      )}
+      {slot.reserved && (
+        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+          Un paiement est en cours sur cette place.
+        </p>
       )}
       {slot.url && (
         <a

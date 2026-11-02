@@ -46,6 +46,7 @@ export const start = action({
     acquisition: v.number(),
     word: v.string(),
     url: v.optional(v.string()),
+    description: v.optional(v.string()),
   },
   handler: async (
     ctx,
