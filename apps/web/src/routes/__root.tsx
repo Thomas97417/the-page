@@ -89,7 +89,7 @@ function RootDocument() {
             storageKey="vite-ui-theme"
           >
             <PageProvider>
-              <div id="top" className="flex min-h-dvh flex-col">
+              <div id="top" className="paper-background flex min-h-dvh flex-col">
                 <Header />
                 <Outlet />
               </div>

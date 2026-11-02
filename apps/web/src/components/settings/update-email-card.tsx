@@ -67,6 +67,7 @@ export default function UpdateEmailCard({ email }: { email: string }) {
                 <Label htmlFor="newEmail">Email</Label>
                 <Input
                   id="newEmail"
+                  placeholder="Votre adresse email"
                   autoComplete="off"
                   required
                   disabled={isSocialOnly}
