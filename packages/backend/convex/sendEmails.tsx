@@ -4,6 +4,8 @@ import { Resend } from "@convex-dev/resend";
 import { internalAction } from "./_generated/server";
 import { v } from "convex/values";
 import { render } from "@react-email/render";
+import { EMAIL_CONTENT } from "./lib/email-content";
+import { normalizeLanguage, type Language } from "./lib/language";
 import {
   Html,
   Head,
@@ -18,9 +20,10 @@ export const resend: Resend = new Resend(components.resend, {
   testMode: false,
 });
 
-function ResetPasswordEmail({ url }: { url: string }) {
+function ResetPasswordEmail({ url, language }: { url: string; language: Language }) {
+  const copy = EMAIL_CONTENT[language].reset;
   return (
-    <Html>
+    <Html lang={language}>
       <Head />
       <Body style={{ backgroundColor: "#f6f9fc", fontFamily: "sans-serif" }}>
         <Container
@@ -39,12 +42,12 @@ function ResetPasswordEmail({ url }: { url: string }) {
               marginBottom: "16px",
             }}
           >
-            Votre mot de passe the page
+            {copy.title}
           </Text>
           <Text
             style={{ fontSize: "14px", color: "#555", marginBottom: "24px" }}
           >
-            Choisissez un nouveau mot de passe pour votre compte.
+            {copy.description}
           </Text>
           <Section style={{ textAlign: "center" as const }}>
             <Button
@@ -58,11 +61,11 @@ function ResetPasswordEmail({ url }: { url: string }) {
                 textDecoration: "none",
               }}
             >
-              Réinitialiser le mot de passe
+              {copy.button}
             </Button>
           </Section>
           <Text style={{ fontSize: "12px", color: "#999", marginTop: "24px" }}>
-            Vous n’êtes pas à l’origine de cette demande ? Ignorez cet email.
+            {copy.notice}
           </Text>
         </Container>
       </Body>
@@ -75,22 +78,25 @@ export const sendResetPasswordEmail = internalAction({
     from: v.string(),
     to: v.string(),
     url: v.string(),
+    language: v.optional(v.union(v.literal("fr"), v.literal("en"))),
   },
-  handler: async (ctx, { from, to, url }) => {
-    const html = await render(<ResetPasswordEmail url={url} />);
+  handler: async (ctx, { from, to, url, language: preference }) => {
+    const language = normalizeLanguage(preference);
+    const html = await render(<ResetPasswordEmail url={url} language={language} />);
 
     await resend.sendEmail(ctx, {
       from,
       to,
-      subject: "Votre mot de passe the page",
+      subject: EMAIL_CONTENT[language].reset.title,
       html,
     });
   },
 });
 
-function VerificationEmail({ url }: { url: string }) {
+function VerificationEmail({ url, language }: { url: string; language: Language }) {
+  const copy = EMAIL_CONTENT[language].verification;
   return (
-    <Html>
+    <Html lang={language}>
       <Head />
       <Body style={{ backgroundColor: "#f6f9fc", fontFamily: "sans-serif" }}>
         <Container
@@ -109,12 +115,12 @@ function VerificationEmail({ url }: { url: string }) {
               marginBottom: "16px",
             }}
           >
-            Vérifiez votre email — the page
+            {copy.title}
           </Text>
           <Text
             style={{ fontSize: "14px", color: "#555", marginBottom: "24px" }}
           >
-            Confirmez votre adresse email pour rejoindre the page.
+            {copy.description}
           </Text>
           <Section style={{ textAlign: "center" as const }}>
             <Button
@@ -128,11 +134,11 @@ function VerificationEmail({ url }: { url: string }) {
                 textDecoration: "none",
               }}
             >
-              Vérifier mon email
+              {copy.button}
             </Button>
           </Section>
           <Text style={{ fontSize: "12px", color: "#999", marginTop: "24px" }}>
-            Vous n’avez pas créé ce compte ? Ignorez cet email.
+            {copy.notice}
           </Text>
         </Container>
       </Body>
@@ -146,14 +152,16 @@ export const sendVerificationEmail = internalAction({
     to: v.string(),
     url: v.string(),
     token: v.string(),
+    language: v.optional(v.union(v.literal("fr"), v.literal("en"))),
   },
-  handler: async (ctx, { from, to, url }) => {
-    const html = await render(<VerificationEmail url={url} />);
+  handler: async (ctx, { from, to, url, language: preference }) => {
+    const language = normalizeLanguage(preference);
+    const html = await render(<VerificationEmail url={url} language={language} />);
 
     await resend.sendEmail(ctx, {
       from,
       to,
-      subject: "Vérifiez votre email — the page",
+      subject: EMAIL_CONTENT[language].verification.title,
       html,
     });
   },

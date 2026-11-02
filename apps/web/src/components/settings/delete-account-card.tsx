@@ -1,5 +1,7 @@
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { errorMessage } from "@/lib/errors";
 
 import { authClient } from "@/lib/auth-client";
 
@@ -24,6 +26,7 @@ import {
 } from "../ui/alert-dialog";
 
 export default function DeleteAccountCard() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const handleDelete = async () => {
@@ -34,7 +37,7 @@ export default function DeleteAccountCard() {
           location.reload();
         },
         onError: (error) => {
-          toast.error(error.error.message);
+          toast.error(errorMessage(error.error, t));
         },
       },
     });
@@ -44,9 +47,9 @@ export default function DeleteAccountCard() {
     <SettingsCard className="border-0">
       <SettingsCardContent>
         <SettingsCardHeader
-          title="Supprimer le compte"
+          title={t("settings.delete")}
           headingLevel={2}
-          description="Votre accès au compte et à l’édition de vos mots sera supprimé. Cette action est définitive."
+          description={t("settings.deleteDescription")}
         />
       </SettingsCardContent>
       <SettingsCardFooter>
@@ -59,26 +62,25 @@ export default function DeleteAccountCard() {
               />
             }
           >
-            Supprimer le compte
+            {t("settings.delete")}
           </AlertDialogTrigger>
           <AlertDialogContent className="rounded-none p-6">
             <AlertDialogHeader className="place-items-start gap-3 text-left">
               <AlertDialogTitle className="text-balance font-serif text-2xl font-normal tracking-tight sm:text-3xl">
-                Supprimer votre compte&nbsp;?
+                {t("settings.deleteTitle")}
               </AlertDialogTitle>
               <AlertDialogDescription>
-                Votre accès au compte et à l’édition de vos mots sera supprimé.
-                Cette action est définitive.
+                {t("settings.deleteDescription")}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="-mx-6 -mb-6 mt-2 rounded-none bg-transparent p-6">
-              <AlertDialogCancel className="h-11 px-4">Annuler</AlertDialogCancel>
+              <AlertDialogCancel className="h-11 px-4">{t("common.cancel")}</AlertDialogCancel>
               <AlertDialogAction
                 variant="destructive"
                 className="h-11 px-4"
                 onClick={handleDelete}
               >
-                Supprimer le compte
+                {t("settings.delete")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

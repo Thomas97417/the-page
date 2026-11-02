@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { Loader2, ArrowUpRight, MailCheck } from "lucide-react";
@@ -6,21 +7,22 @@ import { returnPath } from "@/lib/page";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
-import { authError } from "./auth-form";
+import { errorMessage } from "@/lib/errors";
 
 export default function EmailActionForm({
   verify = false,
 }: {
   verify?: boolean;
 }) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<unknown>(null);
   async function submit(event: FormEvent) {
     event.preventDefault();
     setBusy(true);
-    setError("");
+    setError(null);
     try {
       const result = verify
         ? await authClient.sendVerificationEmail({
@@ -31,10 +33,10 @@ export default function EmailActionForm({
             email,
             redirectTo: "/reset-password",
           });
-      if (result.error) setError(authError(result.error.code));
+      if (result.error) setError(result.error);
       else setSent(true);
     } catch {
-      setError(authError());
+      setError("AUTH_ERROR");
     } finally {
       setBusy(false);
     }
@@ -45,40 +47,40 @@ export default function EmailActionForm({
         to="/sign-in"
         className="text-sm text-muted-foreground hover:text-foreground"
       >
-        ← Connexion
+        {t("auth.backToSignIn")}
       </Link>
       {sent ? (
         <div className="mt-12">
           <MailCheck className="mb-6 size-8 text-primary" />
           <h1 className="font-serif text-4xl tracking-tight">
-            Regardez vos emails.
+            {t("auth.checkEmail")}
           </h1>
           <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
-            Si un compte correspond à cette adresse, un lien vous a été envoyé.
+            {t("auth.emailSent")}
           </p>
         </div>
       ) : (
         <>
           <h1 className="mt-9 font-serif text-4xl tracking-tight">
-            {verify ? "Vérifiez votre email." : "Mot de passe oublié ?"}
+            {verify ? t("auth.verifyEmail") : t("auth.forgotPassword")}
           </h1>
           <form className="mt-8 space-y-5" onSubmit={submit}>
             <div className="space-y-2">
-              <Label htmlFor="request-email">Email</Label>
+              <Label htmlFor="request-email">{t("common.email")}</Label>
               <Input
                 className="h-12"
                 id="request-email"
                 type="email"
-                placeholder="Votre adresse email"
+                placeholder={t("common.yourEmail")}
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
-            {error && (
+            {error != null && (
               <p role="alert" className="text-sm text-destructive">
-                {error}
+                {errorMessage(error, t)}
               </p>
             )}
             <Button
@@ -86,7 +88,7 @@ export default function EmailActionForm({
               type="submit"
               disabled={busy}
             >
-              Envoyer le lien
+              {t("auth.sendLink")}
               {busy ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (

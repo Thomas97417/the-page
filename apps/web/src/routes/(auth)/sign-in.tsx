@@ -2,20 +2,20 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import SignInForm from "@/components/sign-in-form";
 
 export const Route = createFileRoute("/(auth)/sign-in")({
-  head: () => ({
-    meta: [
-      { title: "Connexion — the page" },
-      {
-        name: "description",
-        content: "Connectez-vous à the page.",
-      },
-    ],
-  }),
   beforeLoad: async ({ context }) => {
     if (context.isAuthenticated) {
       throw redirect({ to: "/" });
     }
   },
+  head: ({ match }) => ({
+    meta: [
+      { title: match.context.i18n.t("meta.signIn") },
+      {
+        name: "description",
+        content: match.context.i18n.t("meta.signInDescription"),
+      },
+    ],
+  }),
   component: RouteComponent,
 });
 

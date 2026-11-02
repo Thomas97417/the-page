@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@my-better-t-app/backend/convex/_generated/api";
@@ -15,66 +16,68 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { euros, errorMessage } from "@/lib/page";
+import { euros } from "@/lib/page";
+import { errorMessage } from "@/lib/errors";
 import { DEFAULT_PAGE_ID, isPageId, PAGES, type PageId } from "@my-better-t-app/backend/convex/lib/pages";
 
 export const Route = createFileRoute("/admin")({
-  head: () => ({
-    meta: [
-      { title: "Modération — the page" },
-      { name: "robots", content: "noindex" },
-    ],
-  }),
   beforeLoad: ({ context }) => {
     if (!context.isAuthenticated) throw redirect({ to: "/sign-in" });
   },
+  head: ({ match }) => ({
+    meta: [
+      { title: match.context.i18n.t("meta.admin") },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
   component: Admin,
 });
 
 function Admin() {
+  const { t, i18n } = useTranslation();
   const [pageId, setPageId] = useState<PageId>(DEFAULT_PAGE_ID);
   const viewer = useQuery(api.slots.viewer);
   const slots = useQuery(api.slots.adminList, viewer?.isAdmin ? { pageId } : "skip");
   const moderate = useMutation(api.slots.moderate);
   const [busy, setBusy] = useState<string | null>(null);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<unknown>(null);
   if (viewer === undefined)
     return <Loader2 className="mx-auto mt-20 size-5 animate-spin" />;
   if (!viewer?.isAdmin)
     return (
       <main className="mx-auto max-w-3xl px-6 py-20">
-        <h1 className="font-serif text-4xl">Accès réservé.</h1>
+        <h1 className="font-serif text-4xl">{t("admin.restricted")}</h1>
       </main>
     );
   return (
     <main className="mx-auto max-w-5xl px-5 py-14 sm:px-10">
-      <h1 className="font-serif text-5xl tracking-tight">Modération.</h1>
+      <h1 className="font-serif text-5xl tracking-tight">{t("admin.title")}</h1>
       <label className="mt-8 flex flex-wrap items-center gap-3 text-sm">
-        Page à modérer
+        {t("admin.choosePage")}
         <select
           value={pageId}
           onChange={(event) => {
             if (isPageId(event.target.value)) setPageId(event.target.value);
-            setError("");
+            setError(null);
           }}
           className="h-11 min-w-44 border bg-background px-3 focus-visible:outline-2 focus-visible:outline-ring"
         >
-          {PAGES.map((page) => <option key={page.id} value={page.id}>{page.label}</option>)}
+          {PAGES.map((page) => <option key={page.id} value={page.id}>{t(`pages.${page.id}`)}</option>)}
         </select>
       </label>
-      {error && (
+      {error != null && (
         <p role="alert" className="mt-6 text-sm text-destructive">
-          {error}
+          {errorMessage(error, t)}
         </p>
       )}
       <div className="mt-10 overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead className="border-b font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
             <tr>
-              <th className="py-4 pr-4 font-normal">Place</th>
-              <th className="pr-4 font-normal">Mot / description / lien</th>
-              <th className="pr-4 font-normal">Prix suivant</th>
-              <th className="text-right font-normal">Actions</th>
+              <th className="py-4 pr-4 font-normal">{t("admin.position")}</th>
+              <th className="pr-4 font-normal">{t("admin.content")}</th>
+              <th className="pr-4 font-normal">{t("admin.nextPrice")}</th>
+              <th className="text-right font-normal">{t("admin.actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -82,7 +85,7 @@ function Admin() {
               const act = async (action: "hide" | "restore" | "remove") => {
                 if (!slot.currentPurchaseId) return;
                 setBusy(slot._id);
-                setError("");
+                setError(null);
                 try {
                   await moderate({
                     slotId: slot._id,
@@ -90,7 +93,7 @@ function Admin() {
                     action,
                   });
                 } catch (cause) {
-                  setError(errorMessage(cause));
+                  setError(cause);
                 } finally {
                   setBusy(null);
                 }
@@ -118,7 +121,7 @@ function Admin() {
                     )}
                   </td>
                   <td className="pr-4 tabular-nums">
-                    {euros((slot.acquisitions + 1) * 100)}
+                    {euros((slot.acquisitions + 1) * 100, i18n.resolvedLanguage)}
                   </td>
                   <td>
                     {slot.currentPurchaseId && (
@@ -126,8 +129,8 @@ function Admin() {
                         <Button
                           aria-label={
                             slot.visibility === "hidden"
-                              ? `Rétablir la place ${slot.position}`
-                              : `Masquer la place ${slot.position}`
+                              ? t("admin.restore", { position: slot.position })
+                              : t("admin.hide", { position: slot.position })
                           }
                           variant="ghost"
                           size="icon"
@@ -148,7 +151,7 @@ function Admin() {
                           <AlertDialogTrigger
                             render={
                               <Button
-                                aria-label={`Retirer la place ${slot.position}`}
+                                aria-label={t("admin.remove", { position: slot.position })}
                                 variant="ghost"
                                 size="icon"
                                 disabled={busy === slot._id}
@@ -160,20 +163,19 @@ function Admin() {
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>
-                                Retirer ce mot ?
+                                {t("admin.removeTitle")}
                               </AlertDialogTitle>
                               <AlertDialogDescription>
-                                La place sera libérée au prix actuel.
-                                L’historique d’achat sera conservé.
+                                {t("admin.removeDescription")}
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Annuler</AlertDialogCancel>
+                              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                               <AlertDialogAction
                                 variant="destructive"
                                 onClick={() => act("remove")}
                               >
-                                Retirer
+                                {t("admin.confirmRemove")}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>

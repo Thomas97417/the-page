@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { ArrowUpRight } from "lucide-react";
 
 import ChangePasswordCard from "./change-password-card";
@@ -7,18 +8,19 @@ import EmailCard from "./update-email-card";
 import UpdateNameCard from "./update-name-card";
 
 const sections = [
-  { id: "profil", number: "01", label: "Votre profil" },
-  { id: "securite", number: "02", label: "Sécurité" },
-  { id: "sessions", number: "03", label: "Sessions" },
-];
+  { id: "profil", number: "01", label: "profile" },
+  { id: "securite", number: "02", label: "security" },
+  { id: "sessions", number: "03", label: "sessions" },
+] as const;
 
 export function AccountSettings({ name, email }: { name: string; email: string }) {
-  const displayName = name.trim() || "Mon espace";
+  const { t } = useTranslation();
+  const displayName = name.trim() || t("user.space");
   const initial = (name.trim() || email).charAt(0).toUpperCase();
 
   return (
     <main className="mx-auto w-full max-w-296 flex-1 px-5 pb-12 pt-8 sm:px-10 sm:pb-20 sm:pt-12 lg:px-14">
-      <h1 className="sr-only">Mon compte</h1>
+      <h1 className="sr-only">{t("user.account")}</h1>
       <div className="grid gap-9 lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-20">
         <aside className="min-w-0 lg:sticky lg:top-10 lg:self-start">
           <div className="hidden min-w-0 lg:block">
@@ -37,7 +39,7 @@ export function AccountSettings({ name, email }: { name: string; email: string }
           </div>
 
           <nav
-            aria-label="Rubriques du compte"
+            aria-label={t("settings.navigation")}
             className="flex flex-wrap gap-x-6 gap-y-1 border-b pb-5 lg:mt-8 lg:flex-col lg:gap-1 lg:border-0 lg:pb-0"
           >
             {sections.map(({ id, number, label }) => (
@@ -48,7 +50,7 @@ export function AccountSettings({ name, email }: { name: string; email: string }
               >
                 <span className="font-mono text-[10px]">{number}</span>
                 <span className="underline-offset-4 group-hover:underline">
-                  {label}
+                  {t(`settings.${label}`)}
                 </span>
                 <ArrowUpRight
                   aria-hidden="true"
@@ -66,7 +68,7 @@ export function AccountSettings({ name, email }: { name: string; email: string }
             aria-labelledby="profil-heading"
             className="scroll-mt-8"
           >
-            <SectionHeading id="profil-heading" number="01" title="Votre profil" />
+            <SectionHeading id="profil-heading" number="01" title={t("settings.profile")} />
             <UpdateNameCard name={name} />
             <EmailCard email={email} />
           </section>
@@ -76,7 +78,7 @@ export function AccountSettings({ name, email }: { name: string; email: string }
             aria-labelledby="securite-heading"
             className="scroll-mt-8 pt-10"
           >
-            <SectionHeading id="securite-heading" number="02" title="Sécurité" />
+            <SectionHeading id="securite-heading" number="02" title={t("settings.security")} />
             <ChangePasswordCard />
           </section>
 
@@ -85,11 +87,11 @@ export function AccountSettings({ name, email }: { name: string; email: string }
             aria-labelledby="sessions-heading"
             className="scroll-mt-8 pt-10"
           >
-            <SectionHeading id="sessions-heading" number="03" title="Sessions" />
+            <SectionHeading id="sessions-heading" number="03" title={t("settings.sessions")} />
             <SessionsCard />
           </section>
 
-          <section aria-label="Suppression du compte" className="pt-3">
+          <section aria-label={t("settings.deleteSection")} className="pt-3">
             <DeleteAccountCard />
           </section>
         </div>

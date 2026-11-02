@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useQuery } from "convex/react";
 import { api } from "@my-better-t-app/backend/convex/_generated/api";
 import { useNavigate } from "@tanstack/react-router";
@@ -16,11 +17,12 @@ import {
 import { authClient } from "@/lib/auth-client";
 
 export default function UserMenu() {
+  const { t } = useTranslation();
   const user = useCurrentUser();
   const viewer = useQuery(api.slots.viewer);
   const navigate = useNavigate();
   const { showWords } = usePage();
-  const name = user?.name?.trim() || "Mon espace";
+  const name = user?.name?.trim() || t("user.space");
   const initial = (user?.name?.trim() || user?.email || "M")
     .charAt(0)
     .toUpperCase();
@@ -34,7 +36,7 @@ export default function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        aria-label="Menu du compte"
+        aria-label={t("user.menu")}
         className="flex size-9 shrink-0 items-center justify-center rounded-none border font-serif text-lg text-foreground transition-colors hover:border-foreground/30 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-popup-open:border-foreground/30 data-popup-open:bg-muted motion-reduce:transition-none"
       >
         {initial}
@@ -57,14 +59,14 @@ export default function UserMenu() {
         <DropdownMenuSeparator className="mx-0" />
         <DropdownMenuGroup className="py-2">
           <DropdownMenuItem
-            label="Mes mots"
+            label={t("user.words")}
             onClick={showWords}
             className={itemClassName}
           >
             <span className="min-w-0 flex-1">
-              <span className={labelClassName}>Mes mots</span>
+              <span className={labelClassName}>{t("user.words")}</span>
               <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
-                Vos mots et leur historique
+                {t("user.wordsDescription")}
               </span>
             </span>
             <ArrowUpRight
@@ -77,7 +79,7 @@ export default function UserMenu() {
             onClick={() => navigate({ to: "/settings" })}
             className={itemClassName}
           >
-            <span className={labelClassName}>Mon compte</span>
+            <span className={labelClassName}>{t("user.account")}</span>
             <ArrowUpRight
               aria-hidden="true"
               className={arrowClassName}
@@ -89,7 +91,7 @@ export default function UserMenu() {
               onClick={() => navigate({ to: "/admin" })}
               className={itemClassName}
             >
-              <span className={labelClassName}>Administration</span>
+              <span className={labelClassName}>{t("user.admin")}</span>
               <ArrowUpRight
                 aria-hidden="true"
                 className={arrowClassName}
@@ -109,7 +111,7 @@ export default function UserMenu() {
           >
             <LogOut aria-hidden="true" className="size-4" strokeWidth={1.5} />
             <span className="underline-offset-4 group-data-highlighted/dropdown-menu-item:underline">
-              Déconnexion
+              {t("user.signOut")}
             </span>
           </DropdownMenuItem>
         </DropdownMenuGroup>

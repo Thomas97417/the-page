@@ -1,14 +1,16 @@
+import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "./theme-provider";
 
 const THEME_OPTIONS = [
-  { value: "light", label: "Jour", icon: Sun },
-  { value: "dark", label: "Nuit", icon: Moon },
-  { value: "system", label: "Système", icon: Monitor },
+  { value: "light", label: "light", icon: Sun },
+  { value: "dark", label: "dark", icon: Moon },
+  { value: "system", label: "system", icon: Monitor },
 ] as const;
 
 export default function ThemeToggle() {
+  const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -25,8 +27,8 @@ export default function ThemeToggle() {
     <button
       type="button"
       onClick={() => setTheme(next.value)}
-      aria-label={active ? `Thème ${active.label.toLowerCase()}. Passer au thème ${next.label.toLowerCase()}` : "Changer le thème"}
-      title={active ? `${active.label} → ${next.label}` : "Changer le thème"}
+      aria-label={active ? t("theme.toggle", { current: t(`theme.${active.label}`).toLowerCase(), next: t(`theme.${next.label}`).toLowerCase() }) : t("theme.change")}
+      title={active ? `${t(`theme.${active.label}`)} → ${t(`theme.${next.label}`)}` : t("theme.change")}
       className="flex size-9 shrink-0 items-center justify-center rounded-none border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
     >
       <Icon aria-hidden="true" className="size-4" strokeWidth={1.5} />

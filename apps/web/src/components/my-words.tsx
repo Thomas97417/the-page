@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, type FormEvent } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@my-better-t-app/backend/convex/_generated/api";
@@ -9,32 +10,26 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { WordDescriptionField } from "./word-description-field";
-import { euros, errorMessage } from "@/lib/page";
+import { euros } from "@/lib/page";
+import { formatLocale } from "@my-better-t-app/backend/convex/lib/language";
+import { errorMessage } from "@/lib/errors";
 import { Link } from "@tanstack/react-router";
 import { DEFAULT_PAGE_ID, getPage } from "@my-better-t-app/backend/convex/lib/pages";
 
 type Purchase = FunctionReturnType<typeof api.purchases.mine>[number];
-const statusLabels = {
-  creating: "Préparation",
-  pending: "Paiement en cours",
-  published: "Terminé",
-  expired: "Expiré",
-  failed: "Échoué",
-  refund_pending: "Remboursement en cours",
-  refunded: "Remboursé",
-};
 
 function OwnedWord({ purchase, onClose }: { purchase: Purchase; onClose: () => void }) {
+  const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
   const [word, setWord] = useState(purchase.word ?? "");
   const [url, setUrl] = useState(purchase.url ?? "");
   const [description, setDescription] = useState(purchase.description ?? "");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<unknown>(null);
   const update = useMutation(api.slots.updateContent);
   async function save(event: FormEvent) {
     event.preventDefault();
-    setError("");
+    setError(null);
     try {
       const content = validateContent(word, url, description);
       setBusy(true);
@@ -45,11 +40,7 @@ function OwnedWord({ purchase, onClose }: { purchase: Purchase; onClose: () => v
       });
       setEditing(false);
     } catch (cause) {
-      setError(
-        cause instanceof Error && !("data" in cause)
-          ? cause.message
-          : errorMessage(cause),
-      );
+      setError(cause);
     } finally {
       setBusy(false);
     }
@@ -67,9 +58,9 @@ function OwnedWord({ purchase, onClose }: { purchase: Purchase; onClose: () => v
               onClick={onClose}
               className="underline-offset-4 hover:underline"
             >
-              {getPage(purchase.pageId).label} · PLACE {String(purchase.position).padStart(2, "0")}
+              {t("myWords.position", { page: t(`pages.${purchase.pageId}`), position: String(purchase.position).padStart(2, "0") })}
             </Link>
-            {purchase.hidden ? " · MASQUÉ" : ""}
+            {purchase.hidden ? t("myWords.hiddenMarker") : ""}
           </p>
           <p className="mt-2 break-all font-serif text-3xl">{purchase.word}</p>
         </div>
@@ -77,7 +68,7 @@ function OwnedWord({ purchase, onClose }: { purchase: Purchase; onClose: () => v
           <Button
             size="icon"
             variant="ghost"
-            aria-label={`Modifier ${purchase.word}`}
+            aria-label={t("myWords.edit", { word: purchase.word })}
             onClick={() => {
               setWord(purchase.word ?? "");
               setUrl(purchase.url ?? "");
@@ -97,7 +88,7 @@ function OwnedWord({ purchase, onClose }: { purchase: Purchase; onClose: () => v
       {editing && (
         <form onSubmit={save} className="mt-5 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor={`word-${purchase.id}`}>Mot</Label>
+            <Label htmlFor={`word-${purchase.id}`}>{t("common.word")}</Label>
             <Input
               id={`word-${purchase.id}`}
               value={word}
@@ -111,7 +102,7 @@ function OwnedWord({ purchase, onClose }: { purchase: Purchase; onClose: () => v
             onChange={setDescription}
           />
           <div className="space-y-2">
-            <Label htmlFor={`url-${purchase.id}`}>Lien</Label>
+            <Label htmlFor={`url-${purchase.id}`}>{t("common.link")}</Label>
             <Input
               id={`url-${purchase.id}`}
               type="url"
@@ -120,9 +111,9 @@ function OwnedWord({ purchase, onClose }: { purchase: Purchase; onClose: () => v
               onChange={(e) => setUrl(e.target.value)}
             />
           </div>
-          {error && (
+          {error != null && (
             <p role="alert" className="text-sm text-destructive">
-              {error}
+              {errorMessage(error, t)}
             </p>
           )}
           <div className="flex gap-2">
@@ -132,14 +123,14 @@ function OwnedWord({ purchase, onClose }: { purchase: Purchase; onClose: () => v
               ) : (
                 <Check className="size-4" />
               )}
-              Enregistrer
+              {t("common.save")}
             </Button>
             <Button
               type="button"
               variant="ghost"
               onClick={() => setEditing(false)}
             >
-              Annuler
+              {t("common.cancel")}
             </Button>
           </div>
         </form>
@@ -149,6 +140,7 @@ function OwnedWord({ purchase, onClose }: { purchase: Purchase; onClose: () => v
 }
 
 export function MyWords({ onClose }: { onClose: () => void }) {
+  const { t, i18n } = useTranslation();
   const [tab, setTab] = useState<"current" | "history">("current");
   const purchases = useQuery(api.purchases.mine);
   const current = purchases?.filter((p) => p.current) ?? [];
@@ -161,10 +153,10 @@ export function MyWords({ onClose }: { onClose: () => void }) {
     >
       <SheetContent>
         <SheetTitle className="mt-14 font-serif text-5xl tracking-tight">
-          Mes mots.
+          {t("myWords.title")}
         </SheetTitle>
         <SheetDescription className="sr-only">
-          Vos emplacements actuels et l’historique de vos achats sur toutes les pages.
+          {t("myWords.description")}
         </SheetDescription>
         <div className="mt-9 flex gap-6 border-b text-sm">
           <button
@@ -172,7 +164,7 @@ export function MyWords({ onClose }: { onClose: () => void }) {
             aria-pressed={tab === "current"}
             onClick={() => setTab("current")}
           >
-            En ligne{" "}
+            {t("myWords.current")}{" "}
             {current.length > 0 && (
               <span className="ml-1 text-primary">{current.length}</span>
             )}
@@ -182,7 +174,7 @@ export function MyWords({ onClose }: { onClose: () => void }) {
             aria-pressed={tab === "history"}
             onClick={() => setTab("history")}
           >
-            Historique
+            {t("myWords.history")}
           </button>
         </div>
         {!purchases ? (
@@ -194,9 +186,9 @@ export function MyWords({ onClose }: { onClose: () => void }) {
             ))
           ) : (
             <div className="py-16">
-              <p className="font-serif text-2xl">Votre place vous attend.</p>
+              <p className="font-serif text-2xl">{t("myWords.empty")}</p>
               <Button variant="link" className="mt-4 px-0" onClick={onClose}>
-                Choisir un emplacement <ArrowUpRight />
+                {t("myWords.choose")} <ArrowUpRight />
               </Button>
             </div>
           )
@@ -209,20 +201,20 @@ export function MyWords({ onClose }: { onClose: () => void }) {
                     {purchase.word}
                   </p>
                   <span className="shrink-0 text-sm">
-                    {euros(purchase.amount)}
+                    {euros(purchase.amount, i18n.resolvedLanguage)}
                   </span>
                 </div>
                 <div className="mt-2 flex flex-wrap justify-between gap-2 text-xs text-muted-foreground">
                   <span>
-                    {getPage(purchase.pageId).label} · Place {purchase.position} ·{" "}
-                    {new Date(purchase.createdAt).toLocaleDateString("fr-FR")}
+                    {t("word.position", { page: t(`pages.${purchase.pageId}`), position: purchase.position })} ·{" "}
+                    {new Date(purchase.createdAt).toLocaleDateString(formatLocale(i18n.resolvedLanguage))}
                   </span>
                   <span>
                     {purchase.current
                       ? purchase.hidden
-                        ? "Masqué"
-                        : "En ligne"
-                      : statusLabels[purchase.status]}
+                        ? t("myWords.hidden")
+                        : t("myWords.current")
+                      : t(`myWords.status.${purchase.status}`)}
                   </span>
                 </div>
                 {purchase.checkoutUrl && (
@@ -230,7 +222,7 @@ export function MyWords({ onClose }: { onClose: () => void }) {
                     className="mt-3 inline-flex items-center gap-1 text-sm text-primary underline underline-offset-4"
                     href={purchase.checkoutUrl}
                   >
-                    Reprendre le paiement
+                    {t("myWords.resume")}
                     <ArrowUpRight className="size-3" />
                   </a>
                 )}
@@ -239,7 +231,7 @@ export function MyWords({ onClose }: { onClose: () => void }) {
           </div>
         ) : (
           <p className="py-12 text-sm text-muted-foreground">
-            Aucun achat pour le moment.
+            {t("myWords.noPurchases")}
           </p>
         )}
       </SheetContent>

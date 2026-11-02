@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 
 import {
@@ -10,12 +11,14 @@ import { Label } from "../ui/label";
 import { useForm } from "@tanstack/react-form";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
+import { errorMessage } from "@/lib/errors";
 import z from "zod";
 import { Button } from "../ui/button";
 import { ArrowUpRight, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 export default function UpdateEmailCard({ email }: { email: string }) {
+  const { t } = useTranslation();
   const { data: accounts } = useQuery({
     queryKey: ["accounts"],
     queryFn: async () => {
@@ -35,17 +38,17 @@ export default function UpdateEmailCard({ email }: { email: string }) {
         { newEmail: value.newEmail },
         {
           onSuccess: () => {
-            toast.success("Email modifié.");
+            toast.success(t("settings.emailChanged"));
           },
           onError: (error) => {
-            toast.error(error.error.message);
+            toast.error(errorMessage(error.error, t));
           },
         },
       );
     },
     validators: {
       onSubmit: z.object({
-        newEmail: z.string().email("Adresse email invalide"),
+        newEmail: z.string().email("INVALID_EMAIL"),
       }),
     },
   });
@@ -60,20 +63,20 @@ export default function UpdateEmailCard({ email }: { email: string }) {
       <SettingsCard>
         <SettingsCardContent>
           <SettingsCardHeader
-            title="Adresse email"
-            description="L’adresse utilisée pour vous connecter et recevoir nos emails."
+            title={t("settings.emailTitle")}
+            description={t("settings.emailDescription")}
           />
           <form.Field
             name="newEmail"
             children={(field) => (
               <div className="flex flex-col gap-2">
                 <Label htmlFor="newEmail" className="sr-only">
-                  Email
+                  {t("common.email")}
                 </Label>
                 <Input
                   id="newEmail"
                   type="email"
-                  placeholder="Votre adresse email"
+                  placeholder={t("common.yourEmail")}
                   autoComplete="email"
                   required
                   disabled={isSocialOnly}
@@ -93,7 +96,7 @@ export default function UpdateEmailCard({ email }: { email: string }) {
                     className="text-xs text-destructive"
                   >
                     {field.state.meta.errors
-                      .map((error) => error?.message)
+                      .map((error) => errorMessage(error?.message, t))
                       .join(" ")}
                   </p>
                 )}
@@ -104,7 +107,7 @@ export default function UpdateEmailCard({ email }: { email: string }) {
         <SettingsCardFooter>
           {isSocialOnly && (
             <p className="max-w-xs text-xs leading-relaxed text-muted-foreground">
-              Email géré par votre fournisseur de connexion.
+              {t("settings.socialEmail")}
             </p>
           )}
           <form.Subscribe>
@@ -116,7 +119,7 @@ export default function UpdateEmailCard({ email }: { email: string }) {
                   isSocialOnly || !state.canSubmit || state.isSubmitting
                 }
               >
-                {state.isSubmitting ? "Enregistrement…" : "Enregistrer"}
+                {state.isSubmitting ? t("common.saving") : t("common.save")}
                 {state.isSubmitting ? (
                   <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
                 ) : (

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -5,24 +6,25 @@ import { PageFallback } from "./page-fallback";
 import { buttonVariants } from "./ui/button";
 
 export default function NotFound() {
+  const { t } = useTranslation();
   return (
     <PageFallback
       marker="404"
-      label="Page introuvable"
+      label={t("fallback.notFound")}
       title={
         <>
-          Une page
+          {t("fallback.notFoundTitle")}
           <br />
-          <span className="italic">s’est égarée.</span>
+          <span className="italic">{t("fallback.notFoundEmphasis")}</span>
         </>
       }
-      description="Cette page n’existe pas ou le lien a changé. Revenez à l’accueil pour retrouver les mots de la page."
+      description={t("fallback.notFoundDescription")}
       actions={
         <Link
           to="/"
           className={cn(buttonVariants(), "h-12 gap-8 px-6 text-sm")}
         >
-          Retour à la page
+          {t("common.backToPage")}
           <ArrowUpRight aria-hidden="true" className="size-4" />
         </Link>
       }

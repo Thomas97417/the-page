@@ -1,6 +1,9 @@
+import { useTranslation } from "react-i18next";
 import { authClient } from "@/lib/auth-client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { errorMessage } from "@/lib/errors";
+import { formatLocale } from "@my-better-t-app/backend/convex/lib/language";
 import { Button } from "../ui/button";
 import { Loader2, Monitor, Smartphone, Globe, X, LogOut } from "lucide-react";
 import { useState } from "react";
@@ -25,6 +28,7 @@ import {
 } from "../ui/alert-dialog";
 
 export default function SessionsCard() {
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [revokingAll, setRevokingAll] = useState(false);
@@ -59,11 +63,11 @@ export default function SessionsCard() {
             router.navigate({ to: "/" });
             return;
           }
-          toast.success("Session fermée.");
+          toast.success(t("settings.sessionRevoked"));
           queryClient.invalidateQueries({ queryKey: ["sessions"] });
         },
         onError: (error) => {
-          toast.error(error.error.message);
+          toast.error(errorMessage(error.error, t));
         },
       },
     );
@@ -74,9 +78,9 @@ export default function SessionsCard() {
     setRevokingAll(true);
     const { error } = await authClient.revokeOtherSessions();
     if (error) {
-      toast.error(error.message);
+      toast.error(errorMessage(error, t));
     } else {
-      toast.success("Autres sessions fermées.");
+      toast.success(t("settings.otherSessionsRevoked"));
       queryClient.invalidateQueries({ queryKey: ["sessions"] });
     }
     setRevokingAll(false);
@@ -96,14 +100,14 @@ export default function SessionsCard() {
   }
 
   function getBrowserName(userAgent: string | null | undefined) {
-    if (!userAgent) return "Navigateur inconnu";
+    if (!userAgent) return t("settings.unknownBrowser");
     const ua = userAgent.toLowerCase();
     if (ua.includes("firefox")) return "Firefox";
     if (ua.includes("edg")) return "Edge";
     if (ua.includes("safari") && !ua.includes("chrome")) return "Safari";
     if (ua.includes("chrome")) return "Chrome";
     if (ua.includes("opera") || ua.includes("opr")) return "Opera";
-    return "Navigateur inconnu";
+    return t("settings.unknownBrowser");
   }
 
   const otherSessions = sessions?.filter((s) => s.id !== currentSessionId);
@@ -112,8 +116,8 @@ export default function SessionsCard() {
     <SettingsCard>
       <SettingsCardContent>
         <SettingsCardHeader
-          title="Vos appareils"
-          description="Retrouvez les navigateurs connectés à votre compte."
+          title={t("settings.devices")}
+          description={t("settings.devicesDescription")}
         />
         <div className="flex flex-col">
           {isLoading ? (
@@ -139,14 +143,14 @@ export default function SessionsCard() {
                         {isCurrent && (
                           <span className="inline-flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-wide text-muted-foreground">
                             <span aria-hidden="true" className="size-1 rounded-full bg-foreground" />
-                            Cet appareil
+                            {t("settings.thisDevice")}
                           </span>
                         )}
                       </div>
                       <span className="text-[11px] leading-relaxed text-muted-foreground">
-                        Dernière activité{" "}
+                        {t("settings.lastActive")}{" "}
                         {new Date(session.updatedAt).toLocaleDateString(
-                          "fr-FR",
+                          formatLocale(i18n.resolvedLanguage),
                           {
                             month: "short",
                             day: "numeric",
@@ -164,7 +168,7 @@ export default function SessionsCard() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            aria-label="Fermer la session de cet appareil"
+                            aria-label={t("settings.closeThisSession")}
                             className="size-11 text-muted-foreground hover:text-destructive"
                             disabled={revokingId === session.token}
                           />
@@ -179,14 +183,14 @@ export default function SessionsCard() {
                       <AlertDialogContent className="rounded-none p-6">
                         <AlertDialogHeader className="place-items-start gap-3 text-left">
                           <AlertDialogTitle className="text-balance font-serif text-2xl font-normal tracking-tight sm:text-3xl">
-                            Fermer cette session&nbsp;?
+                            {t("settings.closeSessionTitle")}
                           </AlertDialogTitle>
                           <AlertDialogDescription>
-                            Vous serez déconnecté.
+                            {t("settings.signOutNotice")}
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter className="-mx-6 -mb-6 mt-2 rounded-none bg-transparent p-6">
-                          <AlertDialogCancel className="h-11 px-4">Annuler</AlertDialogCancel>
+                          <AlertDialogCancel className="h-11 px-4">{t("common.cancel")}</AlertDialogCancel>
                           <AlertDialogAction
                             variant="destructive"
                             className="h-11 px-4"
@@ -194,7 +198,7 @@ export default function SessionsCard() {
                               revokeSession(session.id, session.token)
                             }
                           >
-                            Se déconnecter
+                            {t("common.signOut")}
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
@@ -203,7 +207,7 @@ export default function SessionsCard() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      aria-label={`Fermer la session ${getBrowserName(session.userAgent)}`}
+                      aria-label={t("settings.closeSession", { browser: getBrowserName(session.userAgent) })}
                       className="size-11 text-muted-foreground hover:text-destructive"
                       disabled={revokingId === session.token}
                       onClick={() => revokeSession(session.id, session.token)}
@@ -220,21 +224,21 @@ export default function SessionsCard() {
             })
           ) : (
             <p className="py-4 text-sm text-muted-foreground">
-              Aucune session active.
+              {t("settings.noSessions")}
             </p>
           )}
         </div>
       </SettingsCardContent>
       <SettingsCardFooter>
         <p className="max-w-xs text-xs leading-relaxed text-muted-foreground">
-          Gardez uniquement les sessions que vous reconnaissez.
+          {t("settings.sessionsNotice")}
         </p>
         <Button
           variant="outline"
           disabled={!otherSessions?.length || revokingAll}
           onClick={revokeOtherSessions}
         >
-          {revokingAll ? "Fermeture…" : "Fermer les autres sessions"}
+          {revokingAll ? t("settings.closing") : t("settings.closeOtherSessions")}
           {revokingAll ? (
             <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
           ) : (

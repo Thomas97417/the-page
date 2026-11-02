@@ -4,20 +4,20 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { AccountSettings } from "@/components/settings/account-settings";
 
 export const Route = createFileRoute("/settings")({
-  head: () => ({
-    meta: [
-      { title: "Mon compte — the page" },
-      {
-        name: "description",
-        content: "Gérez votre compte the page.",
-      },
-    ],
-  }),
   beforeLoad: async ({ context }) => {
     if (!context.isAuthenticated) {
       throw redirect({ to: "/sign-in" });
     }
   },
+  head: ({ match }) => ({
+    meta: [
+      { title: match.context.i18n.t("meta.settings") },
+      {
+        name: "description",
+        content: match.context.i18n.t("meta.settingsDescription"),
+      },
+    ],
+  }),
   component: RouteComponent,
 });
 

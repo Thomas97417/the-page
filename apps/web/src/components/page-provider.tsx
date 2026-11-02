@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   createContext,
   useContext,
@@ -9,7 +10,7 @@ import { useLocation } from "@tanstack/react-router";
 import { useConvexAuth } from "convex/react";
 import type { Id } from "@my-better-t-app/backend/convex/_generated/dataModel";
 import { DEFAULT_PAGE_ID, isPageId, pageIdFromPath, type PageId } from "@my-better-t-app/backend/convex/lib/pages";
-import { rememberReturnPath } from "@/lib/page";
+import { rememberReturnPath, euros } from "@/lib/page";
 import { BuySheet } from "./purchase-sheet";
 import { MyWords } from "./my-words";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "./ui/sheet";
@@ -41,6 +42,7 @@ export function saveDraft(draft: WordDraft) {
 }
 
 export function PageProvider({ children }: { children: ReactNode }) {
+  const { t, i18n } = useTranslation();
   const [draft, setDraft] = useState<WordDraft | null>(null);
   const [wordsOpen, setWordsOpen] = useState(false);
   const [rulesOpen, setRulesOpen] = useState(false);
@@ -95,39 +97,33 @@ export function PageProvider({ children }: { children: ReactNode }) {
       <Sheet open={rulesOpen} onOpenChange={setRulesOpen}>
         <SheetContent>
           <SheetTitle className="mt-14 font-serif text-4xl tracking-tight">
-            Comment ça marche ?
+            {t("rules.title")}
           </SheetTitle>
           <SheetDescription className="mt-6 text-base leading-relaxed text-muted-foreground">
-            Une page World et des pages par pays. 50 emplacements par page.
-            Un mot par place.
+            {t("rules.description")}
           </SheetDescription>
           <ol className="mt-10 space-y-8 text-base leading-relaxed">
             <li>
               <span className="mb-2 block font-mono text-xs text-primary">
                 01
               </span>
-              Choisissez une place et écrivez votre mot. Ajoutez une description
-              et un lien si vous le souhaitez. Chaque page est indépendante ;
-              vous pouvez participer à celle de votre choix.
+              {t("rules.choose")}
             </li>
             <li>
               <span className="mb-2 block font-mono text-xs text-primary">
                 02
               </span>
-              Chaque place commence à 1 €. Son prix augmente de 1 € à chaque
-              achat.
+              {t("rules.price", { price: euros(100, i18n.resolvedLanguage) })}
             </li>
             <li>
               <span className="mb-2 block font-mono text-xs text-primary">
                 03
               </span>
-              Un nouvel achat remplace votre mot, sans compensation. Tant que
-              vous avez la place, vous pouvez le modifier gratuitement.
+              {t("rules.replace")}
             </li>
           </ol>
           <p className="mt-10 border-t pt-6 text-sm leading-relaxed text-muted-foreground">
-            Aucune durée ni audience garantie. Les paiements reviennent à the
-            page. Les contenus abusifs peuvent être retirés.
+            {t("rules.notice")}
           </p>
         </SheetContent>
       </Sheet>

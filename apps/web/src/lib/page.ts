@@ -1,7 +1,7 @@
-import { ConvexError } from "convex/values";
+import type { TFunction } from "i18next";
+import { formatLocale } from "@my-better-t-app/backend/convex/lib/language";
 import {
   DEFAULT_PAGE_ID,
-  getPage,
   pageIdFromPath,
   pagePath,
   purchaseReturnPath,
@@ -17,33 +17,27 @@ export function validatePageSearch(search: Record<string, unknown>): { purchase?
   };
 }
 
-export function pageHead(pageId: PageId) {
-  const page = getPage(pageId);
+export function pageHead(pageId: PageId, t: TFunction) {
+  const page = t(`pages.${pageId}`);
   return {
     meta: [
-      { title: `${page.label} — the page · Une page à tous. Un mot de vous.` },
+      { title: t("meta.pageTitle", { page }) },
       {
         name: "description",
         content: pageId === DEFAULT_PAGE_ID
-          ? "La page mondiale écrite à plusieurs. 50 places, un mot par place. Ajoutez le vôtre à l’histoire."
-          : `Une page pour ${page.label}. 50 places, un mot par place. Ajoutez le vôtre à cette histoire collective.`,
+          ? t("meta.worldDescription")
+          : t("meta.countryDescription", { page }),
       },
     ],
   };
 }
 
-export const euros = (amount: number) =>
-  new Intl.NumberFormat("fr-FR", {
+export const euros = (amount: number, language: string | undefined) =>
+  new Intl.NumberFormat(formatLocale(language), {
     style: "currency",
     currency: "EUR",
     maximumFractionDigits: Number.isInteger(amount / 100) ? 0 : 2,
   }).format(amount / 100);
-
-export function errorMessage(error: unknown) {
-  if (error instanceof ConvexError && typeof error.data === "string")
-    return error.data;
-  return "Une erreur est survenue. Réessayez.";
-}
 
 export function returnPath() {
   try {

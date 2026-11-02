@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { Combobox } from "@base-ui/react/combobox";
 import { Link } from "@tanstack/react-router";
@@ -19,20 +20,21 @@ function normalizeSearch(value: string) {
     .replace(/[^a-z0-9]/g, "");
 }
 
-function matchesPage(page: Page, query: string) {
+function matchesPage(page: Page, query: string, label: string) {
   const search = normalizeSearch(query);
-  return [page.label, page.id, page.slug, page.suffix].some((value) =>
+  return [label, page.label, page.id, page.slug, page.suffix].some((value) =>
     normalizeSearch(value).includes(search),
   );
 }
 
 export function PageNavigation({ pageId }: { pageId: PageId }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const currentPage = getPage(pageId);
 
   return (
-    <Combobox.Root
+    <Combobox.Root<Page>
       items={PAGES}
       value={currentPage}
       open={open}
@@ -42,11 +44,11 @@ export function PageNavigation({ pageId }: { pageId: PageId }) {
         setOpen(nextOpen);
         setQuery("");
       }}
-      filter={matchesPage}
+      filter={(page, query) => matchesPage(page, query, t(`pages.${page.id}`))}
       autoHighlight
     >
       <Combobox.Trigger
-        aria-label={`Choisir une page, page actuelle : ${currentPage.label}`}
+        aria-label={t("header.choosePage", { page: t(`pages.${pageId}`) })}
         className="group inline-flex min-h-11 items-center gap-1 pr-0.5 font-serif text-sm tracking-[-0.025em] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-popup-open:text-foreground sm:text-base"
       >
         <span>.{currentPage.suffix}</span>
@@ -64,21 +66,21 @@ export function PageNavigation({ pageId }: { pageId: PageId }) {
           className="isolate z-50 outline-none"
         >
           <Combobox.Popup
-            aria-label="Choisir une page"
+            aria-label={t("pageNavigation.choose")}
             className="flex max-h-[min(21rem,var(--available-height))] w-52 max-w-[calc(100vw-2.5rem)] origin-(--transform-origin) flex-col overflow-hidden border bg-background text-foreground shadow-[0_8px_40px_-12px_rgb(0_0_0/0.18)] outline-none duration-100 data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 motion-reduce:animate-none"
           >
             <div className="mx-2 flex shrink-0 items-center gap-2 border-b px-1 py-2 focus-within:border-foreground/40">
               <Search aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" strokeWidth={1.5} />
               <Combobox.Input
-                aria-label="Rechercher un pays"
-                placeholder="Rechercher un pays…"
+                aria-label={t("pageNavigation.search")}
+                placeholder={t("pageNavigation.searchPlaceholder")}
                 autoComplete="off"
                 spellCheck={false}
                 className="h-7 min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground"
               />
               {query && (
                 <Combobox.Clear
-                  aria-label="Effacer la recherche"
+                  aria-label={t("pageNavigation.clear")}
                   className="flex size-7 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
                 >
                   <X aria-hidden="true" className="size-3" strokeWidth={1.5} />
@@ -86,17 +88,17 @@ export function PageNavigation({ pageId }: { pageId: PageId }) {
               )}
             </div>
             <Combobox.Empty className="px-4 py-6 text-center text-xs leading-relaxed text-muted-foreground empty:hidden">
-              Aucun pays trouvé.
+              {t("pageNavigation.empty")}
             </Combobox.Empty>
             <Combobox.List
-              aria-label="Pages disponibles"
+              aria-label={t("pageNavigation.available")}
               className="country-scrollbar min-h-0 overflow-y-auto overscroll-contain p-2 empty:hidden"
             >
               {(page: Page) => (
                 <Combobox.Item
                   key={page.id}
                   value={page}
-                  aria-label={`.${page.suffix} — ${page.label}`}
+                  aria-label={`.${page.suffix} — ${t(`pages.${page.id}`)}`}
                   render={
                     <Link
                       preload="intent"
@@ -114,7 +116,7 @@ export function PageNavigation({ pageId }: { pageId: PageId }) {
                       .{page.suffix}
                     </span>
                     <span className="mt-0.5 block text-[10px] leading-tight text-muted-foreground">
-                      {page.label}
+                      {t(`pages.${page.id}`)}
                     </span>
                   </span>
                   {pageId === page.id ? (

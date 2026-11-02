@@ -1,6 +1,8 @@
 import type { ConvexQueryClient } from "@convex-dev/react-query";
 import type { QueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
+import type { i18n } from "i18next";
+import { useTranslation } from "react-i18next";
 
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import {
@@ -32,6 +34,7 @@ const getAuth = createServerFn({ method: "GET" }).handler(async () => {
 export interface RouterAppContext extends RouteAuthContext {
   queryClient: QueryClient;
   convexQueryClient: ConvexQueryClient;
+  i18n: i18n;
 }
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
@@ -99,8 +102,9 @@ function RootComponent() {
 }
 
 function RootDocument({ children }: { children: ReactNode }) {
+  const { i18n } = useTranslation();
   return (
-    <html lang="fr" suppressHydrationWarning>
+    <html lang={i18n.resolvedLanguage} suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>

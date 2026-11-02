@@ -7,6 +7,7 @@ import type { DataModel } from "./_generated/dataModel";
 import { components, internal } from "./_generated/api";
 import { query, type ActionCtx } from "./_generated/server";
 import authConfig from "./auth.config";
+import { languageFromCookie } from "./lib/language";
 import {
   SITE_URL,
   EMAIL_FROM,
@@ -27,23 +28,25 @@ function createAuth(ctx: GenericCtx<DataModel>) {
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
-      sendResetPassword: async ({ user, url }) => {
+      sendResetPassword: async ({ user, url }, request) => {
         const actionCtx = ctx as unknown as ActionCtx;
         await actionCtx.runAction(internal.sendEmails.sendResetPasswordEmail, {
           from: EMAIL_FROM,
           to: user.email,
           url,
+          language: languageFromCookie(request?.headers.get("cookie")),
         });
       },
     },
     emailVerification: {
-      sendVerificationEmail: async ({ user, url, token }) => {
+      sendVerificationEmail: async ({ user, url, token }, request) => {
         const actionCtx = ctx as unknown as ActionCtx;
         await actionCtx.runAction(internal.sendEmails.sendVerificationEmail, {
           from: EMAIL_FROM,
           to: user.email,
           url,
           token,
+          language: languageFromCookie(request?.headers.get("cookie")),
         });
       },
     },
