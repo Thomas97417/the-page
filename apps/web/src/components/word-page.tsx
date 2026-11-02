@@ -7,7 +7,7 @@ import { PageManuscript } from "@/components/page-manuscript";
 import TargetCursor from "@/components/target-cursor";
 import { Button } from "@/components/ui/button";
 import { PurchaseResult } from "@/components/purchase-result";
-import { DEFAULT_PAGE_ID, getPage, type PageId } from "@my-better-t-app/backend/convex/lib/pages";
+import { getPage, type PageId } from "@my-better-t-app/backend/convex/lib/pages";
 
 export function WordPage({ pageId, purchase }: { pageId: PageId; purchase?: string }) {
   const { data: slots } = useQuery(convexQuery(api.slots.list, { pageId }));
@@ -30,22 +30,7 @@ export function WordPage({ pageId, purchase }: { pageId: PageId; purchase?: stri
           padding={8}
         />
         {purchase && <PurchaseResult key={purchase} purchaseId={purchase} pageId={pageId} />}
-        <section aria-labelledby="page-title" className="pb-10 pt-8 text-center sm:pb-14 sm:pt-10">
-          <p className="mb-5 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-            {pageId === DEFAULT_PAGE_ID ? "La page mondiale" : `La page · ${page.label}`}
-          </p>
-          <h1 id="page-title" className="font-serif text-[clamp(2.25rem,5.5vw,4.5rem)] leading-[1.08] tracking-[-0.045em]">
-            Une page à tous.
-            <br />
-            <span className="italic">Un mot de vous.</span>
-          </h1>
-          <p className="mx-auto mt-5 max-w-sm text-sm leading-relaxed text-muted-foreground">
-            {pageId === DEFAULT_PAGE_ID
-              ? "50 places pour écrire ensemble, partout dans le monde."
-              : `50 places pour écrire ensemble sur la page ${page.label}.`}
-          </p>
-        </section>
-
+        <h1 className="sr-only">the page — {page.label}</h1>
         <PageManuscript slots={slots} />
 
         <section aria-label="Participer à la page" className="flex flex-col items-center gap-4 pb-14 pt-8 sm:pb-18 sm:pt-10">

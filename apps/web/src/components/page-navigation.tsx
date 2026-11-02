@@ -9,9 +9,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
@@ -36,35 +34,29 @@ export function PageNavigation({ pageId }: { pageId: PageId }) {
           strokeWidth={1.5}
         />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" sideOffset={6} className="w-68 p-1.5">
-        <DropdownMenuGroup>
-          <DropdownMenuLabel className="px-3 font-mono text-[10px] uppercase tracking-[0.14em]">
-            Choisir une page
-          </DropdownMenuLabel>
-          {PAGES.map((page) => (
-            <DropdownMenuItem
-              key={page.id}
-              aria-label={`the page.${PAGE_SUFFIXES[page.id]} — ${page.label}`}
-              render={
-                <Link
-                  to={page.id === DEFAULT_PAGE_ID ? "/" : "/$page"}
-                  params={page.id === DEFAULT_PAGE_ID ? {} : { page: page.id }}
-                  search={{}}
-                  aria-current={pageId === page.id ? "page" : undefined}
-                />
-              }
-              className="min-h-11 cursor-pointer justify-between gap-4 px-3"
-            >
-              <span className="whitespace-nowrap font-serif text-xl tracking-[-0.055em]">
-                the page.<span className="text-sm tracking-[-0.025em]">{PAGE_SUFFIXES[page.id]}</span>
-              </span>
-              <span className="ml-auto whitespace-nowrap text-muted-foreground">{page.label}</span>
-              <span className="flex size-3.5 shrink-0 items-center justify-center">
-                {pageId === page.id && <Check aria-hidden="true" className="size-3.5" />}
-              </span>
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuGroup>
+      <DropdownMenuContent align="start" sideOffset={4} className="w-40 p-1">
+        {PAGES.map((page) => (
+          <DropdownMenuItem
+            key={page.id}
+            aria-label={`the page.${PAGE_SUFFIXES[page.id]} — ${page.label}`}
+            render={
+              <Link
+                to={page.id === DEFAULT_PAGE_ID ? "/" : "/$page"}
+                params={page.id === DEFAULT_PAGE_ID ? {} : { page: page.id }}
+                search={{}}
+                aria-current={pageId === page.id ? "page" : undefined}
+              />
+            }
+            className="min-h-8 cursor-pointer justify-between gap-2 px-2 py-1"
+          >
+            <span className="whitespace-nowrap font-serif text-base tracking-[-0.055em]">
+              the page.<span className="text-xs tracking-[-0.025em]">{PAGE_SUFFIXES[page.id]}</span>
+            </span>
+            <span className="flex size-3 shrink-0 items-center justify-center">
+              {pageId === page.id && <Check aria-hidden="true" className="size-3" />}
+            </span>
+          </DropdownMenuItem>
+        ))}
       </DropdownMenuContent>
     </DropdownMenu>
   );
