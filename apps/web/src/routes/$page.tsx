@@ -7,6 +7,8 @@ import { pageHead, validatePageSearch } from "@/lib/page";
 
 export const Route = createFileRoute("/$page")({
   validateSearch: validatePageSearch,
+  pendingMs: 150,
+  pendingMinMs: 150,
   beforeLoad: ({ params, search }) => {
     if (!isPageId(params.page)) throw notFound();
     if (params.page === DEFAULT_PAGE_ID)
