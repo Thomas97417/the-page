@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle } from "./ui/sheet";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { WordDescriptionField } from "./word-description-field";
 import { euros, errorMessage } from "@/lib/page";
 
 export function BuySheet({
@@ -19,6 +20,7 @@ export function BuySheet({
 }) {
   const [word, setWord] = useState(draft.word);
   const [url, setUrl] = useState(draft.url);
+  const [description, setDescription] = useState(draft.description ?? "");
   const [accepted, setAccepted] = useState(draft.acquisition);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -37,7 +39,7 @@ export function BuySheet({
     event.preventDefault();
     setError("");
     try {
-      const content = validateContent(word, url);
+      const content = validateContent(word, url, description);
       if (!slot) {
         setError("Cet emplacement n’est plus disponible.");
         return;
@@ -94,7 +96,7 @@ export function BuySheet({
           <SheetDescription className="mt-5 text-sm leading-relaxed text-muted-foreground">
             {owned.hidden
               ? "Ce mot est masqué par la modération."
-              : "Vous pouvez modifier votre mot et son lien gratuitement."}
+              : "Vous pouvez modifier votre mot, sa description et son lien gratuitement."}
           </SheetDescription>
           <p className="my-12 break-all border-y py-12 text-center font-serif text-4xl text-primary">
             {owned.word}
@@ -127,8 +129,8 @@ export function BuySheet({
           À vous d’écrire.
         </SheetTitle>
         <SheetDescription className="sr-only">
-          Choisissez votre mot et un lien facultatif, puis payez l’emplacement
-          sélectionné.
+          Choisissez votre mot, puis payez l’emplacement sélectionné. La
+          description et le lien sont facultatifs.
         </SheetDescription>
         <form onSubmit={submit} className="mt-10 flex flex-1 flex-col gap-7">
           <div className="space-y-2.5">
@@ -149,6 +151,11 @@ export function BuySheet({
               className="h-13 text-base"
             />
           </div>
+          <WordDescriptionField
+            id="purchase-description"
+            value={description}
+            onChange={setDescription}
+          />
           <div className="space-y-2.5">
             <Label htmlFor="purchase-url">
               Un lien{" "}
@@ -166,10 +173,15 @@ export function BuySheet({
               className="h-13 text-base"
             />
           </div>
-          <div className="flex min-h-36 items-center justify-center border-y border-dashed py-8 text-center">
+          <div className="flex min-h-36 flex-col items-center justify-center gap-3 border-y border-dashed py-8 text-center">
             <span className="max-w-full break-all font-serif text-4xl leading-tight text-primary">
               {word || "Votre mot."}
             </span>
+            {description.trim() && (
+              <p className="max-w-full whitespace-pre-line break-words text-sm leading-relaxed text-muted-foreground">
+                {description.trim()}
+              </p>
+            )}
           </div>
           <div className="mt-auto space-y-5 pt-5">
             <div className="flex items-baseline justify-between">
