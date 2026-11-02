@@ -25,7 +25,7 @@ export function SheetContent({
       >
         <Dialog.Close
           aria-label={t("common.closePanel")}
-          className="absolute right-5 top-5 flex size-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary"
+          className="absolute right-5 top-5 flex size-11 items-center justify-center rounded-none text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary"
         >
           <X className="size-5" />
         </Dialog.Close>
