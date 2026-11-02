@@ -20,7 +20,6 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogMedia,
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
@@ -84,16 +83,16 @@ export default function SessionsCard() {
   }
 
   function getDeviceIcon(userAgent: string | null | undefined) {
-    if (!userAgent) return <Globe className="size-4" />;
+    if (!userAgent) return <Globe aria-hidden="true" className="size-4" strokeWidth={1.5} />;
     const ua = userAgent.toLowerCase();
     if (
       ua.includes("mobile") ||
       ua.includes("android") ||
       ua.includes("iphone")
     ) {
-      return <Smartphone className="size-4" />;
+      return <Smartphone aria-hidden="true" className="size-4" strokeWidth={1.5} />;
     }
-    return <Monitor className="size-4" />;
+    return <Monitor aria-hidden="true" className="size-4" strokeWidth={1.5} />;
   }
 
   function getBrowserName(userAgent: string | null | undefined) {
@@ -112,12 +111,15 @@ export default function SessionsCard() {
   return (
     <SettingsCard>
       <SettingsCardContent>
-        <SettingsCardHeader title="Sessions actives" description="" />
-        <div className="flex flex-col gap-2">
+        <SettingsCardHeader
+          title="Vos appareils"
+          description="Retrouvez les navigateurs connectés à votre compte."
+        />
+        <div className="flex flex-col">
           {isLoading ? (
             <>
-              <Skeleton className="h-14 w-full" />
-              <Skeleton className="h-14 w-full" />
+              <Skeleton className="my-2 h-16 w-full rounded-none" />
+              <Skeleton className="my-2 h-16 w-full rounded-none" />
             </>
           ) : sessions?.length ? (
             sessions.map((session) => {
@@ -125,25 +127,26 @@ export default function SessionsCard() {
               return (
                 <div
                   key={session.token}
-                  className="flex items-center justify-between rounded-md border p-3"
+                  className="flex items-center justify-between gap-3 border-b py-4 first:pt-1 last:border-0 last:pb-1"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="text-muted-foreground">
+                  <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-full border text-muted-foreground">
                       {getDeviceIcon(session.userAgent)}
                     </div>
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-2 text-sm">
+                    <div className="flex min-w-0 flex-col gap-1.5">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
                         <span>{getBrowserName(session.userAgent)}</span>
                         {isCurrent && (
-                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[0.65rem] font-medium text-primary">
-                            Actuelle
+                          <span className="inline-flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-wide text-muted-foreground">
+                            <span aria-hidden="true" className="size-1 rounded-full bg-foreground" />
+                            Cet appareil
                           </span>
                         )}
                       </div>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-[11px] leading-relaxed text-muted-foreground">
                         Dernière activité{" "}
                         {new Date(session.updatedAt).toLocaleDateString(
-                          undefined,
+                          "fr-FR",
                           {
                             month: "short",
                             day: "numeric",
@@ -160,34 +163,33 @@ export default function SessionsCard() {
                         render={
                           <Button
                             variant="ghost"
-                            size="icon-xs"
-                            className="hover:cursor-pointer text-muted-foreground hover:text-destructive"
+                            size="icon"
+                            aria-label="Fermer la session de cet appareil"
+                            className="size-11 text-muted-foreground hover:text-destructive"
                             disabled={revokingId === session.token}
                           />
                         }
                       >
                         {revokingId === session.token ? (
-                          <Loader2 className="size-3 animate-spin" />
+                          <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
                         ) : (
-                          <X className="size-3" />
+                          <X aria-hidden="true" className="size-3.5" strokeWidth={1.5} />
                         )}
                       </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogMedia>
-                            <LogOut className="size-5" />
-                          </AlertDialogMedia>
-                          <AlertDialogTitle>
-                            Fermer cette session ?
+                      <AlertDialogContent className="rounded-none p-6">
+                        <AlertDialogHeader className="place-items-start gap-3 text-left">
+                          <AlertDialogTitle className="text-balance font-serif text-2xl font-normal tracking-tight sm:text-3xl">
+                            Fermer cette session&nbsp;?
                           </AlertDialogTitle>
                           <AlertDialogDescription>
                             Vous serez déconnecté.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogFooter className="-mx-6 -mb-6 mt-2 rounded-none bg-transparent p-6">
+                          <AlertDialogCancel className="h-11 px-4">Annuler</AlertDialogCancel>
                           <AlertDialogAction
                             variant="destructive"
+                            className="h-11 px-4"
                             onClick={() =>
                               revokeSession(session.id, session.token)
                             }
@@ -200,15 +202,16 @@ export default function SessionsCard() {
                   ) : (
                     <Button
                       variant="ghost"
-                      size="icon-xs"
-                      className="hover:cursor-pointer text-muted-foreground hover:text-destructive"
+                      size="icon"
+                      aria-label={`Fermer la session ${getBrowserName(session.userAgent)}`}
+                      className="size-11 text-muted-foreground hover:text-destructive"
                       disabled={revokingId === session.token}
                       onClick={() => revokeSession(session.id, session.token)}
                     >
                       {revokingId === session.token ? (
-                        <Loader2 className="size-3 animate-spin" />
+                        <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
                       ) : (
-                        <X className="size-3" />
+                        <X aria-hidden="true" className="size-3.5" strokeWidth={1.5} />
                       )}
                     </Button>
                   )}
@@ -216,24 +219,26 @@ export default function SessionsCard() {
               );
             })
           ) : (
-            <p className="text-sm text-muted-foreground">
+            <p className="py-4 text-sm text-muted-foreground">
               Aucune session active.
             </p>
           )}
         </div>
       </SettingsCardContent>
       <SettingsCardFooter>
+        <p className="max-w-xs text-xs leading-relaxed text-muted-foreground">
+          Gardez uniquement les sessions que vous reconnaissez.
+        </p>
         <Button
-          size="sm"
-          variant="destructive"
-          className="hover:cursor-pointer"
+          variant="outline"
           disabled={!otherSessions?.length || revokingAll}
           onClick={revokeOtherSessions}
         >
+          {revokingAll ? "Fermeture…" : "Fermer les autres sessions"}
           {revokingAll ? (
-            <Loader2 className="size-4 animate-spin" />
+            <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
           ) : (
-            "Fermer les autres sessions"
+            <LogOut aria-hidden="true" className="size-3.5" strokeWidth={1.5} />
           )}
         </Button>
       </SettingsCardFooter>

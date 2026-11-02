@@ -8,7 +8,7 @@ export function SettingsCard({
   return (
     <div
       className={cn(
-        "flex w-full flex-col items-start rounded-lg border border-border bg-card",
+        "flex w-full min-w-0 flex-col gap-5 border-b py-7 sm:py-8",
         className,
       )}
       {...props}
@@ -26,7 +26,7 @@ export function SettingsCardContent({
   className?: string;
 }) {
   return (
-    <div className={cn("flex w-full flex-col gap-4 p-6", className)}>
+    <div className={cn("flex w-full min-w-0 flex-col gap-5", className)}>
       {children}
     </div>
   );
@@ -42,7 +42,7 @@ export function SettingsCardFooter({
   return (
     <div
       className={cn(
-        "flex min-h-14 w-full flex-wrap items-center justify-between gap-3 rounded-b-lg border-t border-border bg-muted px-6 py-3",
+        "flex w-full flex-wrap items-center justify-between gap-x-6 gap-y-4 [&_button]:ml-auto [&_button]:h-11 [&_button]:gap-3 [&_button]:px-4",
         className,
       )}
     >
@@ -54,15 +54,23 @@ export function SettingsCardFooter({
 export function SettingsCardHeader({
   title,
   description,
+  headingLevel = 3,
 }: {
   title: string;
-  description: string;
+  description?: string;
+  headingLevel?: 2 | 3;
 }) {
+  const Heading = headingLevel === 2 ? "h2" : "h3";
+
   return (
-    <div className="flex flex-col gap-1">
-      <h2 className="text-lg font-medium">{title}</h2>
+    <div className="flex flex-col gap-2">
+      <Heading className="font-serif text-2xl tracking-tight sm:text-[1.625rem]">
+        {title}
+      </Heading>
       {description && (
-        <p className="text-sm text-muted-foreground">{description}</p>
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          {description}
+        </p>
       )}
     </div>
   );

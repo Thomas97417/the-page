@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 
 import { Button } from "@/components/ui/button";
-import { TriangleAlert } from "lucide-react";
 
 import {
   SettingsCard,
@@ -20,7 +19,6 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogMedia,
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
@@ -43,37 +41,43 @@ export default function DeleteAccountCard() {
   };
 
   return (
-    <SettingsCard className="border-destructive">
+    <SettingsCard className="border-0">
       <SettingsCardContent>
-        <SettingsCardHeader title="Supprimer le compte" description="" />
+        <SettingsCardHeader
+          title="Supprimer le compte"
+          headingLevel={2}
+          description="Votre accès au compte et à l’édition de vos mots sera supprimé. Cette action est définitive."
+        />
       </SettingsCardContent>
-      <SettingsCardFooter className="bg-destructive/10 dark:bg-destructive/10">
+      <SettingsCardFooter>
         <AlertDialog>
           <AlertDialogTrigger
             render={
               <Button
-                size="sm"
-                variant="destructive"
-                className="hover:cursor-pointer"
+                variant="outline"
+                className="border-destructive/25 text-destructive hover:border-destructive/50 hover:bg-destructive/5 hover:text-destructive"
               />
             }
           >
             Supprimer le compte
           </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogMedia>
-                <TriangleAlert className="size-5" />
-              </AlertDialogMedia>
-              <AlertDialogTitle>Supprimer votre compte ?</AlertDialogTitle>
+          <AlertDialogContent className="rounded-none p-6">
+            <AlertDialogHeader className="place-items-start gap-3 text-left">
+              <AlertDialogTitle className="text-balance font-serif text-2xl font-normal tracking-tight sm:text-3xl">
+                Supprimer votre compte&nbsp;?
+              </AlertDialogTitle>
               <AlertDialogDescription>
                 Votre accès au compte et à l’édition de vos mots sera supprimé.
                 Cette action est définitive.
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Annuler</AlertDialogCancel>
-              <AlertDialogAction variant="destructive" onClick={handleDelete}>
+            <AlertDialogFooter className="-mx-6 -mb-6 mt-2 rounded-none bg-transparent p-6">
+              <AlertDialogCancel className="h-11 px-4">Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                className="h-11 px-4"
+                onClick={handleDelete}
+              >
                 Supprimer le compte
               </AlertDialogAction>
             </AlertDialogFooter>
