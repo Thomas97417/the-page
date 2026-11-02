@@ -15,6 +15,7 @@ import type * as healthCheck from "../healthCheck.js";
 import type * as http from "../http.js";
 import type * as lib_content from "../lib/content.js";
 import type * as lib_orders from "../lib/orders.js";
+import type * as lib_pages from "../lib/pages.js";
 import type * as payments from "../payments.js";
 import type * as permissions from "../permissions.js";
 import type * as polar from "../polar.js";
@@ -38,6 +39,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   "lib/content": typeof lib_content;
   "lib/orders": typeof lib_orders;
+  "lib/pages": typeof lib_pages;
   payments: typeof payments;
   permissions: typeof permissions;
   polar: typeof polar;

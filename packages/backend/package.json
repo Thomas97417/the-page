@@ -5,7 +5,7 @@
   "license": "ISC",
   "author": "",
   "scripts": {
-    "dev": "convex dev",
+    "dev": "convex dev --run slots:initialize",
     "dev:setup": "convex dev --configure --dev-deployment cloud --until-success",
     "check-types": "tsc --project convex/tsconfig.json --noEmit && tsc --project tests/tsconfig.json --noEmit",
     "test": "vitest run"

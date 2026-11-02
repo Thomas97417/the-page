@@ -1,6 +1,8 @@
 # the page
 
-Une page de 50 emplacements. Chaque place commence à **1 € TTC** ; son prix augmente de **1 €** à chaque achat confirmé. Un rachat remplace le mot précédent immédiatement. Chaque mot peut être accompagné d’une **description facultative de 160 caractères maximum**, visible dans sa fiche, et d’un lien facultatif. Le propriétaire peut modifier gratuitement son mot, sa description et son lien jusqu’au prochain achat.
+Une page mondiale **World**, complétée par les pages **France**, **Royaume-Uni** et **États-Unis**. Chaque page possède ses **50 emplacements indépendants**. Chaque place commence à **1 € TTC** ; son prix augmente de **1 €** à chaque achat confirmé. Un rachat remplace le mot précédent immédiatement. Chaque mot peut être accompagné d’une **description facultative de 160 caractères maximum**, visible dans sa fiche, et d’un lien facultatif. Le propriétaire peut modifier gratuitement son mot, sa description et son lien jusqu’au prochain achat.
+
+World reste la page par défaut sur `/`. Les pages nationales sont accessibles sur `/france`, `/royaume-uni` et `/etats-unis`. Le suffixe à côté de « the page. » dans le header ouvre le choix entre `world`, `fr`, `uk` et `us`. `/world` redirige vers `/`. Chacun peut participer à la page de son choix ; le pays n’est pas déterminé par géolocalisation. Les prix restent en euros pour toutes les pages.
 
 React 19, TanStack Start, Convex, Better Auth, Tailwind CSS et shadcn/ui (Base UI). Monorepo Bun / Turborepo.
 
@@ -19,13 +21,13 @@ L’application écoute sur [localhost:3003](http://localhost:3003). Libérer ce
 
 Le déploiement de développement existant est `affable-ptarmigan-378`, projet `the-page`, équipe `throuquette`, région Europe (Irlande). Pour utiliser un projet indépendant : `bun run dev:setup`, puis adapter les deux URL publiques.
 
-Une fois les fonctions déployées, initialiser la page depuis `packages/backend` :
+`bun run dev:server` initialise les pages après le premier déploiement des fonctions. Pour lancer l’initialisation manuellement depuis `packages/backend` :
 
 ```bash
 bunx --bun convex run slots:initialize '{}'
 ```
 
-Cette fonction interne crée seulement les places manquantes, sans modifier les mots ni les prix existants.
+Cette fonction interne rattache les anciens emplacements à World et crée seulement les places manquantes de chaque page. Elle conserve les IDs, les mots, les prix, les propriétaires et les réservations existants ; elle peut être relancée sans doublons. Après un déploiement effectué sans `dev:server`, l’exécuter une fois pour ouvrir les nouvelles pages. La liste des pages est définie dans `packages/backend/convex/lib/pages.ts`.
 
 ## Paiement Polar : sandbox uniquement
 
@@ -62,11 +64,11 @@ Sans configuration Polar, la page reste consultable et l’achat affiche une ind
 
 ## Comptes et administration
 
-L’authentification email exige `RESEND_API_KEY`, `EMAIL_FROM` et `BETTER_AUTH_SECRET` côté Convex. Google et GitHub utilisent respectivement `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` et `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`. Configurer leurs callbacks pour l’origine de l’application. Les connexions et les emails de vérification ramènent au brouillon conservé dans l’onglet.
+L’authentification email exige `RESEND_API_KEY`, `EMAIL_FROM` et `BETTER_AUTH_SECRET` côté Convex. Google et GitHub utilisent respectivement `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` et `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`. Configurer leurs callbacks pour l’origine de l’application. Les connexions et les emails de vérification ramènent au brouillon conservé dans l’onglet, sur sa page d’origine. Les retours de paiement conservent également la page sélectionnée. « Mes mots » regroupe les achats de toutes les pages et indique leur pays.
 
 Pour activer la modération, ajouter **`ADMIN_USER_IDS`** dans les variables Convex : IDs Better Auth des administrateurs, séparés par des virgules. Les IDs sont visibles dans la table `user` du composant Better Auth dans le dashboard. Une liste vide n’accorde aucun accès.
 
-La route `/admin` permet de masquer, rétablir ou retirer le mot actuel. Chaque action vérifie les permissions côté serveur et conserve une trace. Un mot masqué, sa description et son URL ne sont jamais renvoyés aux visiteurs ; l’édition par le propriétaire ne contourne pas la modération.
+La route `/admin` permet de sélectionner une page, puis de masquer, rétablir ou retirer le mot actuel. Chaque action vérifie les permissions côté serveur et conserve une trace. Un mot masqué, sa description et son URL ne sont jamais renvoyés aux visiteurs ; l’édition par le propriétaire ne contourne pas la modération.
 
 Les routes utiles sont `/`, `/settings`, `/admin`, les écrans de connexion et récupération de compte, et `/api/auth/*`. Les anciennes démonstrations `/dashboard` et `/upload` ont été supprimées. Le stockage R2 préexistant n’est pas utilisé par les nouveaux parcours.
 
@@ -78,7 +80,7 @@ bun run check-types
 bun run build
 ```
 
-Les tests Vitest/Convex utilisent une base en mémoire et des appels Polar simulés : ils ne créent ni utilisateur réel, ni paiement, ni mot sur le déploiement distant. Ils vérifient les prix indépendants, la propriété, l’édition, les réservations concurrentes, la modération, les signatures invalides, les commandes incohérentes et la récupération des paiements/remboursements.
+Les tests Vitest/Convex utilisent une base en mémoire et des appels Polar simulés : ils ne créent ni utilisateur réel, ni paiement, ni mot sur le déploiement distant. Ils vérifient l’isolation des pages, la migration de World, les retours après connexion et paiement, les prix indépendants, la propriété, l’édition, les réservations concurrentes, la modération, les signatures invalides, les commandes incohérentes et la récupération des paiements/remboursements.
 
 Pour valider l’intégration réelle après configuration : acheter une place avec les moyens de paiement de test documentés par Polar ; vérifier `order.paid`, le mot publié et l’augmentation d’un euro ; racheter avec un second compte ; vérifier que le premier compte ne peut plus modifier la place. Tester aussi un checkout abandonné, un événement rejoué et un paiement après expiration. N’utiliser aucune carte réelle dans ce prototype.
 

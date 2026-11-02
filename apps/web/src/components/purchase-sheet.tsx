@@ -10,6 +10,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { WordDescriptionField } from "./word-description-field";
 import { euros, errorMessage } from "@/lib/page";
+import { DEFAULT_PAGE_ID, getPage } from "@my-better-t-app/backend/convex/lib/pages";
 
 export function BuySheet({
   draft,
@@ -30,7 +31,8 @@ export function BuySheet({
   const owned = purchases?.find(
     (purchase) => purchase.current && purchase.slotId === draft.slotId,
   );
-  const slots = useQuery(api.slots.list);
+  const pageId = draft.pageId ?? DEFAULT_PAGE_ID;
+  const slots = useQuery(api.slots.list, { pageId });
   const availability = useQuery(api.payments.availability);
   const start = useAction(api.payments.start);
   const slot = slots?.find((s) => s.id === draft.slotId);
@@ -123,7 +125,7 @@ export function BuySheet({
       <SheetContent>
         <div className="mt-12 flex items-center gap-3 font-mono text-xs text-muted-foreground">
           <span className="size-1.5 rounded-full bg-primary" />
-          EMPLACEMENT {String(draft.position).padStart(2, "0")}
+          {getPage(pageId).label} · EMPLACEMENT {String(draft.position).padStart(2, "0")}
         </div>
         <SheetTitle className="mt-5 font-serif text-5xl tracking-tight">
           À vous d’écrire.

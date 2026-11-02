@@ -8,12 +8,15 @@ import {
 import { useLocation } from "@tanstack/react-router";
 import { useConvexAuth } from "convex/react";
 import type { Id } from "@my-better-t-app/backend/convex/_generated/dataModel";
+import { DEFAULT_PAGE_ID, isPageId, pageIdFromPath, type PageId } from "@my-better-t-app/backend/convex/lib/pages";
+import { rememberReturnPath } from "@/lib/page";
 import { BuySheet } from "./purchase-sheet";
 import { MyWords } from "./my-words";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "./ui/sheet";
 
 export type WordDraft = {
   slotId: Id<"slots">;
+  pageId?: PageId;
   position: number;
   acquisition: number;
   word: string;
@@ -29,6 +32,7 @@ const PageContext = createContext<PageContextValue | null>(null);
 const DRAFT_KEY = "the-page:draft";
 
 export function saveDraft(draft: WordDraft) {
+  rememberReturnPath(draft.pageId ?? DEFAULT_PAGE_ID);
   try {
     sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
   } catch {
@@ -43,21 +47,27 @@ export function PageProvider({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const { isAuthenticated } = useConvexAuth();
   useEffect(() => {
-    if (pathname !== "/") return;
+    const pageId = pageIdFromPath(pathname);
+    if (!pageId) return;
     try {
       const raw = sessionStorage.getItem(DRAFT_KEY);
       if (!raw) return;
       const saved = JSON.parse(raw);
       if (
+        saved &&
         typeof saved.slotId === "string" &&
+        (saved.pageId === undefined || isPageId(saved.pageId)) &&
         typeof saved.word === "string" &&
         typeof saved.url === "string" &&
         (saved.description === undefined ||
           typeof saved.description === "string") &&
         Number.isInteger(saved.position) &&
         Number.isInteger(saved.acquisition)
-      )
-        setDraft(saved);
+      ) {
+        // A draft belongs to its page, including after an auth redirect.
+        if ((saved.pageId ?? DEFAULT_PAGE_ID) !== pageId) return;
+        setDraft({ ...saved, pageId });
+      }
       sessionStorage.removeItem(DRAFT_KEY);
     } catch {
       /* Ignore an invalid or unavailable local draft. */
@@ -88,7 +98,8 @@ export function PageProvider({ children }: { children: ReactNode }) {
             Comment ça marche ?
           </SheetTitle>
           <SheetDescription className="mt-6 text-base leading-relaxed text-muted-foreground">
-            50 emplacements. Un mot par place.
+            Une page World et des pages par pays. 50 emplacements par page.
+            Un mot par place.
           </SheetDescription>
           <ol className="mt-10 space-y-8 text-base leading-relaxed">
             <li>
@@ -96,7 +107,8 @@ export function PageProvider({ children }: { children: ReactNode }) {
                 01
               </span>
               Choisissez une place et écrivez votre mot. Ajoutez une description
-              et un lien si vous le souhaitez.
+              et un lien si vous le souhaitez. Chaque page est indépendante ;
+              vous pouvez participer à celle de votre choix.
             </li>
             <li>
               <span className="mb-2 block font-mono text-xs text-primary">

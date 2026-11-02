@@ -1,35 +1,63 @@
 import { ConvexError, v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
+import type { QueryCtx } from "./_generated/server";
 import { SLOT_COUNT, priceFor, validateContent } from "./lib/content";
 import { isAdminId, requireAdmin, requireUser } from "./permissions";
 import { authComponent } from "./auth";
+import { DEFAULT_PAGE_ID, PAGES, type PageId } from "./lib/pages";
+import { pageIdValidator } from "./schema";
+
+async function pageSlots(ctx: QueryCtx, pageId: PageId) {
+  const slots = await ctx.db
+    .query("slots")
+    .withIndex("by_page_position", (q) => q.eq("pageId", pageId))
+    .collect();
+  // World remains readable before the one-time initialization runs.
+  if (pageId === DEFAULT_PAGE_ID) {
+    slots.push(
+      ...(await ctx.db
+        .query("slots")
+        .withIndex("by_page_position", (q) => q.eq("pageId", undefined))
+        .collect()),
+    );
+    slots.sort((a, b) => a.position - b.position);
+  }
+  return slots;
+}
 
 export const initialize = internalMutation({
   args: {},
   handler: async (ctx) => {
+    const slots = await ctx.db.query("slots").collect();
+    // Preserve IDs, ownership, prices and reservations on the original page.
+    for (const slot of slots) {
+      if (!slot.pageId)
+        await ctx.db.patch(slot._id, { pageId: DEFAULT_PAGE_ID });
+    }
     const existing = new Set(
-      (await ctx.db.query("slots").collect()).map((slot) => slot.position),
+      slots.map((slot) => `${slot.pageId ?? DEFAULT_PAGE_ID}:${slot.position}`),
     );
-    for (let position = 1; position <= SLOT_COUNT; position++) {
-      if (!existing.has(position))
-        await ctx.db.insert("slots", {
-          position,
-          acquisitions: 0,
-          visibility: "visible",
-        });
+    for (const page of PAGES) {
+      for (let position = 1; position <= SLOT_COUNT; position++) {
+        if (!existing.has(`${page.id}:${position}`))
+          await ctx.db.insert("slots", {
+            pageId: page.id,
+            position,
+            acquisitions: 0,
+            visibility: "visible",
+          });
+      }
     }
   },
 });
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
-    const slots = await ctx.db
-      .query("slots")
-      .withIndex("by_position")
-      .collect();
+  args: { pageId: v.optional(pageIdValidator) },
+  handler: async (ctx, { pageId = DEFAULT_PAGE_ID }) => {
+    const slots = await pageSlots(ctx, pageId);
     return slots.map((slot) => ({
       id: slot._id,
+      pageId: slot.pageId ?? DEFAULT_PAGE_ID,
       position: slot.position,
       acquisitions: slot.acquisitions,
       price: priceFor(slot.acquisitions),
@@ -84,10 +112,10 @@ export const updateContent = mutation({
 });
 
 export const adminList = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { pageId: v.optional(pageIdValidator) },
+  handler: async (ctx, { pageId = DEFAULT_PAGE_ID }) => {
     await requireAdmin(ctx);
-    return await ctx.db.query("slots").withIndex("by_position").collect();
+    return await pageSlots(ctx, pageId);
   },
 });
 

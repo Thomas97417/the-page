@@ -5,6 +5,7 @@ import type { MutationCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { RESERVATION_MS, priceFor, validateContent } from "./lib/content";
 import { requireUser } from "./permissions";
+import { DEFAULT_PAGE_ID } from "./lib/pages";
 
 async function release(ctx: MutationCtx, purchase: Doc<"purchases">) {
   const slot = await ctx.db.get(purchase.slotId);
@@ -26,7 +27,7 @@ export const mine = query({
       .order("desc")
       .take(100);
     // Always include owned places, even when their purchase is older than the
-    // bounded history. There can be at most 50 current purchases on the page.
+    // bounded history, across all pages.
     const slots = await ctx.db.query("slots").collect();
     const current = await Promise.all(
       slots
@@ -47,6 +48,7 @@ export const mine = query({
         return {
           id: purchase._id,
           slotId: purchase.slotId,
+          pageId: purchase.pageId ?? slot?.pageId ?? DEFAULT_PAGE_ID,
           position: purchase.position,
           word: current ? slot.word : purchase.word,
           url: current ? slot.url : purchase.url,
@@ -76,6 +78,7 @@ export const status = query({
     const slot = await ctx.db.get(purchase.slotId);
     return {
       status: purchase.status,
+      pageId: purchase.pageId ?? slot?.pageId ?? DEFAULT_PAGE_ID,
       position: purchase.position,
       current: slot?.currentPurchaseId === purchase._id,
     };
@@ -165,6 +168,7 @@ export const reserve = internalMutation({
     const reservedUntil = Date.now() + RESERVATION_MS;
     const id = await ctx.db.insert("purchases", {
       slotId: slot._id,
+      pageId: slot.pageId ?? DEFAULT_PAGE_ID,
       position: slot.position,
       userId: args.userId,
       ...content,

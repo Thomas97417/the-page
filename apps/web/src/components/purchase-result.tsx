@@ -4,9 +4,10 @@ import { useAction, useConvexAuth, useQuery } from "convex/react";
 import { api } from "@my-better-t-app/backend/convex/_generated/api";
 import { Check, Loader2, X } from "lucide-react";
 import { Button } from "./ui/button";
-import { errorMessage } from "@/lib/page";
+import { errorMessage, rememberReturnPath } from "@/lib/page";
+import { DEFAULT_PAGE_ID, getPage, type PageId } from "@my-better-t-app/backend/convex/lib/pages";
 
-export function PurchaseResult({ purchaseId }: { purchaseId: string }) {
+export function PurchaseResult({ purchaseId, pageId }: { purchaseId: string; pageId: PageId }) {
   const { isAuthenticated, isLoading } = useConvexAuth();
   const result = useQuery(
     api.purchases.status,
@@ -25,7 +26,7 @@ export function PurchaseResult({ purchaseId }: { purchaseId: string }) {
     result?.status === "creating";
   const labels = {
     published: result?.current
-      ? `Votre mot est en ligne, place ${result.position}.`
+      ? `Votre mot est en ligne sur ${getPage(result.pageId).label}, place ${result.position}.`
       : "Votre achat est confirmé. Cette place a depuis été reprise.",
     expired: "La réservation a expiré. Aucun mot n’a été publié.",
     failed: "Le paiement n’a pas abouti.",
@@ -53,16 +54,7 @@ export function PurchaseResult({ purchaseId }: { purchaseId: string }) {
             <Link
               to="/sign-in"
               className="underline underline-offset-4"
-              onClick={() => {
-                try {
-                  sessionStorage.setItem(
-                    "the-page:return",
-                    `/?purchase=${encodeURIComponent(purchaseId)}`,
-                  );
-                } catch {
-                  /* optional storage */
-                }
-              }}
+              onClick={() => rememberReturnPath(pageId, purchaseId)}
             >
               Connectez-vous pour consulter votre achat.
             </Link>
@@ -99,7 +91,12 @@ export function PurchaseResult({ purchaseId }: { purchaseId: string }) {
         )}
         <button
           aria-label="Fermer le suivi du paiement"
-          onClick={() => navigate({ to: "/", search: {} })}
+          onClick={() => navigate({
+            to: pageId === DEFAULT_PAGE_ID ? "/" : "/$page",
+            params: pageId === DEFAULT_PAGE_ID ? {} : { page: pageId },
+            search: {},
+            replace: true,
+          })}
           className="flex size-9 items-center justify-center hover:text-foreground"
         >
           <X className="size-4" />
