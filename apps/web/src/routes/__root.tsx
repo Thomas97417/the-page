@@ -1,5 +1,6 @@
 import type { ConvexQueryClient } from "@convex-dev/react-query";
 import type { QueryClient } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import {
@@ -53,7 +54,8 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
     ],
   }),
 
-  component: RootDocument,
+  component: RootComponent,
+  shellComponent: RootDocument,
   beforeLoad: async (ctx) => {
     const token = await getAuth();
     if (token) {
@@ -68,7 +70,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
   notFoundComponent: NotFound,
 });
 
-function RootDocument() {
+function RootComponent() {
   const context = useRouteContext({ from: Route.id });
   return (
     <ConvexBetterAuthProvider
@@ -76,29 +78,35 @@ function RootDocument() {
       authClient={authClient}
       initialToken={context.token}
     >
-      <html lang="fr" suppressHydrationWarning>
-        <head>
-          <HeadContent />
-        </head>
-        <body>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="light"
-            enableSystem
-            disableTransitionOnChange
-            storageKey="vite-ui-theme"
-          >
-            <PageProvider>
-              <div id="top" className="paper-background flex min-h-dvh flex-col">
-                <Header />
-                <Outlet />
-              </div>
-            </PageProvider>
-            <Toaster richColors />
-            <Scripts />
-          </ThemeProvider>
-        </body>
-      </html>
+      <PageProvider>
+        <Header />
+        <Outlet />
+      </PageProvider>
     </ConvexBetterAuthProvider>
+  );
+}
+
+function RootDocument({ children }: { children: ReactNode }) {
+  return (
+    <html lang="fr" suppressHydrationWarning>
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          disableTransitionOnChange
+          storageKey="vite-ui-theme"
+        >
+          <div id="top" className="paper-background flex min-h-dvh flex-col">
+            {children}
+          </div>
+          <Toaster richColors />
+        </ThemeProvider>
+        <Scripts />
+      </body>
+    </html>
   );
 }

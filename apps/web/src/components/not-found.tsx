@@ -1,25 +1,31 @@
 import { Link } from "@tanstack/react-router";
-import { Button } from "./ui/button";
+import { ArrowUpRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { PageFallback } from "./page-fallback";
+import { buttonVariants } from "./ui/button";
 
 export default function NotFound() {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-6 px-4 text-center">
-      <div className="flex flex-col items-center gap-2">
-        <span className="text-muted-foreground text-[10rem] leading-none font-bold tracking-tighter select-none">
-          404
-        </span>
-        <h1 className="text-foreground text-xl font-semibold">
-          Page introuvable
-        </h1>
-        <p className="text-muted-foreground max-w-sm text-sm">
-          Cette page n’existe pas.
-        </p>
-      </div>
-      <Link to="/">
-        <Button variant="outline" size="lg">
+    <PageFallback
+      marker="404"
+      label="Page introuvable"
+      title={
+        <>
+          Une page
+          <br />
+          <span className="italic">s’est égarée.</span>
+        </>
+      }
+      description="Cette page n’existe pas ou le lien a changé. Revenez à l’accueil pour retrouver les mots de la page."
+      actions={
+        <Link
+          to="/"
+          className={cn(buttonVariants(), "h-12 gap-8 px-6 text-sm")}
+        >
           Retour à la page
-        </Button>
-      </Link>
-    </div>
+          <ArrowUpRight aria-hidden="true" className="size-4" />
+        </Link>
+      }
+    />
   );
 }

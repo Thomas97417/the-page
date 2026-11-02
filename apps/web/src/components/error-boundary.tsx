@@ -1,46 +1,90 @@
+import { useState } from "react";
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { Link, useRouter } from "@tanstack/react-router";
-import { Button } from "./ui/button";
+import { ArrowUpRight, Loader2, RotateCcw } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { PageFallback } from "./page-fallback";
+import { Button, buttonVariants } from "./ui/button";
 
 export default function ErrorBoundary({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [retryFailed, setRetryFailed] = useState(false);
+
+  async function retry() {
+    setIsRetrying(true);
+    setRetryFailed(false);
+
+    try {
+      await router.invalidate();
+      reset();
+    } catch {
+      setRetryFailed(true);
+    } finally {
+      setIsRetrying(false);
+    }
+  }
 
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-6 px-4 text-center">
-      <div className="flex flex-col items-center gap-2">
-        <span className="text-muted-foreground text-8xl leading-none font-bold tracking-tighter select-none">
-          Oups
-        </span>
-        <h1 className="text-foreground text-xl font-semibold">
-          Une erreur est survenue
-        </h1>
-        <p className="text-muted-foreground max-w-sm text-sm">
-          Réessayez dans un instant.
+    <PageFallback
+      marker="…"
+      label="Une erreur est survenue"
+      title={
+        <>
+          L’histoire
+          <br />
+          <span className="italic">fait une pause.</span>
+        </>
+      }
+      description="Un imprévu empêche l’affichage de cette page. Réessayez dans un instant pour reprendre le fil."
+      actions={
+        <>
+          <Button
+            type="button"
+            disabled={isRetrying}
+            aria-busy={isRetrying}
+            className="h-12 gap-8 px-6 text-sm"
+            onClick={retry}
+          >
+            {isRetrying ? "Chargement…" : "Réessayer"}
+            {isRetrying ? (
+              <Loader2
+                aria-hidden="true"
+                className="size-4 animate-spin motion-reduce:animate-none"
+              />
+            ) : (
+              <RotateCcw aria-hidden="true" className="size-4" />
+            )}
+          </Button>
+          <Link
+            to="/"
+            reloadDocument
+            className={cn(
+              buttonVariants({ variant: "outline" }),
+              "h-12 gap-8 px-6 text-sm",
+            )}
+          >
+            Retour à la page
+            <ArrowUpRight aria-hidden="true" className="size-4" />
+          </Link>
+        </>
+      }
+    >
+      {retryFailed && (
+        <p role="status" className="mt-5 max-w-sm text-sm leading-relaxed text-muted-foreground">
+          La page reste indisponible. Réessayez un peu plus tard.
         </p>
-        {import.meta.env.DEV && error instanceof Error && (
-          <pre className="mt-4 max-w-lg overflow-auto rounded-lg border bg-muted/50 p-4 text-left text-xs text-destructive">
+      )}
+      {import.meta.env.DEV && error instanceof Error && (
+        <details className="mt-9 w-full max-w-lg border-t pt-4 text-left">
+          <summary className="cursor-pointer text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
+            Détails de l’erreur
+          </summary>
+          <pre className="mt-4 max-h-48 overflow-auto whitespace-pre-wrap break-words border bg-muted/50 p-4 font-mono text-xs leading-relaxed text-destructive">
             {error.message}
           </pre>
-        )}
-      </div>
-      <div className="flex gap-3">
-        <Button
-          variant="outline"
-          size="lg"
-          className="hover:cursor-pointer"
-          onClick={() => {
-            reset();
-            router.invalidate();
-          }}
-        >
-          Réessayer
-        </Button>
-        <Link to="/">
-          <Button variant="ghost" size="lg" className="hover:cursor-pointer">
-            Retour à la page
-          </Button>
-        </Link>
-      </div>
-    </div>
+        </details>
+      )}
+    </PageFallback>
   );
 }
