@@ -76,6 +76,7 @@ export default function AuthForm({ signup = false }: { signup?: boolean }) {
             <Label htmlFor="auth-name">Nom</Label>
             <Input
               id="auth-name"
+              placeholder="Votre nom"
               autoComplete="name"
               required
               minLength={2}

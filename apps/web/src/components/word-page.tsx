@@ -18,7 +18,7 @@ export function WordPage({ pageId, purchase }: { pageId: PageId; purchase?: stri
 
   return (
     <>
-      <main className="mx-auto w-full max-w-296 flex-1 px-5 sm:px-10 lg:px-14">
+      <main className="mx-auto flex w-full max-w-296 flex-1 flex-col justify-center px-5 sm:px-10 lg:px-14">
         {purchase && <PurchaseResult key={purchase} purchaseId={purchase} pageId={pageId} />}
         <h1 className="sr-only">the page — {page.label}</h1>
         <PageManuscript slots={slots} />
