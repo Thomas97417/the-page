@@ -2,12 +2,13 @@ import { Link } from "@tanstack/react-router";
 import { useConvexAuth } from "convex/react";
 import { usePage } from "./page-provider";
 import UserMenu from "./user-menu";
+import ThemeToggle from "./theme-toggle";
 
 export default function Header() {
   const { isAuthenticated, isLoading } = useConvexAuth();
   const { showRules, showWords } = usePage();
   return (
-    <header className="mx-auto flex h-21 w-full max-w-296 items-center justify-between px-5 sm:px-10 lg:px-14">
+    <header className="mx-auto flex h-21 w-full max-w-296 shrink-0 items-center justify-between px-5 sm:px-10 lg:px-14">
       <Link
         to="/"
         aria-label="the page, accueil"
@@ -17,7 +18,7 @@ export default function Header() {
       </Link>
       <nav
         aria-label="Navigation principale"
-        className="flex items-center gap-5 text-xs sm:gap-8"
+        className="flex items-center gap-1.5 text-xs sm:gap-6"
       >
         <button
           onClick={showRules}
@@ -47,6 +48,7 @@ export default function Header() {
             </span>
           </Link>
         )}
+        <ThemeToggle />
       </nav>
     </header>
   );

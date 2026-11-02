@@ -91,23 +91,13 @@ function WordDetails({ slot }: { slot: Slot }) {
 }
 
 export function PageManuscript({ slots }: { slots: Slot[] | undefined }) {
-  const occupied = slots?.filter((slot) => slot.word).length ?? 0;
-
   return (
     <article
       id="mots"
       aria-label="La page, 50 places à écrire"
-      aria-describedby="manuscript-hint"
       aria-busy={!slots}
       className="mx-auto w-full max-w-184 scroll-mt-8"
     >
-      <header className="flex items-center justify-between gap-4 border-y py-4 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-        <h2 className="font-normal">La page collective</h2>
-        <p>
-          <span className="text-foreground">{slots ? String(occupied).padStart(2, "0") : "—"}</span>
-          <span className="tracking-normal"> / 50 mots</span>
-        </p>
-      </header>
       <div className="min-h-64 py-9 sm:min-h-80 sm:py-12">
         {slots ? (
           slots.length > 0 ? (
@@ -173,18 +163,6 @@ export function PageManuscript({ slots }: { slots: Slot[] | undefined }) {
           </div>
         )}
       </div>
-      <footer className="pb-6 text-center">
-        <span aria-label="Page 1" className="font-serif text-sm text-muted-foreground">1</span>
-      </footer>
-      <p id="manuscript-hint" className="border-t pt-5 text-center text-xs leading-6 text-muted-foreground">
-        <span className="inline-flex flex-wrap items-baseline justify-center gap-x-2">
-          <span aria-hidden="true" className="font-serif text-base italic text-[#9a9a9a]">Lorem ipsum</span>
-          <span>Place libre · texte de remplissage</span>
-        </span>
-        <br />
-        <span className="hidden sm:inline">Survolez ou cliquez sur un mot pour découvrir sa place.</span>
-        <span className="sm:hidden">Touchez un mot pour découvrir sa place.</span>
-      </p>
     </article>
   );
 }

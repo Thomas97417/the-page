@@ -84,12 +84,12 @@ function RootDocument() {
           <ThemeProvider
             attribute="class"
             defaultTheme="light"
-            forcedTheme="light"
+            enableSystem
             disableTransitionOnChange
             storageKey="vite-ui-theme"
           >
             <PageProvider>
-              <div className="min-h-svh">
+              <div id="top" className="flex min-h-dvh flex-col">
                 <Header />
                 <Outlet />
               </div>
