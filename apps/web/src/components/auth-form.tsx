@@ -48,14 +48,8 @@ export default function AuthForm({ signup = false }: { signup?: boolean }) {
     }
   }
   return (
-    <main className="mx-auto w-full max-w-md px-6 py-16 sm:py-22">
-      <Link
-        to="/"
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        {t("auth.back")}
-      </Link>
-      <h1 className="mt-9 font-serif text-5xl tracking-tight">
+    <main className="mx-auto my-auto w-full max-w-md px-6 py-16 sm:py-22">
+      <h1 className="font-serif text-5xl tracking-tight">
         {signup ? t("auth.signUpTitle") : t("auth.signInTitle")}
       </h1>
       <form onSubmit={submit} className="mt-9 space-y-5">

@@ -1,6 +1,5 @@
 import { useTranslation } from "react-i18next";
 import { useState, type FormEvent } from "react";
-import { Link } from "@tanstack/react-router";
 import { Loader2, ArrowUpRight, MailCheck } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { returnPath } from "@/lib/page";
@@ -42,15 +41,9 @@ export default function EmailActionForm({
     }
   }
   return (
-    <main className="mx-auto w-full max-w-md px-6 py-16 sm:py-22">
-      <Link
-        to="/sign-in"
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        {t("auth.backToSignIn")}
-      </Link>
+    <main className="mx-auto my-auto w-full max-w-md px-6 py-16 sm:py-22">
       {sent ? (
-        <div className="mt-12">
+        <div>
           <MailCheck className="mb-6 size-8 text-primary" />
           <h1 className="font-serif text-4xl tracking-tight">
             {t("auth.checkEmail")}
@@ -61,7 +54,7 @@ export default function EmailActionForm({
         </div>
       ) : (
         <>
-          <h1 className="mt-9 font-serif text-4xl tracking-tight">
+          <h1 className="font-serif text-4xl tracking-tight">
             {verify ? t("auth.verifyEmail") : t("auth.forgotPassword")}
           </h1>
           <form className="mt-8 space-y-5" onSubmit={submit}>

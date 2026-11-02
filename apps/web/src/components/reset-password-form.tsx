@@ -38,7 +38,7 @@ export default function ResetPasswordForm() {
     }
   }
   return (
-    <main className="mx-auto w-full max-w-md px-6 py-16 sm:py-22">
+    <main className="mx-auto my-auto w-full max-w-md px-6 py-16 sm:py-22">
       <h1 className="font-serif text-4xl tracking-tight">
         {done
           ? t("auth.passwordChanged")
