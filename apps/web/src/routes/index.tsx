@@ -5,7 +5,6 @@ import { api } from "@my-better-t-app/backend/convex/_generated/api";
 import { ArrowUp, ArrowUpRight } from "lucide-react";
 import { usePage } from "@/components/page-provider";
 import { PageManuscript } from "@/components/page-manuscript";
-import TargetCursor from "@/components/target-cursor";
 import { Button } from "@/components/ui/button";
 import { PurchaseResult } from "@/components/purchase-result";
 
@@ -42,15 +41,6 @@ function ThePage() {
   return (
     <>
       <main className="mx-auto w-full max-w-296 flex-1 px-5 sm:px-10 lg:px-14">
-        <TargetCursor
-          targetSelector={'a[href], button:not(:disabled):not([aria-disabled="true"])'}
-          spinDuration={0}
-          hoverDuration={0.35}
-          size={30}
-          cornerSize={10}
-          thickness={1.5}
-          padding={8}
-        />
         {purchase && <PurchaseResult purchaseId={purchase} />}
         <section aria-labelledby="page-title" className="pb-10 pt-10 text-center sm:pb-14 sm:pt-14">
           <h1 id="page-title" className="font-serif text-[clamp(2.25rem,5.5vw,4.5rem)] leading-[1.08] tracking-[-0.045em]">

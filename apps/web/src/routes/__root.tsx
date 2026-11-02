@@ -17,6 +17,7 @@ import { authClient } from "@/lib/auth-client";
 import { getToken } from "@/lib/auth-server";
 
 import Header from "../components/header";
+import TargetCursor from "@/components/target-cursor";
 import ErrorBoundary from "../components/error-boundary";
 import NotFound from "../components/not-found";
 import appCss from "../index.css?url";
@@ -79,6 +80,15 @@ function RootComponent() {
       initialToken={context.token}
     >
       <PageProvider>
+        <TargetCursor
+          targetSelector={'a[href]:not([aria-disabled="true"]), button:not(:disabled):not([aria-disabled="true"]), [role="menuitem"]:not([aria-disabled="true"]):not([data-disabled])'}
+          spinDuration={0}
+          hoverDuration={0.35}
+          size={30}
+          cornerSize={10}
+          thickness={1.5}
+          padding={8}
+        />
         <Header />
         <Outlet />
       </PageProvider>
