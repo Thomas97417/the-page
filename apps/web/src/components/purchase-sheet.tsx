@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, type FormEvent } from "react";
 import { useAction, useConvexAuth, useQuery } from "convex/react";
 import { api } from "@my-better-t-app/backend/convex/_generated/api";
@@ -9,8 +10,9 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { WordDescriptionField } from "./word-description-field";
-import { euros, errorMessage } from "@/lib/page";
-import { DEFAULT_PAGE_ID, getPage } from "@my-better-t-app/backend/convex/lib/pages";
+import { euros } from "@/lib/page";
+import { errorMessage } from "@/lib/errors";
+import { DEFAULT_PAGE_ID } from "@my-better-t-app/backend/convex/lib/pages";
 
 export function BuySheet({
   draft,
@@ -19,12 +21,13 @@ export function BuySheet({
   draft: WordDraft;
   onClose: () => void;
 }) {
+  const { t, i18n } = useTranslation();
   const [word, setWord] = useState(draft.word);
   const [url, setUrl] = useState(draft.url);
   const [description, setDescription] = useState(draft.description ?? "");
   const [accepted, setAccepted] = useState(draft.acquisition);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<unknown>(null);
   const { isAuthenticated, isLoading } = useConvexAuth();
   const { showWords } = usePage();
   const purchases = useQuery(api.purchases.mine, isAuthenticated ? {} : "skip");
@@ -39,11 +42,11 @@ export function BuySheet({
   const changed = !!slot && accepted !== slot.acquisitions;
   async function submit(event: FormEvent) {
     event.preventDefault();
-    setError("");
+    setError(null);
     try {
       const content = validateContent(word, url, description);
       if (!slot) {
-        setError("Cet emplacement n’est plus disponible.");
+        setError("SLOT_UNAVAILABLE");
         return;
       }
       if (changed) {
@@ -65,6 +68,7 @@ export function BuySheet({
         slotId: slot.id,
         acquisition: accepted,
         ...content,
+        language: i18n.resolvedLanguage === "en" ? "en" : "fr",
       });
       try {
         sessionStorage.removeItem("the-page:draft");
@@ -73,13 +77,7 @@ export function BuySheet({
       }
       window.location.assign(result.url);
     } catch (cause) {
-      setError(
-        cause instanceof Error &&
-          !("data" in cause) &&
-          !cause.message.includes("Request")
-          ? cause.message
-          : errorMessage(cause),
-      );
+      setError(cause);
       setBusy(false);
     }
   }
@@ -93,12 +91,12 @@ export function BuySheet({
       >
         <SheetContent>
           <SheetTitle className="mt-14 font-serif text-4xl tracking-tight">
-            Cette place est à vous.
+            {t("purchase.owned")}
           </SheetTitle>
           <SheetDescription className="mt-5 text-sm leading-relaxed text-muted-foreground">
             {owned.hidden
-              ? "Ce mot est masqué par la modération."
-              : "Vous pouvez modifier votre mot, sa description et son lien gratuitement."}
+              ? t("purchase.hidden")
+              : t("purchase.editFree")}
           </SheetDescription>
           <p className="my-12 break-all border-y py-12 text-center font-serif text-4xl text-primary">
             {owned.word}
@@ -110,7 +108,7 @@ export function BuySheet({
               showWords();
             }}
           >
-            Mes mots <ArrowUpRight className="size-4" />
+            {t("user.words")} <ArrowUpRight className="size-4" />
           </Button>
         </SheetContent>
       </Sheet>
@@ -125,19 +123,18 @@ export function BuySheet({
       <SheetContent>
         <div className="mt-12 flex items-center gap-3 font-mono text-xs text-muted-foreground">
           <span className="size-1.5 rounded-full bg-primary" />
-          {getPage(pageId).label} · EMPLACEMENT {String(draft.position).padStart(2, "0")}
+          {t("purchase.position", { page: t(`pages.${pageId}`), position: String(draft.position).padStart(2, "0") })}
         </div>
         <SheetTitle className="mt-5 font-serif text-5xl tracking-tight">
-          À vous d’écrire.
+          {t("purchase.title")}
         </SheetTitle>
         <SheetDescription className="sr-only">
-          Choisissez votre mot, puis payez l’emplacement sélectionné. La
-          description et le lien sont facultatifs.
+          {t("purchase.description")}
         </SheetDescription>
         <form onSubmit={submit} className="mt-10 flex flex-1 flex-col gap-7">
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <Label htmlFor="purchase-word">Votre mot</Label>
+              <Label htmlFor="purchase-word">{t("purchase.yourWord")}</Label>
               <span className="font-mono text-xs text-muted-foreground">
                 {Array.from(word.normalize("NFC")).length}/24
               </span>
@@ -145,7 +142,7 @@ export function BuySheet({
             <Input
               autoFocus
               id="purchase-word"
-              placeholder="Inoubliable"
+              placeholder={t("purchase.placeholder")}
               autoComplete="off"
               value={word}
               onChange={(e) => setWord(e.target.value)}
@@ -160,9 +157,9 @@ export function BuySheet({
           />
           <div className="space-y-2.5">
             <Label htmlFor="purchase-url">
-              Un lien{" "}
+              {t("purchase.link")}{" "}
               <span className="font-normal text-muted-foreground">
-                (facultatif)
+                {t("common.optional")}
               </span>
             </Label>
             <Input
@@ -177,29 +174,29 @@ export function BuySheet({
           </div>
           <div className="mt-auto space-y-5 pt-5">
             <div className="flex items-baseline justify-between">
-              <span className="text-sm text-muted-foreground">Votre place</span>
+              <span className="text-sm text-muted-foreground">{t("purchase.yourPlace")}</span>
               <span className="font-serif text-4xl">
-                {euros(slot?.price ?? (draft.acquisition + 1) * 100)}
+                {euros(slot?.price ?? (draft.acquisition + 1) * 100, i18n.resolvedLanguage)}
               </span>
             </div>
             {changed && (
               <p className="text-sm text-primary" role="status">
-                Le prix a changé. Confirmez le nouveau montant.
+                {t("purchase.priceChanged")}
               </p>
             )}
-            {error && (
+            {error != null && (
               <p role="alert" className="text-sm text-destructive">
-                {error}
+                {errorMessage(error, t)}
               </p>
             )}
             {availability?.configured === false && (
               <p className="text-sm text-muted-foreground">
-                Le paiement de test est momentanément indisponible.
+                {t("purchase.unavailable")}
               </p>
             )}
             {slot?.reserved && (
               <p role="status" className="text-sm text-muted-foreground">
-                Un paiement est en cours sur cette place.
+                {t("word.paymentPending")}
               </p>
             )}
             <Button
@@ -216,27 +213,27 @@ export function BuySheet({
             >
               {busy ? (
                 <>
-                  <span>Ouverture du paiement</span>
+                  <span>{t("purchase.opening")}</span>
                   <Loader2 className="size-4 animate-spin" />
                 </>
               ) : (
                 <>
                   <span>
                     {changed
-                      ? `Accepter ${euros(slot?.price ?? 0)}`
+                      ? t("purchase.accept", { price: euros(slot?.price ?? 0, i18n.resolvedLanguage) })
                       : isAuthenticated
-                        ? `Payer ${euros(slot?.price ?? 0)}`
-                        : "Se connecter pour acheter"}
+                        ? t("purchase.pay", { price: euros(slot?.price ?? 0, i18n.resolvedLanguage) })
+                        : t("purchase.signIn")}
                   </span>
                   <ArrowUpRight className="size-5" />
                 </>
               )}
             </Button>
             <p className="text-center text-xs leading-relaxed text-muted-foreground">
-              Votre mot peut être remplacé dès son achat.
+              {t("purchase.replacementNotice")}
               <br />
               <span className="text-[11px]">
-                Paiement de test · Taxes incluses
+                {t("purchase.testNotice")}
               </span>
             </p>
           </div>

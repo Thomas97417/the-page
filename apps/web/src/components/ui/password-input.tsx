@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { Input } from "./input";
 import { Eye, EyeOff } from "lucide-react";
@@ -20,6 +21,7 @@ export default function PasswordInput({
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   className?: string;
 }) {
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
 
   return (
@@ -38,7 +40,7 @@ export default function PasswordInput({
       <button
         type="button"
         aria-label={
-          visible ? "Masquer le mot de passe" : "Afficher le mot de passe"
+          visible ? t("auth.hidePassword") : t("auth.showPassword")
         }
         className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2 cursor-pointer transition-colors"
         onClick={() => setVisible((v) => !v)}

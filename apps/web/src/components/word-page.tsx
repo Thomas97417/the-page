@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@my-better-t-app/backend/convex/_generated/api";
@@ -6,12 +7,12 @@ import { usePage } from "@/components/page-provider";
 import { PageManuscript } from "@/components/page-manuscript";
 import { Button } from "@/components/ui/button";
 import { PurchaseResult } from "@/components/purchase-result";
-import { getPage, type PageId } from "@my-better-t-app/backend/convex/lib/pages";
+import { type PageId } from "@my-better-t-app/backend/convex/lib/pages";
 
 export function WordPage({ pageId, purchase }: { pageId: PageId; purchase?: string }) {
+  const { t } = useTranslation();
   const { data: slots } = useQuery(convexQuery(api.slots.list, { pageId }));
   const { buy, showRules } = usePage();
-  const page = getPage(pageId);
   const available = slots
     ?.filter((slot) => !slot.reserved)
     .sort((a, b) => a.price - b.price || a.position - b.position)[0];
@@ -20,10 +21,10 @@ export function WordPage({ pageId, purchase }: { pageId: PageId; purchase?: stri
     <>
       <main className="mx-auto flex w-full max-w-296 flex-1 flex-col justify-center px-5 sm:px-10 lg:px-14">
         {purchase && <PurchaseResult key={purchase} purchaseId={purchase} pageId={pageId} />}
-        <h1 className="sr-only">the page — {page.label}</h1>
+        <h1 className="sr-only">the page — {t(`pages.${pageId}`)}</h1>
         <PageManuscript slots={slots} />
 
-        <section aria-label="Participer à la page" className="flex flex-col items-center gap-4 pb-14 pt-8 sm:pb-18 sm:pt-10">
+        <section aria-label={t("page.participate")} className="flex flex-col items-center gap-4 pb-14 pt-8 sm:pb-18 sm:pt-10">
           <Button
             className="h-12 gap-8 px-6 text-sm"
             disabled={!available}
@@ -39,12 +40,12 @@ export function WordPage({ pageId, purchase }: { pageId: PageId; purchase?: stri
                 });
             }}
           >
-            Écrire un mot
+            {t("page.write")}
             <ArrowUpRight aria-hidden="true" className="size-4" />
           </Button>
           {slots && slots.length > 0 && !available && (
             <p role="status" className="text-center text-xs leading-relaxed text-muted-foreground">
-              Toutes les places sont réservées pour le moment.
+              {t("page.allReserved")}
             </p>
           )}
         </section>
@@ -56,18 +57,18 @@ export function WordPage({ pageId, purchase }: { pageId: PageId; purchase?: stri
               <span className="text-sm font-medium leading-none tracking-[0.22em]">TOMA</span>
               <span className="whitespace-nowrap font-mono text-[10px] leading-none text-muted-foreground">© 2026</span>
             </p>
-            <nav aria-label="Navigation de pied de page" className="ml-auto flex shrink-0 items-center gap-3 sm:gap-6">
+            <nav aria-label={t("page.footerNavigation")} className="ml-auto flex shrink-0 items-center gap-3 sm:gap-6">
               <button
                 className="group flex min-h-11 items-center gap-2 whitespace-nowrap text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
                 onClick={showRules}
               >
-                <span className="underline-offset-4 group-hover:underline">Comment ça marche</span>
+                <span className="underline-offset-4 group-hover:underline">{t("page.howItWorks")}</span>
                 <ArrowUpRight aria-hidden="true" className="size-3.5" strokeWidth={1.5} />
               </button>
               <div className="border-l pl-3 sm:pl-6">
                 <a
                   href="#top"
-                  aria-label="Retour en haut de la page"
+                  aria-label={t("page.backToTop")}
                   className="group flex size-10 items-center justify-center rounded-full border text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
                 >
                   <ArrowUp

@@ -1,5 +1,7 @@
+import { useTranslation } from "react-i18next";
 import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
+import { errorMessage } from "@/lib/errors";
 import z from "zod";
 import { ArrowUpRight, Loader2 } from "lucide-react";
 
@@ -18,6 +20,7 @@ import {
 import PasswordInput from "../ui/password-input";
 
 export default function ChangePasswordCard() {
+  const { t } = useTranslation();
   const form = useForm({
     defaultValues: {
       currentPassword: "",
@@ -31,9 +34,9 @@ export default function ChangePasswordCard() {
         revokeOtherSessions: true,
       });
       if (error) {
-        toast.error(error.message);
+        toast.error(errorMessage(error, t));
       } else {
-        toast.success("Mot de passe modifié.");
+        toast.success(t("auth.passwordChanged"));
         form.reset();
       }
     },
@@ -42,12 +45,12 @@ export default function ChangePasswordCard() {
         .object({
           currentPassword: z
             .string()
-            .min(1, "Saisissez votre mot de passe actuel."),
-          newPassword: z.string().min(8, "8 caractères minimum."),
+            .min(1, "PASSWORD_REQUIRED"),
+          newPassword: z.string().min(8, "PASSWORD_TOO_SHORT"),
           confirmPassword: z.string(),
         })
         .refine((data) => data.newPassword === data.confirmPassword, {
-          message: "Les mots de passe ne correspondent pas.",
+          message: "PASSWORD_MISMATCH",
           path: ["confirmPassword"],
         }),
     },
@@ -64,18 +67,18 @@ export default function ChangePasswordCard() {
       <SettingsCard>
         <SettingsCardContent>
           <SettingsCardHeader
-            title="Mot de passe"
-            description="Choisissez un mot de passe d’au moins 8 caractères."
+            title={t("common.password")}
+            description={t("settings.passwordDescription")}
           />
           <div className="grid gap-5 sm:grid-cols-2">
             <form.Field
               name="currentPassword"
               children={(field) => (
                 <div className="flex flex-col gap-2.5 sm:col-span-2">
-                  <Label htmlFor="currentPassword">Mot de passe actuel</Label>
+                  <Label htmlFor="currentPassword">{t("settings.currentPassword")}</Label>
                   <PasswordInput
                     id="currentPassword"
-                    placeholder="Mot de passe actuel"
+                    placeholder={t("settings.currentPassword")}
                     autoComplete="current-password"
                     value={field.state.value}
                     onBlur={field.handleBlur}
@@ -88,7 +91,7 @@ export default function ChangePasswordCard() {
                       role="alert"
                       className="text-xs text-destructive"
                     >
-                      {error?.message}
+                      {errorMessage(error?.message, t)}
                     </p>
                   ))}
                 </div>
@@ -98,10 +101,10 @@ export default function ChangePasswordCard() {
               name="newPassword"
               children={(field) => (
                 <div className="flex flex-col gap-2.5">
-                  <Label htmlFor="newPassword">Nouveau mot de passe</Label>
+                  <Label htmlFor="newPassword">{t("auth.newPassword")}</Label>
                   <PasswordInput
                     id="newPassword"
-                    placeholder="Nouveau mot de passe"
+                    placeholder={t("auth.newPassword")}
                     autoComplete="new-password"
                     value={field.state.value}
                     onBlur={field.handleBlur}
@@ -114,7 +117,7 @@ export default function ChangePasswordCard() {
                       role="alert"
                       className="text-xs text-destructive"
                     >
-                      {error?.message}
+                      {errorMessage(error?.message, t)}
                     </p>
                   ))}
                 </div>
@@ -125,11 +128,11 @@ export default function ChangePasswordCard() {
               children={(field) => (
                 <div className="flex flex-col gap-2.5">
                   <Label htmlFor="confirmPassword">
-                    Confirmer le mot de passe
+                    {t("settings.confirmPassword")}
                   </Label>
                   <PasswordInput
                     id="confirmPassword"
-                    placeholder="Confirmer le mot de passe"
+                    placeholder={t("settings.confirmPassword")}
                     autoComplete="new-password"
                     value={field.state.value}
                     onBlur={field.handleBlur}
@@ -142,7 +145,7 @@ export default function ChangePasswordCard() {
                       role="alert"
                       className="text-xs text-destructive"
                     >
-                      {error?.message}
+                      {errorMessage(error?.message, t)}
                     </p>
                   ))}
                 </div>
@@ -152,7 +155,7 @@ export default function ChangePasswordCard() {
         </SettingsCardContent>
         <SettingsCardFooter>
           <p className="max-w-xs text-xs leading-relaxed text-muted-foreground">
-            Les autres sessions seront fermées après modification.
+            {t("settings.revokeNotice")}
           </p>
           <form.Subscribe>
             {(state) => (
@@ -161,7 +164,7 @@ export default function ChangePasswordCard() {
                 variant="outline"
                 disabled={!state.canSubmit || state.isSubmitting}
               >
-                {state.isSubmitting ? "Enregistrement…" : "Enregistrer"}
+                {state.isSubmitting ? t("common.saving") : t("common.save")}
                 {state.isSubmitting ? (
                   <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
                 ) : (

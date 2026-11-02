@@ -48,6 +48,7 @@ export const start = action({
     word: v.string(),
     url: v.optional(v.string()),
     description: v.optional(v.string()),
+    language: v.optional(v.union(v.literal("fr"), v.literal("en"))),
   },
   handler: async (
     ctx,
@@ -61,8 +62,9 @@ export const start = action({
     if (!paymentConfigured())
       throw new ConvexError("Le paiement est momentanément indisponible.");
     const productId = process.env.POLAR_PRODUCT_ID!;
+    const { language, ...purchaseArgs } = args;
     const purchase = await ctx.runMutation(internal.purchases.reserve, {
-      ...args,
+      ...purchaseArgs,
       userId: user._id,
     });
     if (purchase.checkoutUrl)
@@ -112,7 +114,7 @@ export const start = action({
           metadata: { purchaseId: purchase._id },
           successUrl: returnUrl,
           returnUrl,
-          locale: "fr",
+          locale: language ?? "fr",
         },
         REQUEST_OPTIONS,
       );

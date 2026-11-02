@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight, Loader2 } from "lucide-react";
@@ -5,38 +6,25 @@ import { authClient } from "@/lib/auth-client";
 import { useQuery } from "convex/react";
 import { api } from "@my-better-t-app/backend/convex/_generated/api";
 import { returnPath } from "@/lib/page";
+import { errorMessage } from "@/lib/errors";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
 import PasswordInput from "./ui/password-input";
 import { GoogleLoginButton, GitHubLoginButton } from "./social-login-buttons";
 
-export function authError(code?: string) {
-  const messages: Record<string, string> = {
-    INVALID_EMAIL_OR_PASSWORD: "Email ou mot de passe incorrect.",
-    EMAIL_NOT_VERIFIED: "Vérifiez votre email avant de vous connecter.",
-    USER_ALREADY_EXISTS: "Un compte existe déjà avec cet email.",
-    USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL:
-      "Un compte existe déjà avec cet email.",
-    PASSWORD_TOO_SHORT: "Le mot de passe doit contenir au moins 8 caractères.",
-    INVALID_TOKEN: "Ce lien est invalide ou a expiré.",
-  };
-  return (
-    messages[code ?? ""] ?? "Impossible de terminer cette demande. Réessayez."
-  );
-}
-
 export default function AuthForm({ signup = false }: { signup?: boolean }) {
+  const { t } = useTranslation();
   const providers = useQuery(api.auth.providers);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<{ code?: string } | null>(null);
   async function submit(event: FormEvent) {
     event.preventDefault();
     setBusy(true);
-    setError("");
+    setError(null);
     try {
       const result = signup
         ? await authClient.signUp.email({
@@ -47,7 +35,7 @@ export default function AuthForm({ signup = false }: { signup?: boolean }) {
           })
         : await authClient.signIn.email({ email, password });
       if (result.error) {
-        setError(authError(result.error.code));
+        setError(result.error);
         setBusy(false);
         return;
       }
@@ -55,7 +43,7 @@ export default function AuthForm({ signup = false }: { signup?: boolean }) {
         signup && !result.data?.token ? "/verify-email" : returnPath(),
       );
     } catch {
-      setError(authError());
+      setError({ code: "AUTH_ERROR" });
       setBusy(false);
     }
   }
@@ -65,18 +53,18 @@ export default function AuthForm({ signup = false }: { signup?: boolean }) {
         to="/"
         className="text-sm text-muted-foreground hover:text-foreground"
       >
-        ← La page
+        {t("auth.back")}
       </Link>
       <h1 className="mt-9 font-serif text-5xl tracking-tight">
-        {signup ? "Votre première place." : "De retour."}
+        {signup ? t("auth.signUpTitle") : t("auth.signInTitle")}
       </h1>
       <form onSubmit={submit} className="mt-9 space-y-5">
         {signup && (
           <div className="space-y-2">
-            <Label htmlFor="auth-name">Nom</Label>
+            <Label htmlFor="auth-name">{t("common.name")}</Label>
             <Input
               id="auth-name"
-              placeholder="Votre nom"
+              placeholder={t("common.yourName")}
               autoComplete="name"
               required
               minLength={2}
@@ -88,11 +76,11 @@ export default function AuthForm({ signup = false }: { signup?: boolean }) {
           </div>
         )}
         <div className="space-y-2">
-          <Label htmlFor="auth-email">Email</Label>
+          <Label htmlFor="auth-email">{t("common.email")}</Label>
           <Input
             id="auth-email"
             type="email"
-            placeholder="Votre adresse email"
+            placeholder={t("common.yourEmail")}
             autoComplete="email"
             required
             value={email}
@@ -102,19 +90,19 @@ export default function AuthForm({ signup = false }: { signup?: boolean }) {
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="auth-password">Mot de passe</Label>
+            <Label htmlFor="auth-password">{t("common.password")}</Label>
             {!signup && (
               <Link
                 to="/forgot-password"
                 className="text-xs text-muted-foreground hover:underline"
               >
-                Oublié ?
+                {t("auth.forgot")}
               </Link>
             )}
           </div>
           <PasswordInput
             id="auth-password"
-            placeholder={signup ? "8 caractères minimum" : "Votre mot de passe"}
+            placeholder={signup ? t("auth.passwordMinimum") : t("auth.yourPassword")}
             autoComplete={signup ? "new-password" : "current-password"}
             value={password}
             onBlur={() => {}}
@@ -124,10 +112,10 @@ export default function AuthForm({ signup = false }: { signup?: boolean }) {
         </div>
         {error && (
           <p role="alert" className="text-sm text-destructive">
-            {error}
-            {error.includes("Vérifiez") && (
+            {errorMessage(error, t)}
+            {error.code === "EMAIL_NOT_VERIFIED" && (
               <Link to="/verify-email" className="ml-1 underline">
-                Renvoyer le lien
+                {t("auth.resend")}
               </Link>
             )}
           </p>
@@ -137,7 +125,7 @@ export default function AuthForm({ signup = false }: { signup?: boolean }) {
           disabled={busy || password.length < 8}
           className="h-12 w-full justify-between px-4 text-sm"
         >
-          {signup ? "Créer mon compte" : "Se connecter"}
+          {signup ? t("auth.createAccount") : t("common.signIn")}
           {busy ? (
             <Loader2 className="size-4 animate-spin" />
           ) : (
@@ -149,7 +137,7 @@ export default function AuthForm({ signup = false }: { signup?: boolean }) {
         <>
           <div className="my-7 flex items-center gap-4">
             <span className="h-px flex-1 bg-border" />
-            <span className="text-xs text-muted-foreground">ou</span>
+            <span className="text-xs text-muted-foreground">{t("auth.or")}</span>
             <span className="h-px flex-1 bg-border" />
           </div>
           <div className="grid grid-cols-2 gap-3 [&_button]:h-11">
@@ -159,12 +147,12 @@ export default function AuthForm({ signup = false }: { signup?: boolean }) {
         </>
       )}
       <p className="mt-8 text-center text-sm text-muted-foreground">
-        {signup ? "Déjà un compte ?" : "Première visite ?"}{" "}
+        {signup ? t("auth.hasAccount") : t("auth.firstVisit")}{" "}
         <Link
           to={signup ? "/sign-in" : "/sign-up"}
           className="ml-1 text-foreground underline underline-offset-4"
         >
-          {signup ? "Se connecter" : "Créer un compte"}
+          {signup ? t("common.signIn") : t("auth.signUp")}
         </Link>
       </p>
     </main>

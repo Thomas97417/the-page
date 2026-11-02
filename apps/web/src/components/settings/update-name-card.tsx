@@ -1,5 +1,7 @@
+import { useTranslation } from "react-i18next";
 import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
+import { errorMessage } from "@/lib/errors";
 import z from "zod";
 
 import { authClient } from "@/lib/auth-client";
@@ -17,6 +19,7 @@ import { Label } from "../ui/label";
 import { ArrowUpRight, Loader2 } from "lucide-react";
 
 export default function UpdateNameCard({ name }: { name: string }) {
+  const { t } = useTranslation();
   const form = useForm({
     defaultValues: { name },
     onSubmit: async ({ value }) => {
@@ -24,17 +27,17 @@ export default function UpdateNameCard({ name }: { name: string }) {
         { name: value.name },
         {
           onSuccess: () => {
-            toast.success("Nom modifié.");
+            toast.success(t("settings.nameChanged"));
           },
           onError: (error) => {
-            toast.error(error.error.message);
+            toast.error(errorMessage(error.error, t));
           },
         },
       );
     },
     validators: {
       onSubmit: z.object({
-        name: z.string().min(2, "Le nom doit contenir au moins 2 caractères."),
+        name: z.string().min(2, "NAME_TOO_SHORT"),
       }),
     },
   });
@@ -50,19 +53,19 @@ export default function UpdateNameCard({ name }: { name: string }) {
       <SettingsCard>
         <SettingsCardContent>
           <SettingsCardHeader
-            title="Votre nom"
-            description="Le nom associé à votre compte."
+            title={t("common.yourName")}
+            description={t("settings.nameDescription")}
           />
           <form.Field
             name="name"
             children={(field) => (
               <div className="flex flex-col gap-2">
                 <Label htmlFor="name" className="sr-only">
-                  Nom
+                  {t("common.name")}
                 </Label>
                 <Input
                   id="name"
-                  placeholder="Nom"
+                  placeholder={t("common.name")}
                   autoComplete="name"
                   required
                   minLength={2}
@@ -82,7 +85,7 @@ export default function UpdateNameCard({ name }: { name: string }) {
                     className="text-xs text-destructive"
                   >
                     {field.state.meta.errors
-                      .map((error) => error?.message)
+                      .map((error) => errorMessage(error?.message, t))
                       .join(" ")}
                   </p>
                 )}
@@ -98,7 +101,7 @@ export default function UpdateNameCard({ name }: { name: string }) {
                 variant="outline"
                 disabled={!state.canSubmit || state.isSubmitting}
               >
-                {state.isSubmitting ? "Enregistrement…" : "Enregistrer"}
+                {state.isSubmitting ? t("common.saving") : t("common.save")}
                 {state.isSubmitting ? (
                   <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
                 ) : (

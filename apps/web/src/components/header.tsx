@@ -1,13 +1,16 @@
+import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useConvexAuth } from "convex/react";
 import { ArrowUpRight } from "lucide-react";
 import UserMenu from "./user-menu";
 import ThemeToggle from "./theme-toggle";
-import { DEFAULT_PAGE_ID, getPage, pageIdFromPath } from "@my-better-t-app/backend/convex/lib/pages";
+import LanguageToggle from "./language-toggle";
+import { DEFAULT_PAGE_ID, pageIdFromPath } from "@my-better-t-app/backend/convex/lib/pages";
 import { rememberReturnPath, validatePageSearch } from "@/lib/page";
 import { PageNavigation } from "./page-navigation";
 
 export default function Header() {
+  const { t } = useTranslation();
   const { isAuthenticated, isLoading } = useConvexAuth();
   const { pathname, search } = useLocation();
   const pageId = pageIdFromPath(pathname) ?? DEFAULT_PAGE_ID;
@@ -18,7 +21,7 @@ export default function Header() {
           to={pageId === DEFAULT_PAGE_ID ? "/" : "/$page"}
           params={pageId === DEFAULT_PAGE_ID ? {} : { page: pageId }}
           search={{}}
-          aria-label={`the page, accueil ${getPage(pageId).label}`}
+          aria-label={t("header.home", { page: t(`pages.${pageId}`) })}
           className="py-2 font-serif text-[26px] leading-none tracking-[-0.055em]"
         >
           the page
@@ -26,7 +29,7 @@ export default function Header() {
         <PageNavigation pageId={pageId} />
       </div>
       <nav
-        aria-label="Navigation principale"
+        aria-label={t("header.navigation")}
         className="flex items-center gap-1.5 text-xs sm:gap-6"
       >
         {isAuthenticated ? (
@@ -40,16 +43,17 @@ export default function Header() {
             }}
             aria-disabled={isLoading || undefined}
             tabIndex={isLoading ? -1 : undefined}
-            className={`group inline-flex h-9 shrink-0 items-center gap-2 rounded-none border px-3 text-xs font-medium transition-colors hover:border-foreground/25 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:px-4 ${isLoading ? "pointer-events-none opacity-40" : ""}`}
+            className={`group inline-flex size-9 shrink-0 items-center justify-center gap-2 rounded-none border text-xs font-medium transition-colors hover:border-foreground/25 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring min-[380px]:w-auto min-[380px]:px-3 sm:px-4 ${isLoading ? "pointer-events-none opacity-40" : ""}`}
           >
-            <span>Connexion</span>
+            <span className="sr-only min-[380px]:not-sr-only">{t("header.signIn")}</span>
             <ArrowUpRight
               aria-hidden="true"
-              className="hidden size-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transform-none sm:block"
+              className="size-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transform-none min-[380px]:hidden sm:block"
               strokeWidth={1.5}
             />
           </Link>
         )}
+        <LanguageToggle />
         <ThemeToggle />
       </nav>
     </header>

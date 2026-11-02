@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Dialog } from "@base-ui/react/dialog";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -11,6 +12,7 @@ export function SheetContent({
   className,
   ...props
 }: Dialog.Popup.Props) {
+  const { t } = useTranslation();
   return (
     <Dialog.Portal>
       <Dialog.Backdrop className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-[2px] transition-opacity duration-200 data-starting-style:opacity-0 data-ending-style:opacity-0" />
@@ -22,7 +24,7 @@ export function SheetContent({
         {...props}
       >
         <Dialog.Close
-          aria-label="Fermer le panneau"
+          aria-label={t("common.closePanel")}
           className="absolute right-5 top-5 flex size-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary"
         >
           <X className="size-5" />

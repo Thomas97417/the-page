@@ -5,20 +5,20 @@ export const Route = createFileRoute("/(auth)/reset-password")({
   validateSearch: (search: Record<string, unknown>): { token?: string } => ({
     token: typeof search.token === "string" ? search.token : undefined,
   }),
-  head: () => ({
-    meta: [
-      { title: "Nouveau mot de passe — the page" },
-      {
-        name: "description",
-        content: "Choisissez un nouveau mot de passe.",
-      },
-    ],
-  }),
   beforeLoad: async ({ context }) => {
     if (context.isAuthenticated) {
       throw redirect({ to: "/" });
     }
   },
+  head: ({ match }) => ({
+    meta: [
+      { title: match.context.i18n.t("meta.resetPassword") },
+      {
+        name: "description",
+        content: match.context.i18n.t("meta.resetPasswordDescription"),
+      },
+    ],
+  }),
   component: RouteComponent,
 });
 

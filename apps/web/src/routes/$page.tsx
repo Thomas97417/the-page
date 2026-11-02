@@ -19,7 +19,7 @@ export const Route = createFileRoute("/$page")({
     context.queryClient.ensureQueryData(
       convexQuery(api.slots.list, { pageId: context.pageId }),
     ),
-  head: ({ params }) => pageHead(isPageId(params.page) ? params.page : DEFAULT_PAGE_ID),
+  head: ({ params, match }) => pageHead(isPageId(params.page) ? params.page : DEFAULT_PAGE_ID, match.context.i18n.t),
   component: CountryPage,
 });
 

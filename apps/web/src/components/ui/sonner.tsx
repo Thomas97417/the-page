@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { ToasterProps } from "sonner";
 
 import {
@@ -11,12 +12,14 @@ import { useTheme } from "next-themes";
 import { Toaster as Sonner } from "sonner";
 
 const Toaster = ({ ...props }: ToasterProps) => {
+  const { t } = useTranslation();
   const { theme = "system" } = useTheme();
 
   return (
     <Sonner
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
+      containerAriaLabel={t("common.notifications")}
       icons={{
         success: <CircleCheckIcon className="size-4" />,
         info: <InfoIcon className="size-4" />,
@@ -33,6 +36,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         } as React.CSSProperties
       }
       toastOptions={{
+        closeButtonAriaLabel: t("common.closeNotification"),
         classNames: {
           toast: "cn-toast",
         },

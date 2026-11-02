@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Fragment } from "react";
 import { Popover } from "@base-ui/react/popover";
 import { useConvexAuth, useQuery } from "convex/react";
@@ -8,7 +9,6 @@ import { usePage } from "./page-provider";
 import { buttonVariants } from "./ui/button";
 import { euros } from "@/lib/page";
 import { cn } from "@/lib/utils";
-import { getPage } from "@my-better-t-app/backend/convex/lib/pages";
 
 type Slot = FunctionReturnType<typeof api.slots.list>[number];
 
@@ -19,15 +19,16 @@ const PLACEHOLDER_WORDS = (
   "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat."
 ).split(" ");
 
-function linkLabel(url: string) {
+function linkLabel(url: string, fallback: string) {
   try {
     return new URL(url).hostname.replace(/^www\./, "");
   } catch {
-    return "Visiter le lien";
+    return fallback;
   }
 }
 
 function WordDetails({ slot }: { slot: Slot }) {
+  const { t, i18n } = useTranslation();
   const { buy, showWords } = usePage();
   const { isAuthenticated, isLoading } = useConvexAuth();
   const purchases = useQuery(api.purchases.mine, isAuthenticated ? {} : "skip");
@@ -40,16 +41,16 @@ function WordDetails({ slot }: { slot: Slot }) {
   return (
     <>
       <p className="pr-8 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-        {getPage(slot.pageId).label} · Place {String(slot.position).padStart(2, "0")}
+        {t("word.position", { page: t(`pages.${slot.pageId}`), position: String(slot.position).padStart(2, "0") })}
       </p>
       <Popover.Close
-        aria-label="Fermer les informations du mot"
+        aria-label={t("word.close")}
         className="absolute right-3 top-3 flex size-8 items-center justify-center text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
       >
         <X className="size-3.5" />
       </Popover.Close>
       <Popover.Title className="mt-4 break-words font-serif text-3xl leading-tight tracking-tight">
-        {slot.word || "Votre mot ici."}
+        {slot.word || t("word.placeholder")}
       </Popover.Title>
       {slot.description && (
         <Popover.Description className="mt-3 whitespace-pre-line break-words text-sm leading-relaxed text-muted-foreground">
@@ -58,7 +59,7 @@ function WordDetails({ slot }: { slot: Slot }) {
       )}
       {slot.reserved && (
         <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-          Un paiement est en cours sur cette place.
+          {t("word.paymentPending")}
         </p>
       )}
       {slot.url && (
@@ -68,9 +69,9 @@ function WordDetails({ slot }: { slot: Slot }) {
           rel="sponsored ugc nofollow noopener noreferrer"
           className="mt-1 flex min-h-8 items-center justify-between gap-3 text-xs text-muted-foreground underline decoration-border underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground focus-visible:outline-2 focus-visible:outline-ring"
         >
-          <span className="truncate">{linkLabel(slot.url)}</span>
+          <span className="truncate">{linkLabel(slot.url, t("word.visitLink"))}</span>
           <ArrowUpRight aria-hidden="true" className="size-3.5 shrink-0" />
-          <span className="sr-only"> (nouvel onglet)</span>
+          <span className="sr-only"> {t("common.newTab")}</span>
         </a>
       )}
       {checkingOwnership ? (
@@ -82,14 +83,14 @@ function WordDetails({ slot }: { slot: Slot }) {
             aria-hidden="true"
             className="size-3.5 animate-spin motion-reduce:animate-none"
           />
-          Chargement de vos mots…
+          {t("word.loadingOwned")}
         </div>
       ) : owned ? (
         <div className="mt-5 border-t pt-4">
           <p className="text-xs leading-relaxed text-muted-foreground">
             {owned.hidden
-              ? "Cette place est à vous. Ce mot est masqué par la modération."
-              : "Cette place est à vous. Vous pouvez modifier votre mot gratuitement."}
+              ? t("word.ownedHidden")
+              : t("word.owned")}
           </p>
           <Popover.Close
             onClick={showWords}
@@ -98,15 +99,15 @@ function WordDetails({ slot }: { slot: Slot }) {
               "mt-4 h-10 w-full justify-between gap-3 px-3 text-xs",
             )}
           >
-            Voir mes mots
+            {t("word.viewOwned")}
             <ArrowUpRight aria-hidden="true" className="size-3.5" />
           </Popover.Close>
         </div>
       ) : (
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
           <p className="font-serif text-3xl leading-none tabular-nums">
-            <span className="sr-only">Prix de cette place : </span>
-            {euros(slot.price)}
+            <span className="sr-only">{t("word.price")} </span>
+            {euros(slot.price, i18n.resolvedLanguage)}
           </p>
           <Popover.Close
             disabled={slot.reserved}
@@ -122,7 +123,7 @@ function WordDetails({ slot }: { slot: Slot }) {
             }
             className={cn(buttonVariants(), "h-10 gap-3 px-3 text-xs")}
           >
-            {slot.reserved ? "Réservée" : slot.word ? "Prendre la place" : "Écrire ici"}
+            {slot.reserved ? t("word.reserved") : slot.word ? t("word.take") : t("word.writeHere")}
             {!slot.reserved && <ArrowUpRight aria-hidden="true" className="size-3.5" />}
           </Popover.Close>
         </div>
@@ -132,10 +133,11 @@ function WordDetails({ slot }: { slot: Slot }) {
 }
 
 export function PageManuscript({ slots }: { slots: Slot[] | undefined }) {
+  const { t } = useTranslation();
   return (
     <article
       id="mots"
-      aria-label="La page, 50 places à écrire"
+      aria-label={t("page.manuscript")}
       aria-busy={!slots}
       className="mx-auto w-full max-w-184 scroll-mt-8"
     >
@@ -158,8 +160,8 @@ export function PageManuscript({ slots }: { slots: Slot[] | undefined }) {
                           data-empty={!word.word ? "" : undefined}
                           aria-label={
                             word.word
-                              ? `${word.word}, place ${word.position} : voir les informations`
-                              : `Place ${word.position}, ${word.reserved ? "réservée" : "libre, texte de remplissage"} : voir les informations`
+                              ? t("page.wordDetails", { word: word.word, position: word.position })
+                              : t("page.emptyDetails", { position: word.position, status: word.reserved ? t("page.reserved") : t("page.empty") })
                           }
                           className="manuscript-word"
                         >
@@ -189,12 +191,12 @@ export function PageManuscript({ slots }: { slots: Slot[] | undefined }) {
             </Popover.Root>
           ) : (
             <p className="py-12 text-center font-serif text-xl text-muted-foreground">
-              La page se prépare. Revenez dans un instant.
+              {t("page.preparing")}
             </p>
           )
         ) : (
           <div role="status" className="space-y-7 py-3">
-            <span className="sr-only">Chargement des mots de la page…</span>
+            <span className="sr-only">{t("page.loading")}</span>
             {["w-full", "w-11/12", "w-4/5"].map((width) => (
               <div
                 key={width}

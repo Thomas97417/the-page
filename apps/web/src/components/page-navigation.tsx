@@ -1,8 +1,8 @@
+import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight, Check, ChevronDown } from "lucide-react";
 import {
   DEFAULT_PAGE_ID,
-  getPage,
   PAGES,
   type PageId,
 } from "@my-better-t-app/backend/convex/lib/pages";
@@ -21,10 +21,11 @@ const PAGE_SUFFIXES: Record<PageId, string> = {
 };
 
 export function PageNavigation({ pageId }: { pageId: PageId }) {
+  const { t } = useTranslation();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        aria-label={`Choisir une page, page actuelle : ${getPage(pageId).label}`}
+        aria-label={t("header.choosePage", { page: t(`pages.${pageId}`) })}
         className="group inline-flex min-h-11 items-center gap-1 pr-0.5 font-serif text-sm tracking-[-0.025em] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-popup-open:text-foreground sm:text-base"
       >
         <span>.{PAGE_SUFFIXES[pageId]}</span>
@@ -43,7 +44,7 @@ export function PageNavigation({ pageId }: { pageId: PageId }) {
         {PAGES.map((page) => (
           <DropdownMenuItem
             key={page.id}
-            aria-label={`.${PAGE_SUFFIXES[page.id]} — ${page.label}`}
+            aria-label={`.${PAGE_SUFFIXES[page.id]} — ${t(`pages.${page.id}`)}`}
             render={
               <Link
                 preload="render"
@@ -60,7 +61,7 @@ export function PageNavigation({ pageId }: { pageId: PageId }) {
                 .{PAGE_SUFFIXES[page.id]}
               </span>
               <span className="mt-0.5 block text-[10px] leading-tight text-muted-foreground">
-                {page.label}
+                {t(`pages.${page.id}`)}
               </span>
             </span>
             {pageId === page.id ? (
