@@ -20,8 +20,9 @@ export default function UserMenu() {
   const { t } = useTranslation();
   const user = useCurrentUser();
   const viewer = useQuery(api.slots.viewer);
+  const unread = useQuery(api.notifications.unreadCount);
   const navigate = useNavigate();
-  const { showWords } = usePage();
+  const { showWords, showNotifications } = usePage();
   const name = user?.name?.trim() || t("user.space");
   const initial = (user?.name?.trim() || user?.email || "M")
     .charAt(0)
@@ -36,10 +37,11 @@ export default function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        aria-label={t("user.menu")}
-        className="flex size-9 shrink-0 items-center justify-center rounded-none border font-serif text-lg text-foreground transition-colors hover:border-foreground/30 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-popup-open:border-foreground/30 data-popup-open:bg-muted motion-reduce:transition-none"
+        aria-label={unread ? unread >= 100 ? t("notifications.menuUnreadLimit") : t("notifications.menuUnread", { count: unread }) : t("user.menu")}
+        className="relative flex size-9 shrink-0 items-center justify-center rounded-none border font-serif text-lg text-foreground transition-colors hover:border-foreground/30 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-popup-open:border-foreground/30 data-popup-open:bg-muted motion-reduce:transition-none"
       >
         {initial}
+        {!!unread && <span aria-hidden="true" className="absolute -right-1 -top-1 size-2 rounded-full bg-primary ring-2 ring-background" />}
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
@@ -58,6 +60,25 @@ export default function UserMenu() {
         </DropdownMenuGroup>
         <DropdownMenuSeparator className="mx-0" />
         <DropdownMenuGroup className="py-2">
+          <DropdownMenuItem
+            label={t("common.notifications")}
+            onClick={showNotifications}
+            className={itemClassName}
+          >
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-3">
+                <span className={labelClassName}>{t("common.notifications")}</span>
+                {!!unread && (
+                  <span className="inline-flex min-w-5 items-center justify-center bg-primary px-1.5 py-0.5 font-mono text-[10px] text-primary-foreground">
+                    <span aria-hidden="true">{unread > 99 ? "99+" : unread}</span>
+                    <span className="sr-only">{unread >= 100 ? t("notifications.unreadLimit") : t("notifications.unread", { count: unread })}</span>
+                  </span>
+                )}
+              </span>
+              <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">{t("user.notificationsDescription")}</span>
+            </span>
+            <ArrowUpRight aria-hidden="true" className={arrowClassName} strokeWidth={1.5} />
+          </DropdownMenuItem>
           <DropdownMenuItem
             label={t("user.words")}
             onClick={showWords}

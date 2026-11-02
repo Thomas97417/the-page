@@ -39,7 +39,10 @@ export default function Header() {
             to="/sign-in"
             onClick={() => {
               const pageId = pageIdFromPath(pathname);
-              if (pageId) rememberReturnPath(pageId, validatePageSearch(search).purchase);
+              if (pageId) {
+                const { purchase, reclaim } = validatePageSearch(search);
+                rememberReturnPath(pageId, purchase, reclaim);
+              }
             }}
             aria-disabled={isLoading || undefined}
             tabIndex={isLoading ? -1 : undefined}

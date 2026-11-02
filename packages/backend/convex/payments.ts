@@ -66,6 +66,7 @@ export const start = action({
     const purchase = await ctx.runMutation(internal.purchases.reserve, {
       ...purchaseArgs,
       userId: user._id,
+      language,
     });
     if (purchase.checkoutUrl)
       return {

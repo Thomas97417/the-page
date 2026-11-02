@@ -6,6 +6,7 @@ import { internal } from "./_generated/api";
 import { RESERVATION_MS, priceFor, validateContent } from "./lib/content";
 import { requireUser } from "./permissions";
 import { DEFAULT_PAGE_ID } from "./lib/pages";
+import { notifyPurchase } from "./lib/notifications";
 
 async function release(ctx: MutationCtx, purchase: Doc<"purchases">) {
   const slot = await ctx.db.get(purchase.slotId);
@@ -118,6 +119,7 @@ export const reserve = internalMutation({
     word: v.string(),
     url: v.optional(v.string()),
     description: v.optional(v.string()),
+    language: v.optional(v.union(v.literal("fr"), v.literal("en"))),
   },
   handler: async (ctx, args): Promise<Doc<"purchases">> => {
     const content = validateContent(args.word, args.url, args.description);
@@ -176,6 +178,7 @@ export const reserve = internalMutation({
       amount: priceFor(slot.acquisitions),
       status: "creating",
       reservedUntil,
+      language: args.language,
     });
     await ctx.db.patch(slot._id, { reservationId: id, reservedUntil });
     await ctx.scheduler.runAfter(RESERVATION_MS, internal.payments.reconcile, {
@@ -300,6 +303,7 @@ export const applyPaidOrder = internalMutation({
       status: "published",
       publishedAt: Date.now(),
     });
+    await notifyPurchase(ctx, purchase, slot);
     return "published";
   },
 });

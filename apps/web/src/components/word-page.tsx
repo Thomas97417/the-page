@@ -7,9 +7,10 @@ import { usePage } from "@/components/page-provider";
 import { PageManuscript } from "@/components/page-manuscript";
 import { Button } from "@/components/ui/button";
 import { PurchaseResult } from "@/components/purchase-result";
+import { ReclaimWord } from "@/components/reclaim-word";
 import { type PageId } from "@my-better-t-app/backend/convex/lib/pages";
 
-export function WordPage({ pageId, purchase }: { pageId: PageId; purchase?: string }) {
+export function WordPage({ pageId, purchase, reclaim }: { pageId: PageId; purchase?: string; reclaim?: string }) {
   const { t } = useTranslation();
   const { data: slots } = useQuery(convexQuery(api.slots.list, { pageId }));
   const { buy, showRules } = usePage();
@@ -21,6 +22,7 @@ export function WordPage({ pageId, purchase }: { pageId: PageId; purchase?: stri
     <>
       <main className="mx-auto flex w-full max-w-296 flex-1 flex-col justify-center px-5 sm:px-10 lg:px-14">
         {purchase && <PurchaseResult key={purchase} purchaseId={purchase} pageId={pageId} />}
+        {reclaim && <ReclaimWord key={reclaim} notificationId={reclaim} pageId={pageId} />}
         <h1 className="sr-only">the page — {t(`pages.${pageId}`)}</h1>
         <PageManuscript slots={slots} />
 

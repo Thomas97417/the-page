@@ -5,14 +5,19 @@ import {
   pageIdFromPath,
   pagePath,
   purchaseReturnPath,
+  reclaimPath,
   type PageId,
 } from "@my-better-t-app/backend/convex/lib/pages";
 
-export function validatePageSearch(search: Record<string, unknown>): { purchase?: string } {
+export function validatePageSearch(search: Record<string, unknown>): { purchase?: string; reclaim?: string } {
   return {
     purchase:
       typeof search.purchase === "string" && search.purchase.length < 128
         ? search.purchase
+        : undefined,
+    reclaim:
+      typeof search.reclaim === "string" && search.reclaim.length > 0 && search.reclaim.length < 128
+        ? search.reclaim
         : undefined,
   };
 }
@@ -46,18 +51,21 @@ export function returnPath() {
     const url = new URL(value, "https://the-page.invalid");
     const pageId = pageIdFromPath(url.pathname);
     if (!pageId) return "/";
-    const { purchase } = validatePageSearch({ purchase: url.searchParams.get("purchase") });
-    return purchase ? purchaseReturnPath(pageId, purchase) : pagePath(pageId);
+    const { purchase, reclaim } = validatePageSearch({
+      purchase: url.searchParams.get("purchase"),
+      reclaim: url.searchParams.get("reclaim"),
+    });
+    return purchase ? purchaseReturnPath(pageId, purchase) : reclaim ? reclaimPath(pageId, reclaim) : pagePath(pageId);
   } catch {
     return "/";
   }
 }
 
-export function rememberReturnPath(pageId: PageId, purchaseId?: string) {
+export function rememberReturnPath(pageId: PageId, purchaseId?: string, notificationId?: string) {
   try {
     sessionStorage.setItem(
       "the-page:return",
-      purchaseId ? purchaseReturnPath(pageId, purchaseId) : pagePath(pageId),
+      purchaseId ? purchaseReturnPath(pageId, purchaseId) : notificationId ? reclaimPath(pageId, notificationId) : pagePath(pageId),
     );
   } catch {
     /* Storage can be disabled. */

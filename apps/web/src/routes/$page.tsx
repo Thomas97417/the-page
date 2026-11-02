@@ -22,6 +22,6 @@ export const Route = createFileRoute("/$page")({
 
 function CountryPage() {
   const { pageId } = Route.useRouteContext();
-  const { purchase } = Route.useSearch();
-  return <WordPage key={pageId} pageId={pageId} purchase={purchase} />;
+  const { purchase, reclaim } = Route.useSearch();
+  return <WordPage key={pageId} pageId={pageId} purchase={purchase} reclaim={reclaim} />;
 }

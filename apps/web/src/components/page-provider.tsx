@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -13,6 +14,7 @@ import { DEFAULT_PAGE_ID, isPageId, pageIdFromPath, type PageId } from "@my-bett
 import { rememberReturnPath, euros } from "@/lib/page";
 import { BuySheet } from "./purchase-sheet";
 import { MyWords } from "./my-words";
+import { Notifications } from "./notifications";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "./ui/sheet";
 
 export type WordDraft = {
@@ -27,6 +29,7 @@ export type WordDraft = {
 type PageContextValue = {
   buy: (draft: WordDraft) => void;
   showWords: () => void;
+  showNotifications: () => void;
   showRules: () => void;
 };
 const PageContext = createContext<PageContextValue | null>(null);
@@ -44,8 +47,11 @@ export function saveDraft(draft: WordDraft) {
 export function PageProvider({ children }: { children: ReactNode }) {
   const { t, i18n } = useTranslation();
   const [draft, setDraft] = useState<WordDraft | null>(null);
-  const [wordsOpen, setWordsOpen] = useState(false);
-  const [rulesOpen, setRulesOpen] = useState(false);
+  const [panel, setPanel] = useState<"words" | "rules" | "notifications" | null>(null);
+  const buy = useCallback((draft: WordDraft) => {
+    setPanel(null);
+    setDraft(draft);
+  }, []);
   const { pathname } = useLocation();
   const { isAuthenticated } = useConvexAuth();
   useEffect(() => {
@@ -78,9 +84,10 @@ export function PageProvider({ children }: { children: ReactNode }) {
   return (
     <PageContext.Provider
       value={{
-        buy: setDraft,
-        showWords: () => setWordsOpen(true),
-        showRules: () => setRulesOpen(true),
+        buy,
+        showWords: () => { setDraft(null); setPanel("words"); },
+        showNotifications: () => { setDraft(null); setPanel("notifications"); },
+        showRules: () => { setDraft(null); setPanel("rules"); },
       }}
     >
       {children}
@@ -91,10 +98,13 @@ export function PageProvider({ children }: { children: ReactNode }) {
           onClose={() => setDraft(null)}
         />
       )}
-      {wordsOpen && isAuthenticated && (
-        <MyWords onClose={() => setWordsOpen(false)} />
+      {panel === "words" && isAuthenticated && (
+        <MyWords onClose={() => setPanel(null)} />
       )}
-      <Sheet open={rulesOpen} onOpenChange={setRulesOpen}>
+      {panel === "notifications" && isAuthenticated && (
+        <Notifications onClose={() => setPanel(null)} />
+      )}
+      <Sheet open={panel === "rules"} onOpenChange={(open) => setPanel(open ? "rules" : null)}>
         <SheetContent>
           <SheetTitle className="mt-14 font-serif text-4xl tracking-tight">
             {t("rules.title")}
