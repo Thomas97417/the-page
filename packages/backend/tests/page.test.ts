@@ -5,7 +5,7 @@ import betterAuth from "@convex-dev/better-auth/test";
 import schema from "../convex/schema";
 import { api, components, internal } from "../convex/_generated/api";
 import { validateContent } from "../convex/lib/content";
-import { DEFAULT_PAGE_ID, PAGES, pagePath, type PageId } from "../convex/lib/pages";
+import { DEFAULT_PAGE_ID, PAGES, type PageId } from "../convex/lib/pages";
 import type { Doc } from "../convex/_generated/dataModel";
 import { checkoutsGet } from "@polar-sh/sdk/funcs/checkoutsGet.js";
 import { ordersList } from "@polar-sh/sdk/funcs/ordersList.js";
@@ -889,9 +889,10 @@ describe("reconciliation", () => {
     );
     const call = vi.mocked(checkoutsCreate).mock.calls[0];
     const purchase = (await buyer.client.query(api.purchases.mine))[0];
+    const expectedPath = page.id === DEFAULT_PAGE_ID ? "/" : `/${page.slug}`;
     expect(call[1]).toMatchObject({
-      successUrl: `http://localhost:3003${pagePath(page.id)}?purchase=${encodeURIComponent(purchase.id)}`,
-      returnUrl: `http://localhost:3003${pagePath(page.id)}?purchase=${encodeURIComponent(purchase.id)}`,
+      successUrl: `http://localhost:3003${expectedPath}?purchase=${encodeURIComponent(purchase.id)}`,
+      returnUrl: `http://localhost:3003${expectedPath}?purchase=${encodeURIComponent(purchase.id)}`,
     });
     expect(call[1]).toMatchObject({
       externalCustomerId: buyer.id,

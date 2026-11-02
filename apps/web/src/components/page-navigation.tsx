@@ -21,7 +21,7 @@ function normalizeSearch(value: string) {
 
 function matchesPage(page: Page, query: string) {
   const search = normalizeSearch(query);
-  return [page.label, page.id, page.suffix].some((value) =>
+  return [page.label, page.id, page.slug, page.suffix].some((value) =>
     normalizeSearch(value).includes(search),
   );
 }
@@ -101,7 +101,7 @@ export function PageNavigation({ pageId }: { pageId: PageId }) {
                     <Link
                       preload="intent"
                       to={page.id === DEFAULT_PAGE_ID ? "/" : "/$page"}
-                      params={page.id === DEFAULT_PAGE_ID ? {} : { page: page.id }}
+                      params={page.id === DEFAULT_PAGE_ID ? {} : { page: page.slug }}
                       search={{}}
                       onClick={() => setOpen(false)}
                       aria-current={pageId === page.id ? "page" : undefined}

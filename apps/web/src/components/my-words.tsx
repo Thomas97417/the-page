@@ -61,7 +61,7 @@ function OwnedWord({ purchase, onClose }: { purchase: Purchase; onClose: () => v
           <p className="font-mono text-[11px] text-muted-foreground">
             <Link
               to={purchase.pageId === DEFAULT_PAGE_ID ? "/" : "/$page"}
-              params={purchase.pageId === DEFAULT_PAGE_ID ? {} : { page: purchase.pageId }}
+              params={purchase.pageId === DEFAULT_PAGE_ID ? {} : { page: getPage(purchase.pageId).slug }}
               search={{}}
               hash={`word-${purchase.position}`}
               onClick={onClose}

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PAGES, pagePath } from "../convex/lib/pages";
+import { PAGES, pagePath, type PageId } from "../convex/lib/pages";
 import { rememberReturnPath, returnPath } from "../../../apps/web/src/lib/page";
 
 beforeEach(() => {
@@ -13,6 +13,19 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("returning after authentication", () => {
+  it.each([
+    ["japon", "/japan"],
+    ["royaume-uni", "/united-kingdom"],
+    ["etats-unis", "/united-states"],
+    ["allemagne", "/germany"],
+    ["afrique-du-sud", "/south-africa"],
+  ] satisfies [PageId, string][])("uses the English URL for %s and upgrades saved French destinations", (pageId, path) => {
+    rememberReturnPath(pageId, "purchase/value?next=1");
+    expect(returnPath()).toBe(`${path}?purchase=purchase%2Fvalue%3Fnext%3D1`);
+    sessionStorage.setItem("the-page:return", `/${pageId}?purchase=purchase%2Fvalue%3Fnext%3D1`);
+    expect(returnPath()).toBe(`${path}?purchase=purchase%2Fvalue%3Fnext%3D1`);
+  });
+
   it.each(PAGES)("returns to $id with or without a purchase", (page) => {
     rememberReturnPath(page.id);
     expect(returnPath()).toBe(pagePath(page.id));

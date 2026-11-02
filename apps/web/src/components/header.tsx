@@ -16,7 +16,7 @@ export default function Header() {
       <div className="flex shrink-0 items-baseline">
         <Link
           to={pageId === DEFAULT_PAGE_ID ? "/" : "/$page"}
-          params={pageId === DEFAULT_PAGE_ID ? {} : { page: pageId }}
+          params={pageId === DEFAULT_PAGE_ID ? {} : { page: getPage(pageId).slug }}
           search={{}}
           aria-label={`the page, accueil ${getPage(pageId).label}`}
           className="py-2 font-serif text-[26px] leading-none tracking-[-0.055em]"

@@ -93,7 +93,7 @@ export function PurchaseResult({ purchaseId, pageId }: { purchaseId: string; pag
           aria-label="Fermer le suivi du paiement"
           onClick={() => navigate({
             to: pageId === DEFAULT_PAGE_ID ? "/" : "/$page",
-            params: pageId === DEFAULT_PAGE_ID ? {} : { page: pageId },
+            params: pageId === DEFAULT_PAGE_ID ? {} : { page: getPage(pageId).slug },
             search: {},
             replace: true,
           })}

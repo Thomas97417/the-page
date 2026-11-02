@@ -3,13 +3,15 @@ import {
   createRootRouteWithContext,
   createRoute,
   createRouter,
-  notFound,
+  isNotFound,
   redirect,
 } from "@tanstack/react-router";
 import { QueryClient } from "@tanstack/react-query";
-import { isPageId, PAGES, pagePath } from "@my-better-t-app/backend/convex/lib/pages";
+import { PAGES, pagePath } from "@my-better-t-app/backend/convex/lib/pages";
 import { describe, expect, it, vi } from "vitest";
 import { loadRouteAuth, type RouteAuthContext } from "./route-auth";
+import { loadCountryPage } from "./page-route";
+import { validatePageSearch } from "./page";
 
 const PUBLIC_PATHS = PAGES.map((page) => pagePath(page.id));
 const PRIVATE_PATHS = ["/settings", "/admin"];
@@ -41,12 +43,12 @@ function setup(initialPath = "/") {
   const country = createRoute({
     getParentRoute: () => root,
     path: "$page",
-    beforeLoad: ({ params }) => {
-      if (!isPageId(params.page)) throw notFound();
-    },
-    loader: ({ context, params }) => context.queryClient.ensureQueryData({
-      queryKey: ["slots", params.page],
-      queryFn: () => loadWords(params.page),
+    validateSearch: validatePageSearch,
+    beforeLoad: ({ params, search, location }) =>
+      loadCountryPage(params.page, search, location.hash),
+    loader: ({ context }) => context.queryClient.ensureQueryData({
+      queryKey: ["slots", context.pageId],
+      queryFn: () => loadWords(context.pageId),
     }),
   });
   const privateRoutes = PRIVATE_PATHS.map((path) =>
@@ -88,14 +90,17 @@ function setup(initialPath = "/") {
 }
 
 describe("authentication during page navigation", () => {
-  it.each(PUBLIC_PATHS)("initializes authentication when rendering %s on the server", async (path) => {
-    const { router, getToken } = setup(path);
+  it.each(PAGES)("renders /$slug with the stored $id and initializes server authentication", async (page) => {
+    const { router, getToken, loadWords } = setup(pagePath(page.id));
     await router.load();
     expect(getToken).toHaveBeenCalledOnce();
     expect(router.state.matches[0]?.context).toMatchObject({
       token: "initial-token",
       isAuthenticated: true,
     });
+    expect(router.state.redirect).toBeUndefined();
+    expect(loadWords).toHaveBeenCalledWith(page.id);
+    expect(router.state.matches.at(-1)?.loaderData).toEqual({ pageId: page.id });
   });
 
   it("switches between every public page without waiting for another session lookup", async () => {
@@ -121,11 +126,11 @@ describe("authentication during page navigation", () => {
     app.switchToClient();
     app.getToken.mockRejectedValue(new Error("Auth service unavailable"));
 
-    await app.router.preloadRoute({ to: "/$page", params: { page: "france" } });
-    expect(app.loadWords).toHaveBeenCalledWith("france");
-    await app.load("/france");
-    expect(app.router.state.matches.at(-1)?.loaderData).toEqual({ pageId: "france" });
-    expect(app.loadWords.mock.calls.filter(([page]) => page === "france")).toHaveLength(1);
+    await app.router.preloadRoute({ to: "/$page", params: { page: "japan" } });
+    expect(app.loadWords).toHaveBeenCalledWith("japon");
+    await app.load("/japan");
+    expect(app.router.state.matches.at(-1)?.loaderData).toEqual({ pageId: "japon" });
+    expect(app.loadWords.mock.calls.filter(([page]) => page === "japon")).toHaveLength(1);
     expect(app.getToken).toHaveBeenCalledOnce();
   });
 
@@ -159,5 +164,44 @@ describe("authentication during page navigation", () => {
     await Promise.all([first.router.load(), second.router.load()]);
     expect(first.router.state.matches[0]?.context.isAuthenticated).toBe(true);
     expect(second.router.state.matches[0]?.context.isAuthenticated).toBe(false);
+  });
+});
+
+describe("country URL redirects", () => {
+  it.each(PAGES.filter((page) => page.id !== page.slug))(
+    "permanently redirects /$id to /$slug while preserving purchase tracking and the word anchor",
+    async (page) => {
+      const app = setup(`/${page.id}?purchase=order-123#word-12`);
+      await app.router.load();
+      expect(app.router.state.redirect?.options).toMatchObject({
+        to: "/$page",
+        params: { page: page.slug },
+        search: { purchase: "order-123" },
+        hash: "word-12",
+        replace: true,
+        statusCode: 301,
+      });
+      expect(app.loadWords).not.toHaveBeenCalled();
+    },
+  );
+
+  it("redirects /world to the default page with its purchase and anchor", async () => {
+    const app = setup("/world?purchase=order-123#word-12");
+    await app.router.load();
+    expect(app.router.state.redirect?.options).toMatchObject({
+      to: "/",
+      search: { purchase: "order-123" },
+      hash: "word-12",
+      statusCode: 301,
+    });
+  });
+
+  it("rejects an unknown country", () => {
+    expect.assertions(1);
+    try {
+      loadCountryPage("unknown-country", {}, "");
+    } catch (error) {
+      expect(isNotFound(error)).toBe(true);
+    }
   });
 });
