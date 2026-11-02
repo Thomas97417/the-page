@@ -5,7 +5,7 @@ import betterAuth from "@convex-dev/better-auth/test";
 import schema from "../convex/schema";
 import { api, components, internal } from "../convex/_generated/api";
 import { validateContent } from "../convex/lib/content";
-import { DEFAULT_PAGE_ID, PAGES, pagePath, type PageId } from "../convex/lib/pages";
+import { DEFAULT_PAGE_ID, PAGES, type PageId } from "../convex/lib/pages";
 import type { Doc } from "../convex/_generated/dataModel";
 import { checkoutsGet } from "@polar-sh/sdk/funcs/checkoutsGet.js";
 import { ordersList } from "@polar-sh/sdk/funcs/ordersList.js";
@@ -37,7 +37,7 @@ function setup() {
 }
 type Test = ReturnType<typeof setup>;
 
-async function account(t: Test, name: string) {
+async function account(t: Test, name: string, sessionDuration = 3_600_000) {
   const user = await t.mutation(components.betterAuth.adapter.create, {
     input: {
       model: "user",
@@ -56,7 +56,7 @@ async function account(t: Test, name: string) {
       data: {
         userId: user._id,
         token: `${name}-token`,
-        expiresAt: Date.now() + 3_600_000,
+        expiresAt: Date.now() + sessionDuration,
         createdAt: Date.now(),
         updatedAt: Date.now(),
       },
@@ -270,11 +270,13 @@ describe("purchases and ownership", () => {
   it("identifies every owned word and purchase status by page", async () => {
     const t = setup();
     await t.mutation(internal.slots.initialize);
-    const owner = await account(t, "owner");
+    const owner = await account(t, "owner", (PAGES.length + 1) * 11 * 60_000);
     for (const page of PAGES) {
       const p = await reserve(t, owner.id, 1, "Ensemble", undefined, page.id);
       await paid(t, p);
       expect(await owner.client.query(api.purchases.status, { purchaseId: p._id })).toMatchObject({ pageId: page.id, current: true });
+      // Purchases across all countries still respect the buyer's rate limit.
+      vi.setSystemTime(Date.now() + 11 * 60_000);
     }
     const purchases = await owner.client.query(api.purchases.mine);
     expect(purchases).toHaveLength(PAGES.length);
@@ -887,9 +889,10 @@ describe("reconciliation", () => {
     );
     const call = vi.mocked(checkoutsCreate).mock.calls[0];
     const purchase = (await buyer.client.query(api.purchases.mine))[0];
+    const expectedPath = page.id === DEFAULT_PAGE_ID ? "/" : `/${page.slug}`;
     expect(call[1]).toMatchObject({
-      successUrl: `http://localhost:3003${pagePath(page.id)}?purchase=${encodeURIComponent(purchase.id)}`,
-      returnUrl: `http://localhost:3003${pagePath(page.id)}?purchase=${encodeURIComponent(purchase.id)}`,
+      successUrl: `http://localhost:3003${expectedPath}?purchase=${encodeURIComponent(purchase.id)}`,
+      returnUrl: `http://localhost:3003${expectedPath}?purchase=${encodeURIComponent(purchase.id)}`,
     });
     expect(call[1]).toMatchObject({
       externalCustomerId: buyer.id,
