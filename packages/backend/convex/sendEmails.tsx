@@ -4,7 +4,7 @@ import { Resend } from "@convex-dev/resend";
 import { internalAction } from "./_generated/server";
 import { v } from "convex/values";
 import { render } from "@react-email/render";
-import { EMAIL_CONTENT } from "./lib/email-content";
+import { EMAIL_CONTENT } from "./lib/emailContent";
 import { normalizeLanguage, type Language } from "./lib/language";
 import {
   Html,

@@ -14,6 +14,8 @@ import type * as env from "../env.js";
 import type * as healthCheck from "../healthCheck.js";
 import type * as http from "../http.js";
 import type * as lib_content from "../lib/content.js";
+import type * as lib_emailContent from "../lib/emailContent.js";
+import type * as lib_language from "../lib/language.js";
 import type * as lib_orders from "../lib/orders.js";
 import type * as lib_pages from "../lib/pages.js";
 import type * as payments from "../payments.js";
@@ -38,6 +40,8 @@ declare const fullApi: ApiFromModules<{
   healthCheck: typeof healthCheck;
   http: typeof http;
   "lib/content": typeof lib_content;
+  "lib/emailContent": typeof lib_emailContent;
+  "lib/language": typeof lib_language;
   "lib/orders": typeof lib_orders;
   "lib/pages": typeof lib_pages;
   payments: typeof payments;
