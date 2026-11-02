@@ -14,7 +14,7 @@ import {
   SettingsCardHeader,
 } from "./settings-card";
 import { Label } from "../ui/label";
-import { Loader2 } from "lucide-react";
+import { ArrowUpRight, Loader2 } from "lucide-react";
 
 export default function UpdateNameCard({ name }: { name: string }) {
   const form = useForm({
@@ -49,27 +49,43 @@ export default function UpdateNameCard({ name }: { name: string }) {
     >
       <SettingsCard>
         <SettingsCardContent>
-          <SettingsCardHeader title="Votre nom" description="" />
+          <SettingsCardHeader
+            title="Votre nom"
+            description="Le nom associé à votre compte."
+          />
           <form.Field
             name="name"
             children={(field) => (
-              <div className="flex flex-col gap-1">
-                <Label htmlFor="name">Name</Label>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="name" className="sr-only">
+                  Nom
+                </Label>
                 <Input
                   id="name"
                   placeholder="Nom"
-                  autoComplete="off"
+                  autoComplete="name"
                   required
+                  minLength={2}
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
-                  className="w-full max-w-sm bg-transparent"
+                  aria-invalid={field.state.meta.errors.length > 0}
+                  aria-describedby={
+                    field.state.meta.errors.length ? "name-error" : undefined
+                  }
+                  className="h-12 rounded-none bg-transparent px-3.5 text-base md:text-sm"
                 />
-                {field.state.meta.errors.map((error) => (
-                  <p key={error?.message} className="text-sm text-destructive">
-                    {error?.message}
+                {field.state.meta.errors.length > 0 && (
+                  <p
+                    id="name-error"
+                    role="alert"
+                    className="text-xs text-destructive"
+                  >
+                    {field.state.meta.errors
+                      .map((error) => error?.message)
+                      .join(" ")}
                   </p>
-                ))}
+                )}
               </div>
             )}
           />
@@ -79,13 +95,18 @@ export default function UpdateNameCard({ name }: { name: string }) {
             {(state) => (
               <Button
                 type="submit"
-                size="sm"
+                variant="outline"
                 disabled={!state.canSubmit || state.isSubmitting}
               >
+                {state.isSubmitting ? "Enregistrement…" : "Enregistrer"}
                 {state.isSubmitting ? (
-                  <Loader2 className="animate-spin" />
+                  <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
                 ) : (
-                  "Enregistrer"
+                  <ArrowUpRight
+                    aria-hidden="true"
+                    className="size-3.5"
+                    strokeWidth={1.5}
+                  />
                 )}
               </Button>
             )}

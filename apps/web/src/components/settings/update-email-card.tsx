@@ -12,7 +12,7 @@ import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import z from "zod";
 import { Button } from "../ui/button";
-import { Loader2 } from "lucide-react";
+import { ArrowUpRight, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 export default function UpdateEmailCard({ email }: { email: string }) {
@@ -59,51 +59,72 @@ export default function UpdateEmailCard({ email }: { email: string }) {
     >
       <SettingsCard>
         <SettingsCardContent>
-          <SettingsCardHeader title="Adresse email" description="" />
+          <SettingsCardHeader
+            title="Adresse email"
+            description="L’adresse utilisée pour vous connecter et recevoir nos emails."
+          />
           <form.Field
             name="newEmail"
             children={(field) => (
-              <div className="flex flex-col gap-1">
-                <Label htmlFor="newEmail">Email</Label>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="newEmail" className="sr-only">
+                  Email
+                </Label>
                 <Input
                   id="newEmail"
+                  type="email"
                   placeholder="Votre adresse email"
-                  autoComplete="off"
+                  autoComplete="email"
                   required
                   disabled={isSocialOnly}
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
-                  className="w-full max-w-sm bg-transparent"
+                  aria-invalid={field.state.meta.errors.length > 0}
+                  aria-describedby={
+                    field.state.meta.errors.length ? "email-error" : undefined
+                  }
+                  className="h-12 rounded-none bg-transparent px-3.5 text-base md:text-sm"
                 />
-                {field.state.meta.errors.map((error) => (
-                  <p key={error?.message} className="text-sm text-destructive">
-                    {error?.message}
+                {field.state.meta.errors.length > 0 && (
+                  <p
+                    id="email-error"
+                    role="alert"
+                    className="text-xs text-destructive"
+                  >
+                    {field.state.meta.errors
+                      .map((error) => error?.message)
+                      .join(" ")}
                   </p>
-                ))}
+                )}
               </div>
             )}
           />
         </SettingsCardContent>
         <SettingsCardFooter>
-          <p className="text-sm text-muted-foreground">
-            {isSocialOnly
-              ? "Email géré par votre fournisseur de connexion."
-              : ""}
-          </p>
+          {isSocialOnly && (
+            <p className="max-w-xs text-xs leading-relaxed text-muted-foreground">
+              Email géré par votre fournisseur de connexion.
+            </p>
+          )}
           <form.Subscribe>
             {(state) => (
               <Button
                 type="submit"
-                size="sm"
+                variant="outline"
                 disabled={
                   isSocialOnly || !state.canSubmit || state.isSubmitting
                 }
               >
+                {state.isSubmitting ? "Enregistrement…" : "Enregistrer"}
                 {state.isSubmitting ? (
-                  <Loader2 className="animate-spin size-4" />
+                  <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
                 ) : (
-                  "Enregistrer"
+                  <ArrowUpRight
+                    aria-hidden="true"
+                    className="size-3.5"
+                    strokeWidth={1.5}
+                  />
                 )}
               </Button>
             )}

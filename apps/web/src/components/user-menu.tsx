@@ -35,7 +35,7 @@ export default function UserMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label="Menu du compte"
-        className="flex size-9 shrink-0 items-center justify-center rounded-full border font-serif text-lg text-foreground transition-colors hover:border-foreground/30 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-popup-open:border-foreground/30 data-popup-open:bg-muted motion-reduce:transition-none"
+        className="flex size-9 shrink-0 items-center justify-center rounded-none border font-serif text-lg text-foreground transition-colors hover:border-foreground/30 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-popup-open:border-foreground/30 data-popup-open:bg-muted motion-reduce:transition-none"
       >
         {initial}
       </DropdownMenuTrigger>

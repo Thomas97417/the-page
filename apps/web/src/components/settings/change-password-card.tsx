@@ -1,6 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
 import z from "zod";
+import { ArrowUpRight, Loader2 } from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
 
@@ -62,12 +63,15 @@ export default function ChangePasswordCard() {
     >
       <SettingsCard>
         <SettingsCardContent>
-          <SettingsCardHeader title="Mot de passe" description="" />
-          <div className="flex flex-col gap-3">
+          <SettingsCardHeader
+            title="Mot de passe"
+            description="Choisissez un mot de passe d’au moins 8 caractères."
+          />
+          <div className="grid gap-5 sm:grid-cols-2">
             <form.Field
               name="currentPassword"
               children={(field) => (
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-2.5 sm:col-span-2">
                   <Label htmlFor="currentPassword">Mot de passe actuel</Label>
                   <PasswordInput
                     id="currentPassword"
@@ -76,11 +80,13 @@ export default function ChangePasswordCard() {
                     value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
+                    className="[&_input]:h-12 [&_input]:rounded-none [&_input]:pl-3.5 [&_input]:text-base md:[&_input]:text-sm"
                   />
                   {field.state.meta.errors.map((error) => (
                     <p
                       key={error?.message}
-                      className="text-sm text-destructive"
+                      role="alert"
+                      className="text-xs text-destructive"
                     >
                       {error?.message}
                     </p>
@@ -91,7 +97,7 @@ export default function ChangePasswordCard() {
             <form.Field
               name="newPassword"
               children={(field) => (
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-2.5">
                   <Label htmlFor="newPassword">Nouveau mot de passe</Label>
                   <PasswordInput
                     id="newPassword"
@@ -100,11 +106,13 @@ export default function ChangePasswordCard() {
                     value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
+                    className="[&_input]:h-12 [&_input]:rounded-none [&_input]:pl-3.5 [&_input]:text-base md:[&_input]:text-sm"
                   />
                   {field.state.meta.errors.map((error) => (
                     <p
                       key={error?.message}
-                      className="text-sm text-destructive"
+                      role="alert"
+                      className="text-xs text-destructive"
                     >
                       {error?.message}
                     </p>
@@ -115,7 +123,7 @@ export default function ChangePasswordCard() {
             <form.Field
               name="confirmPassword"
               children={(field) => (
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-2.5">
                   <Label htmlFor="confirmPassword">
                     Confirmer le mot de passe
                   </Label>
@@ -126,11 +134,13 @@ export default function ChangePasswordCard() {
                     value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
+                    className="[&_input]:h-12 [&_input]:rounded-none [&_input]:pl-3.5 [&_input]:text-base md:[&_input]:text-sm"
                   />
                   {field.state.meta.errors.map((error) => (
                     <p
                       key={error?.message}
-                      className="text-sm text-destructive"
+                      role="alert"
+                      className="text-xs text-destructive"
                     >
                       {error?.message}
                     </p>
@@ -141,15 +151,26 @@ export default function ChangePasswordCard() {
           </div>
         </SettingsCardContent>
         <SettingsCardFooter>
-          <p className="text-sm text-muted-foreground">8 caractères minimum.</p>
+          <p className="max-w-xs text-xs leading-relaxed text-muted-foreground">
+            Les autres sessions seront fermées après modification.
+          </p>
           <form.Subscribe>
             {(state) => (
               <Button
                 type="submit"
-                size="sm"
+                variant="outline"
                 disabled={!state.canSubmit || state.isSubmitting}
               >
                 {state.isSubmitting ? "Enregistrement…" : "Enregistrer"}
+                {state.isSubmitting ? (
+                  <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
+                ) : (
+                  <ArrowUpRight
+                    aria-hidden="true"
+                    className="size-3.5"
+                    strokeWidth={1.5}
+                  />
+                )}
               </Button>
             )}
           </form.Subscribe>
