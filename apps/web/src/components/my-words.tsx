@@ -10,6 +10,8 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { WordDescriptionField } from "./word-description-field";
 import { euros, errorMessage } from "@/lib/page";
+import { Link } from "@tanstack/react-router";
+import { DEFAULT_PAGE_ID, getPage } from "@my-better-t-app/backend/convex/lib/pages";
 
 type Purchase = FunctionReturnType<typeof api.purchases.mine>[number];
 const statusLabels = {
@@ -22,7 +24,7 @@ const statusLabels = {
   refunded: "Remboursé",
 };
 
-function OwnedWord({ purchase }: { purchase: Purchase }) {
+function OwnedWord({ purchase, onClose }: { purchase: Purchase; onClose: () => void }) {
   const [editing, setEditing] = useState(false);
   const [word, setWord] = useState(purchase.word ?? "");
   const [url, setUrl] = useState(purchase.url ?? "");
@@ -57,7 +59,16 @@ function OwnedWord({ purchase }: { purchase: Purchase }) {
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="font-mono text-[11px] text-muted-foreground">
-            PLACE {String(purchase.position).padStart(2, "0")}
+            <Link
+              to={purchase.pageId === DEFAULT_PAGE_ID ? "/" : "/$page"}
+              params={purchase.pageId === DEFAULT_PAGE_ID ? {} : { page: purchase.pageId }}
+              search={{}}
+              hash={`word-${purchase.position}`}
+              onClick={onClose}
+              className="underline-offset-4 hover:underline"
+            >
+              {getPage(purchase.pageId).label} · PLACE {String(purchase.position).padStart(2, "0")}
+            </Link>
             {purchase.hidden ? " · MASQUÉ" : ""}
           </p>
           <p className="mt-2 break-all font-serif text-3xl">{purchase.word}</p>
@@ -153,7 +164,7 @@ export function MyWords({ onClose }: { onClose: () => void }) {
           Mes mots.
         </SheetTitle>
         <SheetDescription className="sr-only">
-          Vos emplacements actuels et l’historique de vos achats.
+          Vos emplacements actuels et l’historique de vos achats sur toutes les pages.
         </SheetDescription>
         <div className="mt-9 flex gap-6 border-b text-sm">
           <button
@@ -179,7 +190,7 @@ export function MyWords({ onClose }: { onClose: () => void }) {
         ) : tab === "current" ? (
           current.length ? (
             current.map((purchase) => (
-              <OwnedWord key={purchase.id} purchase={purchase} />
+              <OwnedWord key={purchase.id} purchase={purchase} onClose={onClose} />
             ))
           ) : (
             <div className="py-16">
@@ -203,7 +214,7 @@ export function MyWords({ onClose }: { onClose: () => void }) {
                 </div>
                 <div className="mt-2 flex flex-wrap justify-between gap-2 text-xs text-muted-foreground">
                   <span>
-                    Place {purchase.position} ·{" "}
+                    {getPage(purchase.pageId).label} · Place {purchase.position} ·{" "}
                     {new Date(purchase.createdAt).toLocaleDateString("fr-FR")}
                   </span>
                   <span>

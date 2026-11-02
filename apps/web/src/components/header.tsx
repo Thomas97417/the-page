@@ -1,13 +1,16 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { useConvexAuth } from "convex/react";
 import { ArrowUpRight } from "lucide-react";
 import { usePage } from "./page-provider";
 import UserMenu from "./user-menu";
 import ThemeToggle from "./theme-toggle";
+import { pageIdFromPath } from "@my-better-t-app/backend/convex/lib/pages";
+import { rememberReturnPath, validatePageSearch } from "@/lib/page";
 
 export default function Header() {
   const { isAuthenticated, isLoading } = useConvexAuth();
   const { showWords } = usePage();
+  const { pathname, search } = useLocation();
   return (
     <header className="mx-auto flex h-21 w-full max-w-296 shrink-0 items-center justify-between px-5 sm:px-10 lg:px-14">
       <Link
@@ -34,6 +37,10 @@ export default function Header() {
         ) : (
           <Link
             to="/sign-in"
+            onClick={() => {
+              const pageId = pageIdFromPath(pathname);
+              if (pageId) rememberReturnPath(pageId, validatePageSearch(search).purchase);
+            }}
             aria-disabled={isLoading || undefined}
             tabIndex={isLoading ? -1 : undefined}
             className={`group inline-flex h-9 shrink-0 items-center gap-2 rounded-full border px-4 text-xs font-medium transition-colors hover:border-foreground/25 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${isLoading ? "pointer-events-none opacity-40" : ""}`}

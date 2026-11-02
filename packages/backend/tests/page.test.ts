@@ -5,6 +5,7 @@ import betterAuth from "@convex-dev/better-auth/test";
 import schema from "../convex/schema";
 import { api, components, internal } from "../convex/_generated/api";
 import { validateContent } from "../convex/lib/content";
+import { DEFAULT_PAGE_ID, PAGES, pagePath, type PageId } from "../convex/lib/pages";
 import type { Doc } from "../convex/_generated/dataModel";
 import { checkoutsGet } from "@polar-sh/sdk/funcs/checkoutsGet.js";
 import { ordersList } from "@polar-sh/sdk/funcs/ordersList.js";
@@ -73,8 +74,9 @@ async function reserve(
   position = 1,
   word = "Bonjour",
   description?: string,
+  pageId: PageId = DEFAULT_PAGE_ID,
 ) {
-  const slot = (await t.query(api.slots.list)).find(
+  const slot = (await t.query(api.slots.list, { pageId })).find(
     (s) => s.position === position,
   )!;
   return await t.mutation(internal.purchases.reserve, {
@@ -171,16 +173,128 @@ describe("content", () => {
 });
 
 describe("purchases and ownership", () => {
-  it("initializes exactly 50 empty places idempotently", async () => {
+  it("initializes 50 independent places per page idempotently", async () => {
     const t = setup();
     await t.mutation(internal.slots.initialize);
     await t.mutation(internal.slots.initialize);
-    const slots = await t.query(api.slots.list);
+    const slots = await t.query(api.slots.list, {});
     expect(slots).toHaveLength(50);
     expect(slots.map((s) => s.position)).toEqual(
       Array.from({ length: 50 }, (_, i) => i + 1),
     );
     expect(slots.every((s) => s.price === 100 && !s.word)).toBe(true);
+    const ids = new Set<string>();
+    for (const page of PAGES) {
+      const pageSlots = await t.query(api.slots.list, { pageId: page.id });
+      expect(pageSlots).toHaveLength(50);
+      expect(pageSlots.map((s) => s.position)).toEqual(
+        Array.from({ length: 50 }, (_, i) => i + 1),
+      );
+      expect(pageSlots.every((s) => s.pageId === page.id && s.price === 100)).toBe(true);
+      pageSlots.forEach((slot) => ids.add(slot.id));
+    }
+    expect(ids.size).toBe(PAGES.length * 50);
+    expect(slots).toEqual(await t.query(api.slots.list, { pageId: DEFAULT_PAGE_ID }));
+  });
+  it("migrates legacy World places without changing ownership, prices or reservations", async () => {
+    const t = setup();
+    const legacy = await t.run(async (ctx) => {
+      const slotId = await ctx.db.insert("slots", {
+        position: 1,
+        acquisitions: 4,
+        word: "Ensemble",
+        description: "Notre histoire.",
+        visibility: "visible",
+      });
+      const purchaseId = await ctx.db.insert("purchases", {
+        slotId,
+        position: 1,
+        userId: "original-owner",
+        word: "Ensemble",
+        acquisition: 3,
+        amount: 400,
+        status: "published",
+        reservedUntil: Date.now(),
+      });
+      const reservationId = await ctx.db.insert("purchases", {
+        slotId,
+        position: 1,
+        userId: "next-owner",
+        word: "Demain",
+        acquisition: 4,
+        amount: 500,
+        status: "pending",
+        reservedUntil: Date.now() + 300_000,
+      });
+      await ctx.db.patch(slotId, {
+        currentPurchaseId: purchaseId,
+        reservationId,
+        reservedUntil: Date.now() + 300_000,
+      });
+      return (await ctx.db.get(slotId))!;
+    });
+    const before = await t.query(api.slots.list, {});
+    expect(before[0]).toMatchObject({ id: legacy._id, pageId: "world", word: "Ensemble", price: 500 });
+    expect(await t.query(api.slots.list, { pageId: "france" })).toEqual([]);
+    await t.mutation(internal.slots.initialize);
+    await t.mutation(internal.slots.initialize);
+    expect(await t.run((ctx) => ctx.db.get(legacy._id))).toEqual({ ...legacy, pageId: "world" });
+    expect((await t.query(api.slots.list, {}))[0]).toEqual(before[0]);
+    expect((await t.query(api.slots.list, { pageId: "france" }))[0]).toMatchObject({ price: 100, reserved: false });
+    // A checkout created before the migration can still publish to World.
+    const pending = (await t.query(internal.purchases.get, { purchaseId: legacy.reservationId! }))!;
+    await paid(t, pending);
+    expect((await t.query(api.slots.list, {}))[0]).toMatchObject({ word: "Demain", price: 600 });
+  });
+  it("isolates reservations, publication and refunds between the same position on different pages", async () => {
+    const t = setup();
+    await t.mutation(internal.slots.initialize);
+    const world = await reserve(t, "world-owner");
+    const france = await reserve(t, "france-owner", 1, "Salut", undefined, "france");
+    expect(france.pageId).toBe("france");
+    await paid(t, france);
+    expect((await t.query(api.slots.list, { pageId: "france" }))[0]).toMatchObject({ word: "Salut", price: 200, reserved: false });
+    expect((await t.query(api.slots.list, {}))[0]).toMatchObject({ price: 100, reserved: true });
+    await paid(t, world);
+    await t.mutation(internal.purchases.markRefunded, { orderId: order(france).id, refundedAmount: france.amount });
+    const refunded = (await t.query(api.slots.list, { pageId: "france" }))[0];
+    expect(refunded.price).toBe(200);
+    expect(refunded.word).toBeUndefined();
+    expect((await t.query(api.slots.list, {}))[0]).toMatchObject({ word: "Bonjour", price: 200 });
+    for (const pageId of ["royaume-uni", "etats-unis"] as const) {
+      const untouched = (await t.query(api.slots.list, { pageId }))[0];
+      expect(untouched).toMatchObject({ price: 100, reserved: false });
+      expect(untouched.word).toBeUndefined();
+    }
+  });
+  it("identifies every owned word and purchase status by page", async () => {
+    const t = setup();
+    await t.mutation(internal.slots.initialize);
+    const owner = await account(t, "owner");
+    for (const page of PAGES) {
+      const p = await reserve(t, owner.id, 1, "Ensemble", undefined, page.id);
+      await paid(t, p);
+      expect(await owner.client.query(api.purchases.status, { purchaseId: p._id })).toMatchObject({ pageId: page.id, current: true });
+    }
+    const purchases = await owner.client.query(api.purchases.mine);
+    expect(purchases).toHaveLength(PAGES.length);
+    expect(new Set(purchases.map((purchase) => purchase.pageId))).toEqual(new Set(PAGES.map((page) => page.id)));
+  });
+  it("moderates a country page without hiding the same position on World", async () => {
+    const t = setup();
+    await t.mutation(internal.slots.initialize);
+    const admin = await account(t, "admin");
+    vi.stubEnv("ADMIN_USER_IDS", admin.id);
+    const world = await reserve(t, "world-owner");
+    const france = await reserve(t, "france-owner", 1, "Salut", undefined, "france");
+    await paid(t, world);
+    await paid(t, france);
+    const slots = await admin.client.query(api.slots.adminList, { pageId: "france" });
+    expect(slots).toHaveLength(50);
+    expect(slots.every((slot) => slot.pageId === "france")).toBe(true);
+    await admin.client.mutation(api.slots.moderate, { slotId: france.slotId, purchaseId: france._id, action: "hide" });
+    expect((await t.query(api.slots.list, { pageId: "france" }))[0].word).toBeUndefined();
+    expect((await t.query(api.slots.list, {}))[0].word).toBe("Bonjour");
   });
   it("raises only the purchased place's price and handles duplicate events", async () => {
     const t = setup();
@@ -188,7 +302,7 @@ describe("purchases and ownership", () => {
     const p = await reserve(t);
     await paid(t, p);
     await paid(t, p);
-    const slots = await t.query(api.slots.list);
+    const slots = await t.query(api.slots.list, {});
     expect(slots[0]).toMatchObject({
       word: "Bonjour",
       price: 200,
@@ -205,7 +319,7 @@ describe("purchases and ownership", () => {
     const owner = await account(t, "first");
     const p = await reserve(t, owner.id, 1, "Bonjour", "Une première histoire.");
     await paid(t, p);
-    expect((await t.query(api.slots.list))[0].description).toBe(
+    expect((await t.query(api.slots.list, {}))[0].description).toBe(
       "Une première histoire.",
     );
     await owner.client.mutation(api.slots.updateContent, {
@@ -215,7 +329,7 @@ describe("purchases and ownership", () => {
       url: "https://new.example/",
       description: "Une nouvelle histoire.",
     });
-    expect((await t.query(api.slots.list))[0]).toMatchObject({
+    expect((await t.query(api.slots.list, {}))[0]).toMatchObject({
       word: "Libre",
       description: "Une nouvelle histoire.",
       price: 200,
@@ -232,11 +346,11 @@ describe("purchases and ownership", () => {
         word: "Volé",
       }),
     ).rejects.toThrow("ne vous appartient plus");
-    expect((await t.query(api.slots.list))[0]).toMatchObject({
+    expect((await t.query(api.slots.list, {}))[0]).toMatchObject({
       word: "Suivant",
       price: 300,
     });
-    expect((await t.query(api.slots.list))[0].description).toBeUndefined();
+    expect((await t.query(api.slots.list, {}))[0].description).toBeUndefined();
     expect((await owner.client.query(api.purchases.mine))[0]).toMatchObject({
       word: "Bonjour",
       description: "Une première histoire.",
@@ -253,19 +367,19 @@ describe("purchases and ownership", () => {
       ...args,
       description: "Une dédicace.",
     });
-    expect((await t.query(api.slots.list))[0].description).toBe("Une dédicace.");
+    expect((await t.query(api.slots.list, {}))[0].description).toBe("Une dédicace.");
     await expect(
       owner.client.mutation(api.slots.updateContent, {
         ...args,
         description: "a".repeat(161),
       }),
     ).rejects.toThrow("160 caractères");
-    expect((await t.query(api.slots.list))[0].description).toBe("Une dédicace.");
+    expect((await t.query(api.slots.list, {}))[0].description).toBe("Une dédicace.");
     await owner.client.mutation(api.slots.updateContent, {
       ...args,
       description: " \n ",
     });
-    expect((await t.query(api.slots.list))[0].description).toBeUndefined();
+    expect((await t.query(api.slots.list, {}))[0].description).toBeUndefined();
     expect(
       (await owner.client.query(api.purchases.mine))[0].description,
     ).toBeUndefined();
@@ -276,7 +390,7 @@ describe("purchases and ownership", () => {
     await expect(reserve(t, "buyer", 1, "Mot", "a".repeat(161))).rejects.toThrow(
       "160 caractères",
     );
-    expect((await t.query(api.slots.list))[0].reserved).toBe(false);
+    expect((await t.query(api.slots.list, {}))[0].reserved).toBe(false);
     const p = await reserve(t, "buyer", 1, "Mot", "Mon projet.");
     expect((await reserve(t, "buyer", 1, "Mot", "Mon projet."))._id).toBe(p._id);
     await expect(
@@ -292,7 +406,7 @@ describe("purchases and ownership", () => {
       orderId: order(p).id,
       refundedAmount: p.amount,
     });
-    const slot = (await t.query(api.slots.list))[0];
+    const slot = (await t.query(api.slots.list, {}))[0];
     expect(slot.word).toBeUndefined();
     expect(slot.description).toBeUndefined();
     expect(slot.price).toBe(200);
@@ -309,13 +423,13 @@ describe("purchases and ownership", () => {
     await expect(reserve(t, "third")).rejects.toThrow(
       "paiement est déjà en cours",
     );
-    expect((await t.query(api.slots.list))[0]).toMatchObject({
+    expect((await t.query(api.slots.list, {}))[0]).toMatchObject({
       word: "Bonjour",
       price: 200,
       reserved: true,
     });
     await paid(t, second);
-    expect((await t.query(api.slots.list))[0].acquisitions).toBe(2);
+    expect((await t.query(api.slots.list, {}))[0].acquisitions).toBe(2);
   });
   it("requires explicit acceptance of a changed price", async () => {
     const t = setup();
@@ -357,7 +471,7 @@ describe("purchases and ownership", () => {
       purchaseId: p._id,
       reason: "expired",
     });
-    expect((await t.query(api.slots.list))[0]).toMatchObject({
+    expect((await t.query(api.slots.list, {}))[0]).toMatchObject({
       price: 100,
       reserved: false,
     });
@@ -377,7 +491,7 @@ describe("purchases and ownership", () => {
       orderId: order(old).id,
       refundedAmount: 100,
     });
-    expect((await t.query(api.slots.list))[0]).toMatchObject({
+    expect((await t.query(api.slots.list, {}))[0]).toMatchObject({
       word: "Actuel",
       price: 200,
     });
@@ -396,7 +510,7 @@ describe("purchases and ownership", () => {
         order: order(p, invalid),
       }),
     ).toBe("refund_pending");
-    expect((await t.query(api.slots.list))[0]).toMatchObject({
+    expect((await t.query(api.slots.list, {}))[0]).toMatchObject({
       price: 100,
       acquisitions: 0,
     });
@@ -416,7 +530,7 @@ describe("purchases and ownership", () => {
         order: order(p, { purchaseId: "invalid" }),
       }),
     ).toBe("ignored");
-    expect((await t.query(api.slots.list))[0].price).toBe(100);
+    expect((await t.query(api.slots.list, {}))[0].price).toBe(100);
   });
   it("does not expose another buyer's payment status", async () => {
     const t = setup();
@@ -446,7 +560,7 @@ describe("moderation", () => {
     vi.stubEnv("ADMIN_USER_IDS", admin.id);
     const p = await reserve(t, owner.id, 1, "Bonjour", "Mon histoire.");
     await paid(t, p);
-    await expect(owner.client.query(api.slots.adminList)).rejects.toThrow(
+    await expect(owner.client.query(api.slots.adminList, {})).rejects.toThrow(
       "administration",
     );
     await expect(
@@ -461,7 +575,7 @@ describe("moderation", () => {
       purchaseId: p._id,
       action: "hide",
     });
-    const publicSlot = (await t.query(api.slots.list))[0];
+    const publicSlot = (await t.query(api.slots.list, {}))[0];
     expect(publicSlot.word).toBeUndefined();
     expect(publicSlot.url).toBeUndefined();
     expect(publicSlot.description).toBeUndefined();
@@ -478,7 +592,7 @@ describe("moderation", () => {
       purchaseId: p._id,
       action: "restore",
     });
-    expect((await t.query(api.slots.list))[0]).toMatchObject({
+    expect((await t.query(api.slots.list, {}))[0]).toMatchObject({
       word: "Bonjour",
       description: "Mon histoire.",
     });
@@ -487,11 +601,11 @@ describe("moderation", () => {
       purchaseId: p._id,
       action: "remove",
     });
-    expect((await t.query(api.slots.list))[0]).toMatchObject({
+    expect((await t.query(api.slots.list, {}))[0]).toMatchObject({
       price: 200,
       acquisitions: 1,
     });
-    expect((await t.query(api.slots.list))[0].description).toBeUndefined();
+    expect((await t.query(api.slots.list, {}))[0].description).toBeUndefined();
     expect(await t.run((ctx) => ctx.db.get(p.slotId))).not.toHaveProperty(
       "description",
     );
@@ -527,7 +641,7 @@ describe("reconciliation", () => {
     await expect(reserve(t, "owner")).rejects.toThrow(
       "gratuitement dans Mes mots",
     );
-    expect((await t.query(api.slots.list))[0]).toMatchObject({
+    expect((await t.query(api.slots.list, {}))[0]).toMatchObject({
       price: 200,
       reserved: false,
     });
@@ -558,7 +672,7 @@ describe("reconciliation", () => {
   it("reserves only once when two buyers submit concurrently", async () => {
     const t = setup();
     await t.mutation(internal.slots.initialize);
-    const slot = (await t.query(api.slots.list))[0];
+    const slot = (await t.query(api.slots.list, {}))[0];
     const results = await Promise.allSettled(
       ["first", "second"].map((userId) =>
         t.mutation(internal.purchases.reserve, {
@@ -613,7 +727,7 @@ describe("reconciliation", () => {
       },
     } as never);
     await t.action(internal.payments.verifyOrder, { orderId: data.id });
-    expect((await t.query(api.slots.list))[0]).toMatchObject({
+    expect((await t.query(api.slots.list, {}))[0]).toMatchObject({
       acquisitions: 0,
       price: 100,
     });
@@ -637,7 +751,7 @@ describe("reconciliation", () => {
     } as never);
     await t.action(internal.payments.reconcile, { purchaseId: p._id });
     expect(checkoutsGet).toHaveBeenCalled();
-    expect((await t.query(api.slots.list))[0]).toMatchObject({
+    expect((await t.query(api.slots.list, {}))[0]).toMatchObject({
       reserved: false,
       price: 100,
     });
@@ -657,7 +771,7 @@ describe("reconciliation", () => {
       .mockResolvedValue({ ok: true, value: { status: "confirmed" } } as never);
     await t.action(internal.payments.reconcile, { purchaseId: p._id });
     await t.action(internal.payments.reconcile, { purchaseId: p._id });
-    expect((await t.query(api.slots.list))[0].reserved).toBe(true);
+    expect((await t.query(api.slots.list, {}))[0].reserved).toBe(true);
   });
   it("recovers a succeeded payment when its webhook is missing", async () => {
     const t = setup();
@@ -695,7 +809,7 @@ describe("reconciliation", () => {
       },
     } as never);
     await t.action(internal.payments.reconcile, { purchaseId: p._id });
-    expect((await t.query(api.slots.list))[0]).toMatchObject({
+    expect((await t.query(api.slots.list, {}))[0]).toMatchObject({
       word: "Bonjour",
       price: 200,
     });
@@ -749,7 +863,7 @@ describe("reconciliation", () => {
     });
     expect(response.status).toBe(403);
   });
-  it("builds the fixed EUR sandbox checkout from server data", async () => {
+  it.each(PAGES)("builds a server-priced checkout returning to $id", async (page) => {
     const t = setup();
     await t.mutation(internal.slots.initialize);
     const buyer = await account(t, "buyer");
@@ -761,7 +875,7 @@ describe("reconciliation", () => {
       ok: true,
       value: { id: "checkout", url: "https://sandbox.polar.sh/checkout" },
     } as never);
-    const slot = (await t.query(api.slots.list))[0];
+    const slot = (await t.query(api.slots.list, { pageId: page.id }))[0];
     await buyer.client.action(api.payments.start, {
       slotId: slot.id,
       acquisition: 0,
@@ -772,6 +886,11 @@ describe("reconciliation", () => {
       "Une histoire à partager.",
     );
     const call = vi.mocked(checkoutsCreate).mock.calls[0];
+    const purchase = (await buyer.client.query(api.purchases.mine))[0];
+    expect(call[1]).toMatchObject({
+      successUrl: `http://localhost:3003${pagePath(page.id)}?purchase=${encodeURIComponent(purchase.id)}`,
+      returnUrl: `http://localhost:3003${pagePath(page.id)}?purchase=${encodeURIComponent(purchase.id)}`,
+    });
     expect(call[1]).toMatchObject({
       externalCustomerId: buyer.id,
       allowDiscountCodes: false,

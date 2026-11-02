@@ -1,5 +1,10 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { PAGES } from "./lib/pages";
+
+export const pageIdValidator = v.union(
+  ...PAGES.map((page) => v.literal(page.id)),
+);
 
 export const purchaseStatus = v.union(
   v.literal("creating"),
@@ -13,6 +18,8 @@ export const purchaseStatus = v.union(
 
 export default defineSchema({
   slots: defineTable({
+    // Optional while existing World places are migrated by slots:initialize.
+    pageId: v.optional(pageIdValidator),
     position: v.number(),
     acquisitions: v.number(),
     currentPurchaseId: v.optional(v.id("purchases")),
@@ -26,8 +33,11 @@ export default defineSchema({
     ),
     reservationId: v.optional(v.id("purchases")),
     reservedUntil: v.optional(v.number()),
-  }).index("by_position", ["position"]),
+  })
+    .index("by_position", ["position"])
+    .index("by_page_position", ["pageId", "position"]),
   purchases: defineTable({
+    pageId: v.optional(pageIdValidator),
     slotId: v.id("slots"),
     position: v.number(),
     userId: v.string(),

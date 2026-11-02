@@ -7,6 +7,7 @@ import { usePage } from "./page-provider";
 import { buttonVariants } from "./ui/button";
 import { euros } from "@/lib/page";
 import { cn } from "@/lib/utils";
+import { getPage } from "@my-better-t-app/backend/convex/lib/pages";
 
 type Slot = FunctionReturnType<typeof api.slots.list>[number];
 
@@ -31,7 +32,7 @@ function WordDetails({ slot }: { slot: Slot }) {
   return (
     <>
       <p className="pr-8 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-        Place {String(slot.position).padStart(2, "0")}
+        {getPage(slot.pageId).label} · Place {String(slot.position).padStart(2, "0")}
       </p>
       <Popover.Close
         aria-label="Fermer les informations du mot"
@@ -74,6 +75,7 @@ function WordDetails({ slot }: { slot: Slot }) {
           onClick={() =>
             buy({
               slotId: slot.id,
+              pageId: slot.pageId,
               position: slot.position,
               acquisition: slot.acquisitions,
               word: "",

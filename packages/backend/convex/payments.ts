@@ -13,6 +13,7 @@ import { internal } from "./_generated/api";
 import { polar, paymentConfigured } from "./polar";
 import { requireUser } from "./permissions";
 import { normalizePaidOrder } from "./lib/orders";
+import { DEFAULT_PAGE_ID, purchaseReturnPath } from "./lib/pages";
 
 const REQUEST_OPTIONS = {
   timeoutMs: 20_000,
@@ -86,6 +87,10 @@ export const start = action({
       if (!product.ok || product.value.isRecurring || product.value.isArchived)
         throw new Error("Invalid sandbox product");
       const siteUrl = new URL(process.env.SITE_URL!).origin;
+      const returnUrl = `${siteUrl}${purchaseReturnPath(
+        purchase.pageId ?? DEFAULT_PAGE_ID,
+        purchase._id,
+      )}`;
       const checkout = await checkoutsCreate(
         polar.polar,
         {
@@ -105,8 +110,8 @@ export const start = action({
           customerEmail: user.email,
           customerName: user.name,
           metadata: { purchaseId: purchase._id },
-          successUrl: `${siteUrl}/?purchase=${encodeURIComponent(purchase._id)}`,
-          returnUrl: `${siteUrl}/?purchase=${encodeURIComponent(purchase._id)}`,
+          successUrl: returnUrl,
+          returnUrl,
           locale: "fr",
         },
         REQUEST_OPTIONS,

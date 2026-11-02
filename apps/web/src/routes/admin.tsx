@@ -16,6 +16,7 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { euros, errorMessage } from "@/lib/page";
+import { DEFAULT_PAGE_ID, isPageId, PAGES, type PageId } from "@my-better-t-app/backend/convex/lib/pages";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -31,8 +32,9 @@ export const Route = createFileRoute("/admin")({
 });
 
 function Admin() {
+  const [pageId, setPageId] = useState<PageId>(DEFAULT_PAGE_ID);
   const viewer = useQuery(api.slots.viewer);
-  const slots = useQuery(api.slots.adminList, viewer?.isAdmin ? {} : "skip");
+  const slots = useQuery(api.slots.adminList, viewer?.isAdmin ? { pageId } : "skip");
   const moderate = useMutation(api.slots.moderate);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -47,6 +49,19 @@ function Admin() {
   return (
     <main className="mx-auto max-w-5xl px-5 py-14 sm:px-10">
       <h1 className="font-serif text-5xl tracking-tight">Modération.</h1>
+      <label className="mt-8 flex flex-wrap items-center gap-3 text-sm">
+        Page à modérer
+        <select
+          value={pageId}
+          onChange={(event) => {
+            if (isPageId(event.target.value)) setPageId(event.target.value);
+            setError("");
+          }}
+          className="h-11 min-w-44 border bg-background px-3 focus-visible:outline-2 focus-visible:outline-ring"
+        >
+          {PAGES.map((page) => <option key={page.id} value={page.id}>{page.label}</option>)}
+        </select>
+      </label>
       {error && (
         <p role="alert" className="mt-6 text-sm text-destructive">
           {error}
