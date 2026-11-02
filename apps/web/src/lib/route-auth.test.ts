@@ -7,11 +7,11 @@ import {
   redirect,
 } from "@tanstack/react-router";
 import { QueryClient } from "@tanstack/react-query";
-import { isPageId } from "@my-better-t-app/backend/convex/lib/pages";
+import { isPageId, PAGES, pagePath } from "@my-better-t-app/backend/convex/lib/pages";
 import { describe, expect, it, vi } from "vitest";
 import { loadRouteAuth, type RouteAuthContext } from "./route-auth";
 
-const PUBLIC_PATHS = ["/", "/france", "/royaume-uni", "/etats-unis"];
+const PUBLIC_PATHS = PAGES.map((page) => pagePath(page.id));
 const PRIVATE_PATHS = ["/settings", "/admin"];
 const AUTH_PATHS = [
   "/sign-in",

@@ -37,7 +37,7 @@ function setup() {
 }
 type Test = ReturnType<typeof setup>;
 
-async function account(t: Test, name: string) {
+async function account(t: Test, name: string, sessionDuration = 3_600_000) {
   const user = await t.mutation(components.betterAuth.adapter.create, {
     input: {
       model: "user",
@@ -56,7 +56,7 @@ async function account(t: Test, name: string) {
       data: {
         userId: user._id,
         token: `${name}-token`,
-        expiresAt: Date.now() + 3_600_000,
+        expiresAt: Date.now() + sessionDuration,
         createdAt: Date.now(),
         updatedAt: Date.now(),
       },
@@ -270,11 +270,13 @@ describe("purchases and ownership", () => {
   it("identifies every owned word and purchase status by page", async () => {
     const t = setup();
     await t.mutation(internal.slots.initialize);
-    const owner = await account(t, "owner");
+    const owner = await account(t, "owner", (PAGES.length + 1) * 11 * 60_000);
     for (const page of PAGES) {
       const p = await reserve(t, owner.id, 1, "Ensemble", undefined, page.id);
       await paid(t, p);
       expect(await owner.client.query(api.purchases.status, { purchaseId: p._id })).toMatchObject({ pageId: page.id, current: true });
+      // Purchases across all countries still respect the buyer's rate limit.
+      vi.setSystemTime(Date.now() + 11 * 60_000);
     }
     const purchases = await owner.client.query(api.purchases.mine);
     expect(purchases).toHaveLength(PAGES.length);
