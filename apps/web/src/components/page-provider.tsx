@@ -82,7 +82,7 @@ export function PageProvider({ children }: { children: ReactNode }) {
       <Sheet open={rulesOpen} onOpenChange={setRulesOpen}>
         <SheetContent>
           <SheetTitle className="mt-14 font-serif text-4xl tracking-tight">
-            La règle du jeu.
+            Comment ça marche ?
           </SheetTitle>
           <SheetDescription className="mt-6 text-base leading-relaxed text-muted-foreground">
             50 emplacements. Un mot par place.

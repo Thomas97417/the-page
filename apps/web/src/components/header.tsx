@@ -6,7 +6,7 @@ import ThemeToggle from "./theme-toggle";
 
 export default function Header() {
   const { isAuthenticated, isLoading } = useConvexAuth();
-  const { showRules, showWords } = usePage();
+  const { showWords } = usePage();
   return (
     <header className="mx-auto flex h-21 w-full max-w-296 shrink-0 items-center justify-between px-5 sm:px-10 lg:px-14">
       <Link
@@ -20,13 +20,6 @@ export default function Header() {
         aria-label="Navigation principale"
         className="flex items-center gap-1.5 text-xs sm:gap-6"
       >
-        <button
-          onClick={showRules}
-          className="min-h-11 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
-        >
-          <span className="hidden sm:inline">Comment ça marche</span>
-          <span className="sm:hidden">Règles</span>
-        </button>
         {isAuthenticated ? (
           <>
             <button

@@ -90,17 +90,17 @@ function ThePage() {
       </main>
       <footer className="w-full shrink-0 pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto w-full max-w-296 px-5 sm:px-10 lg:px-14">
-          <div className="flex items-center justify-between gap-4 border-t py-6 sm:py-8">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t py-6 sm:py-8">
             <p className="flex shrink-0 items-start gap-2">
               <span className="text-sm font-medium leading-none tracking-[0.22em]">TOMA</span>
               <span className="whitespace-nowrap font-mono text-[10px] leading-none text-muted-foreground">© 2026</span>
             </p>
-            <nav aria-label="Navigation de pied de page" className="flex shrink-0 items-center gap-3 sm:gap-6">
+            <nav aria-label="Navigation de pied de page" className="ml-auto flex shrink-0 items-center gap-3 sm:gap-6">
               <button
                 className="group flex min-h-11 items-center gap-2 whitespace-nowrap text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
                 onClick={showRules}
               >
-                <span className="underline-offset-4 group-hover:underline">Les règles</span>
+                <span className="underline-offset-4 group-hover:underline">Comment ça marche</span>
                 <ArrowUpRight aria-hidden="true" className="size-3.5" strokeWidth={1.5} />
               </button>
               <div className="border-l pl-3 sm:pl-6">
