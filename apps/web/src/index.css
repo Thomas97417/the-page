@@ -97,6 +97,7 @@
     background: transparent;
     color: inherit;
     font: inherit;
+    line-height: 1;
     letter-spacing: inherit;
     text-align: inherit;
     text-decoration-thickness: 1px;
@@ -105,13 +106,21 @@
   }
 
   .manuscript-word[data-empty] {
-    color: #a3a3a3;
+    color: #9a9a9a;
+    font-size: 0.72em;
+    font-style: italic;
+    letter-spacing: 0;
   }
 
   .manuscript-word:hover,
   .manuscript-word[data-popup-open] {
     color: var(--foreground);
     text-decoration-line: underline;
+  }
+
+  .manuscript-word[data-empty]:hover,
+  .manuscript-word[data-empty][data-popup-open] {
+    color: var(--muted-foreground);
   }
 
   .manuscript-word:focus-visible {

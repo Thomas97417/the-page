@@ -10,6 +10,13 @@ import { cn } from "@/lib/utils";
 
 type Slot = FunctionReturnType<typeof api.slots.list>[number];
 
+const PLACEHOLDER_WORDS = (
+  "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor " +
+  "incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis " +
+  "nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. " +
+  "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat."
+).split(" ");
+
 function linkLabel(url: string) {
   try {
     return new URL(url).hostname.replace(/^www\./, "");
@@ -26,7 +33,7 @@ function WordDetails({ slot }: { slot: Slot }) {
       <div className="flex items-center gap-3 pr-6 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
         <span>Place {String(slot.position).padStart(2, "0")}</span>
         <span aria-hidden="true">·</span>
-        <span>{slot.reserved ? "Réservée" : slot.word ? "Publiée" : "À écrire"}</span>
+        <span>{slot.reserved ? "Réservée" : slot.word ? "Publiée" : "Libre"}</span>
       </div>
       <Popover.Close
         aria-label="Fermer les informations du mot"
@@ -42,7 +49,7 @@ function WordDetails({ slot }: { slot: Slot }) {
           ? "Un paiement est en cours sur cette place."
           : slot.word
             ? "Ce mot fait partie de la page. Un nouvel achat le remplacera par le vôtre."
-            : "Une place dans l’histoire, pour le mot de votre choix."}
+            : "Ce texte de remplissage attend votre mot. Choisissez cette place pour l’écrire."}
       </Popover.Description>
       {slot.url && (
         <a
@@ -121,11 +128,15 @@ export function PageManuscript({ slots }: { slots: Slot[] | undefined }) {
                           aria-label={
                             word.word
                               ? `${word.word}, place ${word.position} : voir les informations`
-                              : `Place ${word.position}, ${word.reserved ? "réservée" : "à écrire"} : voir les informations`
+                              : `Place ${word.position}, ${word.reserved ? "réservée" : "libre, texte de remplissage"} : voir les informations`
                           }
                           className="manuscript-word"
                         >
-                          {word.word || "…"}
+                          {word.word || (
+                            <span aria-hidden="true">
+                              {PLACEHOLDER_WORDS[(word.position - 1) % PLACEHOLDER_WORDS.length]}
+                            </span>
+                          )}
                         </Popover.Trigger>
                       </Fragment>
                     ))}
@@ -166,10 +177,13 @@ export function PageManuscript({ slots }: { slots: Slot[] | undefined }) {
         <span aria-label="Page 1" className="font-serif text-sm text-muted-foreground">1</span>
       </footer>
       <p id="manuscript-hint" className="border-t pt-5 text-center text-xs leading-6 text-muted-foreground">
+        <span className="inline-flex flex-wrap items-baseline justify-center gap-x-2">
+          <span aria-hidden="true" className="font-serif text-base italic text-[#9a9a9a]">Lorem ipsum</span>
+          <span>Place libre · texte de remplissage</span>
+        </span>
+        <br />
         <span className="hidden sm:inline">Survolez ou cliquez sur un mot pour découvrir sa place.</span>
         <span className="sm:hidden">Touchez un mot pour découvrir sa place.</span>
-        <br />
-        Les « … » sont des places à écrire.
       </p>
     </article>
   );
