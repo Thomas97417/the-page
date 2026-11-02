@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "./components/target-cursor.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -92,6 +93,10 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    scrollbar-width: none;
+  }
+  *::-webkit-scrollbar {
+    display: none;
   }
   html {
     @apply scroll-smooth;

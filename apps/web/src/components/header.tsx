@@ -1,13 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { useConvexAuth } from "convex/react";
 import { ArrowUpRight } from "lucide-react";
-import { usePage } from "./page-provider";
 import UserMenu from "./user-menu";
 import ThemeToggle from "./theme-toggle";
 
 export default function Header() {
   const { isAuthenticated, isLoading } = useConvexAuth();
-  const { showWords } = usePage();
   return (
     <header className="mx-auto flex h-21 w-full max-w-296 shrink-0 items-center justify-between px-5 sm:px-10 lg:px-14">
       <Link
@@ -22,15 +20,7 @@ export default function Header() {
         className="flex items-center gap-1.5 text-xs sm:gap-6"
       >
         {isAuthenticated ? (
-          <>
-            <button
-              onClick={showWords}
-              className="min-h-11 transition-colors hover:text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring"
-            >
-              Mes mots
-            </button>
-            <UserMenu />
-          </>
+          <UserMenu />
         ) : (
           <Link
             to="/sign-in"
