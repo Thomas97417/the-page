@@ -30,62 +30,57 @@ function WordDetails({ slot }: { slot: Slot }) {
 
   return (
     <>
-      <div className="flex items-center gap-3 pr-6 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-        <span>Place {String(slot.position).padStart(2, "0")}</span>
-        <span aria-hidden="true">·</span>
-        <span>{slot.reserved ? "Réservée" : slot.word ? "Publiée" : "Libre"}</span>
-      </div>
+      <p className="pr-8 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+        Place {String(slot.position).padStart(2, "0")}
+      </p>
       <Popover.Close
         aria-label="Fermer les informations du mot"
         className="absolute right-3 top-3 flex size-8 items-center justify-center text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
       >
         <X className="size-3.5" />
       </Popover.Close>
-      <Popover.Title className="mt-5 break-words font-serif text-3xl leading-tight tracking-tight">
+      <Popover.Title className="mt-4 break-words font-serif text-3xl leading-tight tracking-tight">
         {slot.word || "Votre mot ici."}
       </Popover.Title>
-      <Popover.Description className="mt-2 text-xs leading-relaxed text-muted-foreground">
-        {slot.reserved
-          ? "Un paiement est en cours sur cette place."
-          : slot.word
-            ? "Ce mot fait partie de la page. Un nouvel achat le remplacera par le vôtre."
-            : "Ce texte de remplissage attend votre mot. Choisissez cette place pour l’écrire."}
-      </Popover.Description>
+      {slot.reserved && (
+        <Popover.Description className="mt-2 text-xs leading-relaxed text-muted-foreground">
+          Un paiement est en cours sur cette place.
+        </Popover.Description>
+      )}
       {slot.url && (
         <a
           href={slot.url}
           target="_blank"
           rel="sponsored ugc nofollow noopener noreferrer"
-          className="mt-4 flex min-h-8 items-center justify-between gap-3 text-sm underline decoration-border underline-offset-4 hover:decoration-foreground focus-visible:outline-2 focus-visible:outline-ring"
+          className="mt-1 flex min-h-8 items-center justify-between gap-3 text-xs text-muted-foreground underline decoration-border underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground focus-visible:outline-2 focus-visible:outline-ring"
         >
           <span className="truncate">{linkLabel(slot.url)}</span>
           <ArrowUpRight aria-hidden="true" className="size-3.5 shrink-0" />
           <span className="sr-only"> (nouvel onglet)</span>
         </a>
       )}
-      <dl className="mt-5 flex items-baseline justify-between gap-3 border-t pt-4">
-        <dt className="text-xs text-muted-foreground">Prochain achat</dt>
-        <dd className="font-serif text-2xl tabular-nums">{euros(slot.price)}</dd>
-      </dl>
-      <p className="mt-1 text-[11px] text-muted-foreground">
-        {slot.acquisitions} achat{slot.acquisitions > 1 ? "s" : ""} · +1 € à chaque achat
-      </p>
-      <Popover.Close
-        disabled={slot.reserved}
-        onClick={() =>
-          buy({
-            slotId: slot.id,
-            position: slot.position,
-            acquisition: slot.acquisitions,
-            word: "",
-            url: "",
-          })
-        }
-        className={cn(buttonVariants(), "mt-5 h-11 w-full justify-between px-4 text-xs")}
-      >
-        {slot.reserved ? "Place réservée" : slot.word ? "Prendre cette place" : "Écrire ici"}
-        <ArrowUpRight aria-hidden="true" className="size-4" />
-      </Popover.Close>
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+        <p className="font-serif text-3xl leading-none tabular-nums">
+          <span className="sr-only">Prix de cette place : </span>
+          {euros(slot.price)}
+        </p>
+        <Popover.Close
+          disabled={slot.reserved}
+          onClick={() =>
+            buy({
+              slotId: slot.id,
+              position: slot.position,
+              acquisition: slot.acquisitions,
+              word: "",
+              url: "",
+            })
+          }
+          className={cn(buttonVariants(), "h-10 gap-3 px-3 text-xs")}
+        >
+          {slot.reserved ? "Réservée" : slot.word ? "Prendre la place" : "Écrire ici"}
+          {!slot.reserved && <ArrowUpRight aria-hidden="true" className="size-3.5" />}
+        </Popover.Close>
+      </div>
     </>
   );
 }
