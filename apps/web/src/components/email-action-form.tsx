@@ -42,7 +42,7 @@ export default function EmailActionForm({
     }
   }
   return (
-    <main className="mx-auto w-full max-w-md px-6 py-16 sm:py-22">
+    <main className="mx-auto my-auto w-full max-w-md px-6 py-16 sm:py-22">
       <Link
         to="/sign-in"
         className="text-sm text-muted-foreground hover:text-foreground"
