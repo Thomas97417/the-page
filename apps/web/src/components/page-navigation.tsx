@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Check, ChevronDown } from "lucide-react";
+import { ArrowUpRight, Check, ChevronDown } from "lucide-react";
 import {
   DEFAULT_PAGE_ID,
   getPage,
@@ -36,9 +36,9 @@ export function PageNavigation({ pageId }: { pageId: PageId }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="start"
-        alignOffset={-8}
-        sideOffset={0}
-        className="w-22 min-w-0 p-1"
+        alignOffset={-20}
+        sideOffset={12}
+        className="w-72 max-w-[calc(100vw-2.5rem)] border bg-background p-5 text-foreground shadow-[0_8px_40px_-12px_rgb(0_0_0/0.18)] ring-0 motion-reduce:animate-none"
       >
         {PAGES.map((page) => (
           <DropdownMenuItem
@@ -52,14 +52,29 @@ export function PageNavigation({ pageId }: { pageId: PageId }) {
                 aria-current={pageId === page.id ? "page" : undefined}
               />
             }
-            className="min-h-8 cursor-pointer justify-between gap-2 px-1 py-1"
+            className="min-h-12 cursor-pointer justify-between gap-4 px-0 py-3 text-foreground focus:bg-transparent data-highlighted:bg-transparent"
           >
-            <span className="whitespace-nowrap font-serif text-sm tracking-[-0.025em] sm:text-base">
-              .{PAGE_SUFFIXES[page.id]}
+            <span className="min-w-0 flex-1">
+              <span className="font-serif text-xl leading-tight tracking-tight underline-offset-4 decoration-foreground/40 group-data-highlighted/dropdown-menu-item:underline">
+                .{PAGE_SUFFIXES[page.id]}
+              </span>
+              <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+                {page.label}
+              </span>
             </span>
-            <span className="flex size-3 shrink-0 items-center justify-center">
-              {pageId === page.id && <Check aria-hidden="true" className="size-3" />}
-            </span>
+            {pageId === page.id ? (
+              <Check
+                aria-hidden="true"
+                className="size-3.5 text-muted-foreground"
+                strokeWidth={1.5}
+              />
+            ) : (
+              <ArrowUpRight
+                aria-hidden="true"
+                className="size-3.5 text-muted-foreground transition-transform group-data-highlighted/dropdown-menu-item:-translate-y-0.5 group-data-highlighted/dropdown-menu-item:translate-x-0.5 motion-reduce:transform-none"
+                strokeWidth={1.5}
+              />
+            )}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

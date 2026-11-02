@@ -46,10 +46,7 @@ export default function UserMenu() {
       >
         <DropdownMenuGroup>
           <DropdownMenuLabel className="min-w-0 px-0 pb-5 pt-0 font-normal">
-            <span className="block font-mono text-[10px] uppercase tracking-widest">
-              Votre espace
-            </span>
-            <span className="mt-3 block truncate font-serif text-2xl leading-tight tracking-tight text-foreground">
+            <span className="block truncate font-serif text-2xl leading-tight tracking-tight text-foreground">
               {name}
             </span>
             <span className="mt-1 block truncate text-xs">
