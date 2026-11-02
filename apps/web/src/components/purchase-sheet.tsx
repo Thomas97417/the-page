@@ -173,16 +173,6 @@ export function BuySheet({
               className="h-13 text-base"
             />
           </div>
-          <div className="flex min-h-36 flex-col items-center justify-center gap-3 border-y border-dashed py-8 text-center">
-            <span className="max-w-full break-all font-serif text-4xl leading-tight text-primary">
-              {word || "Votre mot."}
-            </span>
-            {description.trim() && (
-              <p className="max-w-full whitespace-pre-line break-words text-sm leading-relaxed text-muted-foreground">
-                {description.trim()}
-              </p>
-            )}
-          </div>
           <div className="mt-auto space-y-5 pt-5">
             <div className="flex items-baseline justify-between">
               <span className="text-sm text-muted-foreground">Votre place</span>
