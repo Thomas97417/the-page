@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useConvexAuth } from "convex/react";
+import { ArrowUpRight } from "lucide-react";
 import { usePage } from "./page-provider";
 import UserMenu from "./user-menu";
 import ThemeToggle from "./theme-toggle";
@@ -33,12 +34,16 @@ export default function Header() {
         ) : (
           <Link
             to="/sign-in"
-            className={`flex min-h-11 items-center transition-colors hover:text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring ${isLoading ? "pointer-events-none opacity-40" : ""}`}
+            aria-disabled={isLoading || undefined}
+            tabIndex={isLoading ? -1 : undefined}
+            className={`group inline-flex h-9 shrink-0 items-center gap-2 rounded-full border px-4 text-xs font-medium transition-colors hover:border-foreground/25 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${isLoading ? "pointer-events-none opacity-40" : ""}`}
           >
-            Connexion{" "}
-            <span aria-hidden="true" className="ml-1">
-              ↗
-            </span>
+            <span>Connexion</span>
+            <ArrowUpRight
+              aria-hidden="true"
+              className="size-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transform-none"
+              strokeWidth={1.5}
+            />
           </Link>
         )}
         <ThemeToggle />

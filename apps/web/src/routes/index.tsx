@@ -7,7 +7,6 @@ import { usePage } from "@/components/page-provider";
 import { PageManuscript } from "@/components/page-manuscript";
 import TargetCursor from "@/components/target-cursor";
 import { Button } from "@/components/ui/button";
-import { euros } from "@/lib/page";
 import { PurchaseResult } from "@/components/purchase-result";
 
 export const Route = createFileRoute("/")({
@@ -21,7 +20,7 @@ export const Route = createFileRoute("/")({
   }),
   head: () => ({
     meta: [
-      { title: "the page — Un mot. Une place." },
+      { title: "the page — Une page à tous. Un mot de vous." },
       {
         name: "description",
         content:
@@ -54,8 +53,10 @@ function ThePage() {
         />
         {purchase && <PurchaseResult purchaseId={purchase} />}
         <section aria-labelledby="page-title" className="pb-10 pt-10 text-center sm:pb-14 sm:pt-14">
-          <h1 id="page-title" className="font-serif text-[clamp(2.75rem,6vw,4.75rem)] leading-[1.1] tracking-[-0.055em]">
-            Un mot. <span className="italic">Une place</span>
+          <h1 id="page-title" className="font-serif text-[clamp(2.25rem,5.5vw,4.5rem)] leading-[1.08] tracking-[-0.045em]">
+            Une page à tous.
+            <br />
+            <span className="italic">Un mot de vous.</span>
           </h1>
         </section>
 
@@ -79,13 +80,11 @@ function ThePage() {
             Écrire un mot
             <ArrowUpRight aria-hidden="true" className="size-4" />
           </Button>
-          <p aria-live="polite" className="text-center text-xs leading-relaxed text-muted-foreground">
-            {available
-              ? `À partir de ${euros(available.price)} · +1 € à chaque achat`
-              : slots && slots.length > 0
-                ? "Toutes les places sont réservées pour le moment."
-                : "50 places, un mot par place."}
-          </p>
+          {slots && slots.length > 0 && !available && (
+            <p role="status" className="text-center text-xs leading-relaxed text-muted-foreground">
+              Toutes les places sont réservées pour le moment.
+            </p>
+          )}
         </section>
       </main>
       <footer className="w-full shrink-0 pb-[env(safe-area-inset-bottom)]">
