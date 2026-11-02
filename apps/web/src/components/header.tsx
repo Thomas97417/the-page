@@ -1,55 +1,31 @@
 import { Link } from "@tanstack/react-router";
 import { useConvexAuth } from "convex/react";
+import { ArrowUpRight } from "lucide-react";
 import { usePage } from "./page-provider";
 import UserMenu from "./user-menu";
+import ThemeToggle from "./theme-toggle";
 
 export default function Header() {
   const { isAuthenticated, isLoading } = useConvexAuth();
-  const { showRules, showWords } = usePage();
+  const { showWords } = usePage();
   return (
-    <header className="mx-auto flex h-21 w-full max-w-350 items-center justify-between border-b px-5 sm:px-10 lg:px-14">
+    <header className="mx-auto flex h-21 w-full max-w-296 shrink-0 items-center justify-between px-5 sm:px-10 lg:px-14">
       <Link
         to="/"
         aria-label="the page, accueil"
-        className="flex items-center gap-3 text-xl font-semibold tracking-[-0.07em]"
+        className="flex items-center py-2 font-serif text-[26px] tracking-[-0.055em]"
       >
-        <svg
-          viewBox="0 0 24 28"
-          fill="none"
-          className="h-7 w-6 text-primary"
-          aria-hidden="true"
-        >
-          <path
-            d="M3 1h12l6 6v20H3V1Z"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          />
-          <path
-            d="M15 1v7h6M7 14h10M7 19h6"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          />
-        </svg>
-        <span>
-          the page<span className="text-primary">.</span>
-        </span>
+        <span>the page.</span>
       </Link>
       <nav
         aria-label="Navigation principale"
-        className="flex items-center gap-5 text-sm sm:gap-8"
+        className="flex items-center gap-1.5 text-xs sm:gap-6"
       >
-        <button
-          onClick={showRules}
-          className="text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <span className="hidden sm:inline">Comment ça marche</span>
-          <span className="sm:hidden">Règles</span>
-        </button>
         {isAuthenticated ? (
           <>
             <button
               onClick={showWords}
-              className="transition-colors hover:text-primary"
+              className="min-h-11 transition-colors hover:text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring"
             >
               Mes mots
             </button>
@@ -58,14 +34,19 @@ export default function Header() {
         ) : (
           <Link
             to="/sign-in"
-            className={`transition-colors hover:text-primary ${isLoading ? "pointer-events-none opacity-40" : ""}`}
+            aria-disabled={isLoading || undefined}
+            tabIndex={isLoading ? -1 : undefined}
+            className={`group inline-flex h-9 shrink-0 items-center gap-2 rounded-full border px-4 text-xs font-medium transition-colors hover:border-foreground/25 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${isLoading ? "pointer-events-none opacity-40" : ""}`}
           >
-            Connexion{" "}
-            <span aria-hidden="true" className="ml-1">
-              ↗
-            </span>
+            <span>Connexion</span>
+            <ArrowUpRight
+              aria-hidden="true"
+              className="size-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transform-none"
+              strokeWidth={1.5}
+            />
           </Link>
         )}
+        <ThemeToggle />
       </nav>
     </header>
   );
