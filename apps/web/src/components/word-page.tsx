@@ -7,7 +7,6 @@ import { PageManuscript } from "@/components/page-manuscript";
 import TargetCursor from "@/components/target-cursor";
 import { Button } from "@/components/ui/button";
 import { PurchaseResult } from "@/components/purchase-result";
-import { PageNavigation } from "@/components/page-navigation";
 import { DEFAULT_PAGE_ID, getPage, type PageId } from "@my-better-t-app/backend/convex/lib/pages";
 
 export function WordPage({ pageId, purchase }: { pageId: PageId; purchase?: string }) {
@@ -31,7 +30,6 @@ export function WordPage({ pageId, purchase }: { pageId: PageId; purchase?: stri
           padding={8}
         />
         {purchase && <PurchaseResult key={purchase} purchaseId={purchase} pageId={pageId} />}
-        <PageNavigation pageId={pageId} />
         <section aria-labelledby="page-title" className="pb-10 pt-8 text-center sm:pb-14 sm:pt-10">
           <p className="mb-5 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
             {pageId === DEFAULT_PAGE_ID ? "La page mondiale" : `La page · ${page.label}`}

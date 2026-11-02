@@ -2,7 +2,7 @@
 
 Une page mondiale **World**, complétée par les pages **France**, **Royaume-Uni** et **États-Unis**. Chaque page possède ses **50 emplacements indépendants**. Chaque place commence à **1 € TTC** ; son prix augmente de **1 €** à chaque achat confirmé. Un rachat remplace le mot précédent immédiatement. Chaque mot peut être accompagné d’une **description facultative de 160 caractères maximum**, visible dans sa fiche, et d’un lien facultatif. Le propriétaire peut modifier gratuitement son mot, sa description et son lien jusqu’au prochain achat.
 
-World reste la page par défaut sur `/`. Les pages nationales sont accessibles sur `/france`, `/royaume-uni` et `/etats-unis`, avec une navigation commune. `/world` redirige vers `/`. Chacun peut participer à la page de son choix ; le pays n’est pas déterminé par géolocalisation. Les prix restent en euros pour toutes les pages.
+World reste la page par défaut sur `/`. Les pages nationales sont accessibles sur `/france`, `/royaume-uni` et `/etats-unis`. Le suffixe à côté de « the page. » dans le header ouvre le choix entre `world`, `fr`, `uk` et `us`. `/world` redirige vers `/`. Chacun peut participer à la page de son choix ; le pays n’est pas déterminé par géolocalisation. Les prix restent en euros pour toutes les pages.
 
 React 19, TanStack Start, Convex, Better Auth, Tailwind CSS et shadcn/ui (Base UI). Monorepo Bun / Turborepo.
 
