@@ -60,7 +60,7 @@ export default function SessionsCard() {
             router.navigate({ to: "/" });
             return;
           }
-          toast.success("Session revoked.");
+          toast.success("Session fermée.");
           queryClient.invalidateQueries({ queryKey: ["sessions"] });
         },
         onError: (error) => {
@@ -77,7 +77,7 @@ export default function SessionsCard() {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("All other sessions revoked.");
+      toast.success("Autres sessions fermées.");
       queryClient.invalidateQueries({ queryKey: ["sessions"] });
     }
     setRevokingAll(false);
@@ -86,34 +86,33 @@ export default function SessionsCard() {
   function getDeviceIcon(userAgent: string | null | undefined) {
     if (!userAgent) return <Globe className="size-4" />;
     const ua = userAgent.toLowerCase();
-    if (ua.includes("mobile") || ua.includes("android") || ua.includes("iphone")) {
+    if (
+      ua.includes("mobile") ||
+      ua.includes("android") ||
+      ua.includes("iphone")
+    ) {
       return <Smartphone className="size-4" />;
     }
     return <Monitor className="size-4" />;
   }
 
   function getBrowserName(userAgent: string | null | undefined) {
-    if (!userAgent) return "Unknown browser";
+    if (!userAgent) return "Navigateur inconnu";
     const ua = userAgent.toLowerCase();
     if (ua.includes("firefox")) return "Firefox";
     if (ua.includes("edg")) return "Edge";
     if (ua.includes("safari") && !ua.includes("chrome")) return "Safari";
     if (ua.includes("chrome")) return "Chrome";
     if (ua.includes("opera") || ua.includes("opr")) return "Opera";
-    return "Unknown browser";
+    return "Navigateur inconnu";
   }
 
-  const otherSessions = sessions?.filter(
-    (s) => s.id !== currentSessionId,
-  );
+  const otherSessions = sessions?.filter((s) => s.id !== currentSessionId);
 
   return (
     <SettingsCard>
       <SettingsCardContent>
-        <SettingsCardHeader
-          title="Active Sessions"
-          description="Manage your active sessions across devices."
-        />
+        <SettingsCardHeader title="Sessions actives" description="" />
         <div className="flex flex-col gap-2">
           {isLoading ? (
             <>
@@ -137,12 +136,12 @@ export default function SessionsCard() {
                         <span>{getBrowserName(session.userAgent)}</span>
                         {isCurrent && (
                           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[0.65rem] font-medium text-primary">
-                            Current
+                            Actuelle
                           </span>
                         )}
                       </div>
                       <span className="text-xs text-muted-foreground">
-                        Last active{" "}
+                        Dernière activité{" "}
                         {new Date(session.updatedAt).toLocaleDateString(
                           undefined,
                           {
@@ -179,22 +178,21 @@ export default function SessionsCard() {
                             <LogOut className="size-5" />
                           </AlertDialogMedia>
                           <AlertDialogTitle>
-                            Revoke current session?
+                            Fermer cette session ?
                           </AlertDialogTitle>
                           <AlertDialogDescription>
-                            You will be logged out immediately and redirected to
-                            the home page.
+                            Vous serez déconnecté.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogCancel>Annuler</AlertDialogCancel>
                           <AlertDialogAction
                             variant="destructive"
                             onClick={() =>
                               revokeSession(session.id, session.token)
                             }
                           >
-                            Log out
+                            Se déconnecter
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
@@ -218,14 +216,13 @@ export default function SessionsCard() {
               );
             })
           ) : (
-            <p className="text-sm text-muted-foreground">No active sessions.</p>
+            <p className="text-sm text-muted-foreground">
+              Aucune session active.
+            </p>
           )}
         </div>
       </SettingsCardContent>
       <SettingsCardFooter>
-        <p className="text-sm text-muted-foreground">
-          Revoke access from devices you don't recognize.
-        </p>
         <Button
           size="sm"
           variant="destructive"
@@ -236,7 +233,7 @@ export default function SessionsCard() {
           {revokingAll ? (
             <Loader2 className="size-4 animate-spin" />
           ) : (
-            "Revoke all others"
+            "Fermer les autres sessions"
           )}
         </Button>
       </SettingsCardFooter>

@@ -9,7 +9,6 @@ import {
   createRootRouteWithContext,
   useRouteContext,
 } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { createServerFn } from "@tanstack/react-start";
 
 import { Toaster } from "@/components/ui/sonner";
@@ -21,6 +20,7 @@ import ErrorBoundary from "../components/error-boundary";
 import NotFound from "../components/not-found";
 import appCss from "../index.css?url";
 import { ThemeProvider } from "@/components/theme-provider";
+import { PageProvider } from "@/components/page-provider";
 
 const getAuth = createServerFn({ method: "GET" }).handler(async () => {
   return await getToken();
@@ -42,7 +42,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "Toma Stack",
+        title: "the page",
       },
     ],
     links: [
@@ -76,25 +76,25 @@ function RootDocument() {
       authClient={authClient}
       initialToken={context.token}
     >
-      <html lang="en" suppressHydrationWarning>
+      <html lang="fr" suppressHydrationWarning>
         <head>
           <HeadContent />
         </head>
         <body>
           <ThemeProvider
             attribute="class"
-            defaultTheme="system"
+            defaultTheme="light"
+            forcedTheme="light"
             disableTransitionOnChange
             storageKey="vite-ui-theme"
           >
-            <div className="grid h-svh grid-rows-[auto_1fr]">
-              <Header />
-              <div className="overflow-y-auto">
+            <PageProvider>
+              <div className="min-h-svh">
+                <Header />
                 <Outlet />
               </div>
-            </div>
+            </PageProvider>
             <Toaster richColors />
-            <TanStackRouterDevtools position="bottom-left" />
             <Scripts />
           </ThemeProvider>
         </body>

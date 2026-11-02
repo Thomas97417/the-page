@@ -84,3 +84,11 @@ export const getCurrentUser = query({
     return await authComponent.safeGetAuthUser(ctx);
   },
 });
+
+export const providers = query({
+  args: {},
+  handler: () => ({
+    google: !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET),
+    github: !!(GITHUB_CLIENT_ID && GITHUB_CLIENT_SECRET),
+  }),
+});

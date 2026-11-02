@@ -1,7 +1,8 @@
+import { useQuery } from "convex/react";
+import { api } from "@my-better-t-app/backend/convex/_generated/api";
 import { useNavigate } from "@tanstack/react-router";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { LogOut, Settings, Upload, User } from "lucide-react";
-
+import { LogOut, Settings, Shield } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,66 +14,49 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth-client";
 
-import { Button } from "./ui/button";
-
 export default function UserMenu() {
   const user = useCurrentUser();
+  const viewer = useQuery(api.slots.viewer);
   const navigate = useNavigate();
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={
-          <Button variant="outline" className="flex items-center gap-2 px-2" />
-        }
+        aria-label="Mon compte"
+        className="flex size-9 items-center justify-center rounded-full border bg-secondary font-serif text-lg text-primary outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
-        <span className="hidden text-sm font-medium sm:inline-block">
-          {user?.name}
-        </span>
+        {user?.name?.charAt(0).toUpperCase() || "M"}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 bg-card">
         <DropdownMenuGroup>
-          <DropdownMenuLabel className="font-normal">
-            <div className="flex flex-col gap-1">
-              <p className="text-sm font-medium leading-none">{user?.name}</p>
-              <p className="text-muted-foreground text-xs leading-none">
-                {user?.email}
-              </p>
-            </div>
+          <DropdownMenuLabel className="truncate font-normal">
+            {user?.email}
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={() => navigate({ to: "/dashboard" })}>
-            <User className="mr-2 size-4" />
-            Dashboard
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate({ to: "/upload" })}>
-            <Upload className="mr-2 size-4" />
-            Upload
-          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>
             <Settings className="mr-2 size-4" />
-            Settings
+            Mon compte
           </DropdownMenuItem>
+          {viewer?.isAdmin && (
+            <DropdownMenuItem onClick={() => navigate({ to: "/admin" })}>
+              <Shield className="mr-2 size-4" />
+              Administration
+            </DropdownMenuItem>
+          )}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          variant="destructive"
-          onClick={() => {
-            authClient.signOut({
-              fetchOptions: {
-                onSuccess: () => {
-                  navigate({ to: "/" });
-                  location.reload();
-                },
-              },
-            });
-          }}
-        >
-          <LogOut className="mr-2 size-4" />
-          Sign Out
-        </DropdownMenuItem>
+        <DropdownMenuGroup>
+          <DropdownMenuItem
+            onClick={async () => {
+              await authClient.signOut();
+              window.location.assign("/");
+            }}
+          >
+            <LogOut className="mr-2 size-4" />
+            Déconnexion
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );

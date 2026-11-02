@@ -1,195 +1,207 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@my-better-t-app/backend/convex/_generated/api";
-import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Authenticated, Unauthenticated } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
+import { ArrowDown, ArrowUpRight, Plus } from "lucide-react";
+import { usePage } from "@/components/page-provider";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, ExternalLink } from "lucide-react";
+import { euros } from "@/lib/page";
+import { PurchaseResult } from "@/components/purchase-result";
 
 export const Route = createFileRoute("/")({
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(convexQuery(api.slots.list, {})),
+  validateSearch: (search: Record<string, unknown>): { purchase?: string } => ({
+    purchase:
+      typeof search.purchase === "string" && search.purchase.length < 128
+        ? search.purchase
+        : undefined,
+  }),
   head: () => ({
     meta: [
-      { title: "Toma Stack — Modern Full-Stack Starter" },
+      { title: "the page — Un mot. Une place." },
       {
         name: "description",
         content:
-          "A production-ready starter built with TanStack Start, Convex, Better Auth, Cloudflare R2, and Tailwind CSS.",
+          "50 emplacements, un mot par place. Écrivez le vôtre sur the page.",
       },
     ],
   }),
-  component: HomeComponent,
+  component: ThePage,
 });
 
-const TITLE_TEXT = `
- ████████╗ ██████╗ ███╗   ███╗ █████╗    ███████╗████████╗ █████╗  ██████╗██╗  ██╗
- ╚══██╔══╝██╔═══██╗████╗ ████║██╔══██╗   ██╔════╝╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝
-    ██║   ██║   ██║██╔████╔██║███████║   ███████╗   ██║   ███████║██║     █████╔╝
-    ██║   ██║   ██║██║╚██╔╝██║██╔══██║   ╚════██║   ██║   ██╔══██║██║     ██╔═██╗
-    ██║   ╚██████╔╝██║ ╚═╝ ██║██║  ██║   ███████║   ██║   ██║  ██║╚██████╗██║  ██╗
-    ╚═╝    ╚═════╝ ╚═╝     ╚═╝╚═╝  ╚═╝   ╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝
- `;
-
-const FEATURES = [
-  {
-    title: "TanStack Start",
-    description:
-      "Full-stack SSR framework with file-based routing and type-safe data loading",
-    link: "https://tanstack.com/start",
-  },
-  {
-    title: "Convex",
-    description:
-      "Reactive backend with real-time sync, automatic caching, and serverless functions",
-    link: "https://convex.dev",
-  },
-  {
-    title: "Better Auth",
-    description:
-      "Flexible authentication with email/password, Google, and GitHub providers",
-    link: "https://better-auth.com",
-  },
-  {
-    title: "Cloudflare R2",
-    description:
-      "S3-compatible object storage with zero egress fees for file uploads",
-    link: "https://developers.cloudflare.com/r2",
-  },
-  {
-    title: "Tailwind + shadcn/ui",
-    description:
-      "Utility-first CSS with beautifully designed, accessible components",
-    link: "https://tailwindcss.com",
-  },
-];
-
-const STACK = ["React 19", "TypeScript", "Bun", "Turborepo"];
-
-function StatusBadge() {
-  const healthCheck = useQuery(convexQuery(api.healthCheck.get, {}));
-
-  const isOk = healthCheck.data === "OK";
-  const isLoading = healthCheck.isLoading;
-
+type Slot = FunctionReturnType<typeof api.slots.list>[number];
+function SlotCell({ slot }: { slot: Slot }) {
+  const { buy } = usePage();
+  const open = () =>
+    buy({
+      slotId: slot.id,
+      position: slot.position,
+      acquisition: slot.acquisitions,
+      word: "",
+      url: "",
+    });
   return (
-    <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs backdrop-blur-sm">
-      <span className="relative flex size-2">
-        <span
-          className={`absolute inline-flex size-full animate-ping rounded-full opacity-75 ${isOk ? "bg-green-500" : isLoading ? "bg-orange-400" : "bg-red-500"}`}
-        />
-        <span
-          className={`relative inline-flex size-2 rounded-full ${isOk ? "bg-green-500" : isLoading ? "bg-orange-400" : "bg-red-500"}`}
-        />
+    <article
+      className={`group relative flex min-h-43 min-w-0 flex-col border-b border-r px-4 py-4 transition-colors sm:min-h-48 sm:px-6 sm:py-5 ${slot.word ? "bg-card/60 hover:bg-card" : "hover:bg-secondary/30"}`}
+    >
+      <span className="font-mono text-[10px] tabular-nums tracking-wider text-muted-foreground/60">
+        {String(slot.position).padStart(2, "0")}
       </span>
-      <span className="text-muted-foreground">
-        {isLoading
-          ? "Connecting..."
-          : isOk
-            ? "Backend connected"
-            : "Connection error"}
-      </span>
-    </div>
+      <div className="flex flex-1 items-center justify-center py-5 text-center">
+        {slot.word ? (
+          slot.url ? (
+            <a
+              href={slot.url}
+              target="_blank"
+              rel="sponsored ugc nofollow noopener noreferrer"
+              className="max-w-full break-all font-serif text-[clamp(1.5rem,2.2vw,2.25rem)] leading-tight tracking-tight underline-offset-4 hover:text-primary hover:underline focus-visible:outline-2 focus-visible:outline-primary"
+            >
+              {slot.word}
+            </a>
+          ) : (
+            <span className="max-w-full break-all font-serif text-[clamp(1.5rem,2.2vw,2.25rem)] leading-tight tracking-tight">
+              {slot.word}
+            </span>
+          )
+        ) : (
+          <button
+            onClick={open}
+            disabled={slot.reserved}
+            aria-label={`Écrire sur la place ${slot.position}, ${euros(slot.price)}`}
+            className="flex size-12 items-center justify-center rounded-full border border-dashed border-border text-muted-foreground/35 transition-colors group-hover:border-primary/40 group-hover:text-primary disabled:opacity-30"
+          >
+            <Plus className="size-5" strokeWidth={1} />
+          </button>
+        )}
+      </div>
+      <button
+        disabled={slot.reserved}
+        onClick={open}
+        aria-label={`${slot.word ? "Remplacer le mot de" : "Acheter"} la place ${slot.position} pour ${euros(slot.price)}`}
+        className="flex min-h-7 w-full items-center justify-between gap-2 text-xs text-muted-foreground transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-primary disabled:cursor-wait disabled:text-muted-foreground/50"
+      >
+        <span>
+          {slot.reserved
+            ? "Réservé"
+            : slot.word
+              ? "Prendre la place"
+              : "Écrire ici"}
+        </span>
+        <span className="flex shrink-0 items-center gap-1.5 tabular-nums">
+          {euros(slot.price)}
+          <ArrowUpRight
+            aria-hidden="true"
+            className="size-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transform-none"
+          />
+        </span>
+      </button>
+    </article>
   );
 }
 
-function HomeComponent() {
+function ThePage() {
+  const { data: slots } = useQuery(convexQuery(api.slots.list, {}));
+  const { buy, showRules } = usePage();
+  const { purchase } = Route.useSearch();
+  const occupied = slots?.filter((slot) => slot.word).length ?? 0;
+  const available = slots
+    ?.filter((slot) => !slot.reserved)
+    .sort((a, b) => a.price - b.price || a.position - b.position)[0];
   return (
-    <div className="flex flex-col items-center">
-      {/* Hero */}
-      <section className="relative flex w-full flex-col items-center gap-8 px-4 pt-16 pb-20">
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="bg-primary/5 absolute top-1/2 left-1/2 size-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[120px]" />
-        </div>
-
-        <div className="relative flex flex-col items-center gap-6">
-          <pre className="text-primary overflow-x-auto font-mono text-[0.5rem] leading-tight select-none sm:text-xs">
-            {TITLE_TEXT}
-          </pre>
-
-          <div className="flex flex-col items-center gap-3">
-            <h1 className="max-w-lg text-center text-2xl font-semibold tracking-tight sm:text-3xl">
-              Ship faster with the modern full-stack starter
-            </h1>
-            <p className="text-muted-foreground max-w-md text-center text-sm leading-relaxed">
-              Everything you need to build production-ready apps —
-              authentication, real-time data, SSR, and beautiful UI out of the
-              box.
-            </p>
+    <main className="mx-auto w-full max-w-350 px-5 sm:px-10 lg:px-14">
+      {purchase && <PurchaseResult purchaseId={purchase} />}
+      <section className="relative flex flex-col justify-between gap-8 py-12 sm:flex-row sm:items-end sm:py-16 lg:py-19">
+        <div>
+          <div className="mb-5 flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+            <span className="h-px w-6 bg-primary" />
+            50 places. Une seule page.
           </div>
-
-          <StatusBadge />
+          <h1 className="font-serif text-[clamp(3.25rem,6.2vw,6rem)] leading-[0.98] tracking-[-0.055em]">
+            Un mot.
+            <br />
+            <span className="italic text-primary">Une place.</span>
+          </h1>
         </div>
-
-        <div className="relative flex gap-3">
-          <Authenticated>
-            <Link to="/dashboard">
-              <Button size="lg" className="hover:cursor-pointer gap-2">
-                Go to Dashboard
-                <ArrowRight className="size-4" />
-              </Button>
-            </Link>
-          </Authenticated>
-          <Unauthenticated>
-            <Link to="/sign-in">
-              <Button size="lg" className="hover:cursor-pointer gap-2">
-                Get Started
-                <ArrowRight className="size-4" />
-              </Button>
-            </Link>
-            <Link to="/sign-up">
-              <Button
-                variant="outline"
-                size="lg"
-                className="hover:cursor-pointer"
-              >
-                Create Account
-              </Button>
-            </Link>
-          </Unauthenticated>
-        </div>
-
-        {/* Stack pills */}
-        <div className="relative flex flex-wrap justify-center gap-2">
-          {STACK.map((tech) => (
-            <span
-              key={tech}
-              className="text-muted-foreground rounded-full border px-3 py-1 text-xs"
-            >
-              {tech}
-            </span>
-          ))}
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="w-full max-w-3xl px-4 pb-20">
-        <div className="mb-6 flex flex-col items-center gap-1">
-          <h2 className="text-lg font-semibold tracking-tight">
-            Built with the best
-          </h2>
-          <p className="text-muted-foreground text-sm">
-            A curated stack for developer experience and performance.
+        <div className="flex items-end justify-between gap-5 sm:flex-col sm:items-end sm:gap-6">
+          <p className="max-w-51 text-sm leading-relaxed text-muted-foreground sm:text-right">
+            Chaque rachat augmente le prix de 1 €.
           </p>
-        </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {FEATURES.map((feature) => (
-            <a
-              key={feature.title}
-              href={feature.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group flex flex-col gap-2 rounded-lg border p-5 transition-all hover:border-primary/30 hover:bg-muted/40 hover:shadow-sm"
-            >
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium">{feature.title}</h3>
-                <ExternalLink className="text-muted-foreground size-3.5 opacity-0 transition-opacity group-hover:opacity-100" />
-              </div>
-              <p className="text-muted-foreground text-xs leading-relaxed">
-                {feature.description}
-              </p>
-            </a>
-          ))}
+          <Button
+            className="h-12 gap-5 px-5 text-sm"
+            disabled={!available}
+            onClick={() => {
+              if (available)
+                buy({
+                  slotId: available.id,
+                  position: available.position,
+                  acquisition: available.acquisitions,
+                  word: "",
+                  url: "",
+                });
+            }}
+          >
+            Écrire un mot
+            <ArrowUpRight className="size-4" />
+          </Button>
         </div>
       </section>
-    </div>
+      <div className="flex items-center justify-between border-t py-4 font-mono text-[10px] uppercase tracking-[0.09em] text-muted-foreground">
+        <span className="flex items-center gap-2">
+          <span className="size-1.5 rounded-full bg-primary" />
+          La page
+        </span>
+        <div className="flex items-center gap-5">
+          <span>
+            {slots ? String(occupied).padStart(2, "0") : "—"}
+            <span className="text-muted-foreground/50">
+              {" "}
+              / 50 places occupées
+            </span>
+          </span>
+          <a
+            href="#mots"
+            aria-label="Voir les emplacements"
+            className="text-foreground"
+          >
+            <ArrowDown className="size-3.5" />
+          </a>
+        </div>
+      </div>
+      <section
+        id="mots"
+        aria-label="Les 50 emplacements"
+        aria-busy={!slots}
+        className="grid scroll-mt-4 grid-cols-2 border-l border-t lg:grid-cols-5"
+      >
+        {slots
+          ? slots.map((slot) => <SlotCell slot={slot} key={slot.id} />)
+          : Array.from({ length: 50 }, (_, i) => (
+              <div
+                key={i}
+                className="flex min-h-43 flex-col justify-between border-b border-r p-5 sm:min-h-48"
+              >
+                <span className="h-2 w-4 animate-pulse bg-border motion-reduce:animate-none" />
+                <span className="mx-auto h-6 w-16 animate-pulse bg-border/40 motion-reduce:animate-none" />
+                <span className="h-2 w-12 animate-pulse bg-border/60 motion-reduce:animate-none" />
+              </div>
+            ))}
+      </section>
+      {slots?.length === 0 && (
+        <p className="py-12 text-center text-sm text-muted-foreground">
+          La page se prépare. Revenez dans un instant.
+        </p>
+      )}
+      <footer className="flex items-center justify-between py-8 text-xs text-muted-foreground">
+        <span className="font-medium tracking-tight">the page.</span>
+        <button
+          className="transition-colors hover:text-foreground"
+          onClick={showRules}
+        >
+          Les règles <span aria-hidden="true">↗</span>
+        </button>
+      </footer>
+    </main>
   );
 }

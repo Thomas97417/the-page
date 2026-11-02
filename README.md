@@ -1,193 +1,90 @@
-# The Page
+# the page
 
-Application TypeScript avec React, TanStack Start et Convex.
+Une page de 50 emplacements. Chaque place commence à **1 € TTC** ; son prix augmente de **1 €** à chaque achat confirmé. Un rachat remplace le mot précédent immédiatement. Le propriétaire peut modifier gratuitement son mot et son lien jusqu’au prochain achat.
 
-Le boilerplate inclut l’authentification Better Auth, la vérification d’email et la réinitialisation du mot de passe via Resend, les connexions Google et GitHub et le stockage de fichiers avec Cloudflare R2. L’interface utilise Tailwind CSS et shadcn/ui ; le monorepo utilise Bun et Turborepo.
+React 19, TanStack Start, Convex, Better Auth, Tailwind CSS et shadcn/ui (Base UI). Monorepo Bun / Turborepo.
 
-## Projet Convex
+## Démarrage
 
-Le projet cloud [the-page](https://dashboard.convex.dev/t/throuquette/the-page) appartient à l’équipe `throuquette`. Son déploiement de développement [affable-ptarmigan-378](https://dashboard.convex.dev/d/affable-ptarmigan-378) utilise la région **Europe (Irlande)**.
-
-Les fichiers `.env.example` contiennent ses URL publiques. Les fichiers locaux et les secrets ne sont pas versionnés.
-
-## Prérequis
-
-- Bun : le projet déclare la version `1.3.0` dans `package.json`.
-- Node.js 22.12 ou supérieur pour les outils Vite et Convex.
-- Un compte Convex ayant accès au projet `the-page`.
-- Un compte Resend et une adresse d’expédition configurée pour tester l’inscription par email.
-- OpenSSL pour générer le secret d’authentification avec la commande ci-dessous.
-
-## Installation et premier démarrage
-
-Exécuter les commandes à la racine du dépôt, sauf indication contraire.
-
-### 1. Installer les dépendances et relier Convex
+Prérequis : **Node 22.12+**, Bun 1.3+ et l’accès au projet Convex de développement.
 
 ```bash
 bun install --frozen-lockfile
 cp packages/backend/.env.example packages/backend/.env.local
 cp apps/web/.env.example apps/web/.env
-```
-
-Le fichier `packages/backend/.env.local` sélectionne le déploiement cloud existant via `CONVEX_DEPLOYMENT`. La CLI demandera une connexion au premier lancement si nécessaire.
-
-Pour créer un projet distinct, utiliser `bun run dev:setup`, choisir un nouveau projet cloud, puis adapter les URL du frontend.
-
-### 2. Configurer les URL du frontend
-
-Le fichier `apps/web/.env` est créé à partir de l’exemple à l’étape précédente. Pour utiliser un autre déploiement, adapter ses URL :
-
-```dotenv
-VITE_CONVEX_URL=https://ton-deploiement.convex.cloud
-VITE_CONVEX_SITE_URL=https://ton-deploiement.convex.site
-```
-
-Remplacer `ton-deploiement` par le nom du déploiement de développement créé à l’étape précédente. Les URL sont disponibles dans Convex :
-
-- `VITE_CONVEX_URL` termine en `.cloud` et permet de communiquer avec le backend.
-- `VITE_CONVEX_SITE_URL` termine en `.site` et permet d’appeler ses routes HTTP, notamment celles de l’authentification.
-
-Si Convex génère une variable nommée `CONVEX_URL` dans le fichier du backend, utiliser sa valeur pour `VITE_CONVEX_URL` dans le frontend.
-
-### 3. Configurer l’authentification sur Convex
-
-**Les variables ajoutées dans un fichier `.env` local ne sont pas automatiquement transférées au déploiement Convex.** Les fonctions du backend lisent les variables configurées sur ce déploiement, via la CLI ou le dashboard Convex.
-
-`SITE_URL`, `BETTER_AUTH_URL` et `BETTER_AUTH_SECRET` sont déjà configurées sur le déploiement de développement indiqué ci-dessus. Les commandes suivantes servent uniquement à initialiser un autre déploiement.
-
-Depuis le dossier backend :
-
-```bash
-cd packages/backend
-bunx --bun convex env set SITE_URL http://localhost:3003
-bunx --bun convex env set BETTER_AUTH_URL http://localhost:3003
-bunx --bun convex env set BETTER_AUTH_SECRET "$(openssl rand -base64 32)"
-cd ../..
-```
-
-`SITE_URL` définit l’origine autorisée de l’application. `BETTER_AUTH_URL` définit son URL de base pour l’authentification. Ces valeurs correspondent ici au serveur de développement local ; utiliser l’URL publique de l’application sur un déploiement de production.
-
-Générer `BETTER_AUTH_SECRET` une seule fois lors de la configuration initiale et conserver cette valeur lors des démarrages suivants.
-
-Les exemples utilisent `bunx --bun` pour exécuter la CLI avec Bun.
-
-### 4. Configurer les emails sur Convex
-
-La vérification d’email est activée dans ce boilerplate. **Resend doit être configuré pour terminer une inscription par email**, ainsi que pour réinitialiser un mot de passe.
-
-Dans les paramètres du déploiement Convex de développement, ajouter :
-
-| Variable         | Valeur à renseigner                                                                 |
-| ---------------- | ----------------------------------------------------------------------------------- |
-| `RESEND_API_KEY` | La clé API du compte Resend utilisé par The Page                                    |
-| `EMAIL_FROM`     | L’expéditeur configuré dans Resend, par exemple `The Page <bonjour@ton-domaine.fr>` |
-
-Ces variables peuvent aussi être définies avec `bunx --bun convex env set NOM_VARIABLE 'valeur'`, depuis `packages/backend`.
-
-### 5. Lancer l’application
-
-Depuis la racine du dépôt :
-
-```bash
 bun run dev
 ```
 
-Cette commande lance le frontend et le backend Convex en mode développement. Ouvrir **[http://localhost:3003](http://localhost:3003)**.
+L’application écoute sur [localhost:3003](http://localhost:3003). Libérer ce port si une autre instance du projet tourne déjà. Les deux variables frontend sont uniquement les URL publiques `VITE_CONVEX_URL` et `VITE_CONVEX_SITE_URL`. Ne jamais copier les secrets du backend vers le frontend.
 
-Pour les démarrages suivants, `bun run dev` suffit si la configuration est déjà en place. Après une modification de `apps/web/.env`, redémarrer le serveur frontend.
+Le déploiement de développement existant est `affable-ptarmigan-378`, projet `the-page`, équipe `throuquette`, région Europe (Irlande). Pour utiliser un projet indépendant : `bun run dev:setup`, puis adapter les deux URL publiques.
 
-## Où configurer les variables ?
-
-| Emplacement                     | Usage                                                                                  |
-| ------------------------------- | -------------------------------------------------------------------------------------- |
-| `packages/backend/.env.local`   | Configuration locale de la CLI, notamment le déploiement ciblé par `CONVEX_DEPLOYMENT` |
-| `apps/web/.env`                 | Variables du frontend : URL Convex                                                     |
-| Variables du déploiement Convex | Configuration des fonctions backend : authentification, Resend, OAuth et R2            |
-
-Ne pas copier tout le fichier du backend dans celui du frontend. Ajouter uniquement les variables nécessaires à chaque emplacement. Les variables préfixées par `VITE_` sont accessibles au navigateur : elles ne doivent pas contenir de secrets. Les fichiers `.env` locaux sont ignorés par Git.
-
-## Services complémentaires
-
-Ces services sont nécessaires pour utiliser les fonctionnalités correspondantes.
-
-### Connexion Google et GitHub
-
-Créer les applications OAuth auprès des fournisseurs concernés, puis ajouter leurs identifiants dans les **variables du déploiement Convex** :
-
-| Fournisseur | Variables                                  |
-| ----------- | ------------------------------------------ |
-| Google      | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
-| GitHub      | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` |
-
-Configurer également les URL de retour OAuth chez chaque fournisseur en fonction de l’URL de l’application.
-
-### Fichiers et avatars avec Cloudflare R2
-
-Configurer le bucket et ses accès dans Cloudflare, puis ajouter les variables suivantes dans **Convex** :
-
-```text
-R2_BUCKET
-R2_ENDPOINT
-R2_ACCESS_KEY_ID
-R2_SECRET_ACCESS_KEY
-```
-
-## Dépannage
-
-### « A provided trusted origin is invalid »
-
-Vérifier que `SITE_URL` est définie **sur le déploiement Convex utilisé par l’application**, et pas seulement dans un fichier local :
+Une fois les fonctions déployées, initialiser la page depuis `packages/backend` :
 
 ```bash
-cd packages/backend
-bunx --bun convex env get SITE_URL
-bunx --bun convex env set SITE_URL http://localhost:3003
-cd ../..
+bunx --bun convex run slots:initialize '{}'
 ```
 
-Rafraîchir ensuite l’application à l’adresse `http://localhost:3003`.
+Cette fonction interne crée seulement les places manquantes, sans modifier les mots ni les prix existants.
 
-### « Object is missing the required field from » lors de l’inscription
+## Paiement Polar : sandbox uniquement
 
-L’expéditeur transmis à l’action d’envoi provient de `EMAIL_FROM`. Vérifier que cette variable est renseignée sur Convex, ainsi que `RESEND_API_KEY`. Le champ `from` doit rester obligatoire.
+L’intégration utilise `@convex-dev/polar`, son endpoint signé **`/polar/events`** et le SDK Polar pour les prix fixes calculés côté serveur. Il n’existe aucun commutateur de production.
 
-Une fois la configuration corrigée, utiliser la page `/verify-email` pour demander un nouvel email de vérification si le compte a déjà été créé.
+**La politique de Polar exclut la publicité et le sponsoring.** Ce projet reste un prototype avec des paiements de test. Résoudre l’incompatibilité avec Polar avant toute mise en service commerciale : [Acceptable Use Policy](https://polar.sh/legal/acceptable-use-policy).
 
-### « Could not find a declaration file for module react/jsx-runtime »
+1. Ouvrir [Polar Sandbox](https://sandbox.polar.sh) et créer une organisation de test.
+2. Créer un produit **à paiement unique**, sans abonnement. Le prix du catalogue est remplacé à chaque checkout par un prix fixe en EUR, taxes incluses.
+3. Créer un token sandbox avec les droits `products:read`, `checkouts:read`, `checkouts:write`, `orders:read`, `refunds:read` et `refunds:write`.
+4. Ajouter un webhook pointant vers `https://affable-ptarmigan-378.eu-west-1.convex.site/polar/events` (adapter au déploiement utilisé), avec les événements **`order.paid`** et **`order.refunded`**.
+5. Renseigner dans **les variables du déploiement Convex**, via son dashboard :
 
-Le backend utilise du JSX pour les emails. Il déclare donc `@types/react` dans ses dépendances de développement. Relancer `bun install` à la racine si ces types ne sont pas installés.
+| Variable                   | Valeur                                                        |
+| -------------------------- | ------------------------------------------------------------- |
+| `POLAR_ORGANIZATION_TOKEN` | Token de l’organisation **sandbox**                           |
+| `POLAR_WEBHOOK_SECRET`     | Secret du webhook sandbox                                     |
+| `POLAR_PRODUCT_ID`         | ID du produit à paiement unique sandbox                       |
+| `SITE_URL`                 | Origine de l’application, par exemple `http://localhost:3003` |
+| `BETTER_AUTH_URL`          | Même origine que `SITE_URL`                                   |
 
-Pour vérifier uniquement le TypeScript du backend, depuis la racine :
+Les fichiers `.env.local` ne configurent pas automatiquement les variables du déploiement. Ne pas mettre de token dans une variable `VITE_*`, dans un commit ou dans une URL.
+
+Sans configuration Polar, la page reste consultable et l’achat affiche une indisponibilité. Aucun paiement fictif n’est enregistré. `payments:availability` permet de vérifier la configuration sans dévoiler les secrets.
+
+### Confirmation et récupération
+
+- Un checkout réserve sa place cinq minutes. L’ancien mot reste visible et le prix reste inchangé jusqu’à confirmation.
+- Chaque utilisateur est limité à une réservation en cours et cinq tentatives par dix minutes.
+- Le webhook signé relit la commande Polar et vérifie commande, checkout, produit, utilisateur, devise et montant. La publication et l’augmentation de prix sont atomiques et idempotentes.
+- Avant de libérer une réservation expirée, le backend vérifie Polar. Une panne ou un paiement encore en cours conserve la réservation pendant la vérification.
+- Un paiement reçu après libération est remboursé ; il ne peut jamais écraser un achat plus récent. Une tâche planifiée toutes les cinq minutes récupère les paiements et remboursements interrompus.
+- Les remboursements complets retirent uniquement le mot correspondant s’il est encore actuel. Ils ne diminuent pas le prix d’un emplacement.
+
+## Comptes et administration
+
+L’authentification email exige `RESEND_API_KEY`, `EMAIL_FROM` et `BETTER_AUTH_SECRET` côté Convex. Google et GitHub utilisent respectivement `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` et `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`. Configurer leurs callbacks pour l’origine de l’application. Les connexions et les emails de vérification ramènent au brouillon conservé dans l’onglet.
+
+Pour activer la modération, ajouter **`ADMIN_USER_IDS`** dans les variables Convex : IDs Better Auth des administrateurs, séparés par des virgules. Les IDs sont visibles dans la table `user` du composant Better Auth dans le dashboard. Une liste vide n’accorde aucun accès.
+
+La route `/admin` permet de masquer, rétablir ou retirer le mot actuel. Chaque action vérifie les permissions côté serveur et conserve une trace. Un mot masqué et son URL ne sont jamais renvoyés aux visiteurs ; l’édition par le propriétaire ne contourne pas la modération.
+
+Les routes utiles sont `/`, `/settings`, `/admin`, les écrans de connexion et récupération de compte, et `/api/auth/*`. Les anciennes démonstrations `/dashboard` et `/upload` ont été supprimées. Le stockage R2 préexistant n’est pas utilisé par les nouveaux parcours.
+
+## Vérification
 
 ```bash
-bunx tsc --project packages/backend/convex/tsconfig.json --noEmit
+bun run test
+bun run check-types
+bun run build
 ```
 
-## Structure du projet
+Les tests Vitest/Convex utilisent une base en mémoire et des appels Polar simulés : ils ne créent ni utilisateur réel, ni paiement, ni mot sur le déploiement distant. Ils vérifient les prix indépendants, la propriété, l’édition, les réservations concurrentes, la modération, les signatures invalides, les commandes incohérentes et la récupération des paiements/remboursements.
 
-```text
-the-page/
-├── apps/web/             # Frontend React + TanStack Start
-├── packages/backend/    # Fonctions, authentification et schéma Convex
-├── packages/config/     # Configuration TypeScript partagée
-└── packages/env/        # Validation des variables du frontend
-```
+Pour valider l’intégration réelle après configuration : acheter une place avec les moyens de paiement de test documentés par Polar ; vérifier `order.paid`, le mot publié et l’augmentation d’un euro ; racheter avec un second compte ; vérifier que le premier compte ne peut plus modifier la place. Tester aussi un checkout abandonné, un événement rejoué et un paiement après expiration. N’utiliser aucune carte réelle dans ce prototype.
 
-## Commandes utiles
+## Structure
 
-À exécuter depuis la racine du dépôt :
-
-| Commande             | Description                                                  |
-| -------------------- | ------------------------------------------------------------ |
-| `bun install`        | Installer les dépendances du monorepo                        |
-| `bun run dev:setup`  | Configurer le projet Convex lors de la première installation |
-| `bun run dev`        | Lancer le frontend et le backend en développement            |
-| `bun run dev:web`    | Lancer uniquement le frontend                                |
-| `bun run dev:server` | Lancer uniquement le backend Convex en développement         |
-| `bun run build`      | Construire l’application pour la production                  |
-
-## Documentation
-
-- [Convex et Better Auth avec TanStack Start](https://labs.convex.dev/better-auth/framework-guides/tanstack-start)
-- [Variables d’environnement Convex](https://docs.convex.dev/production/environment-variables)
+- `apps/web/src/routes` : routes TanStack Start ; `routeTree.gen.ts` est régénéré par le routeur.
+- `apps/web/src/components` : page, panneaux, authentification et composants shadcn.
+- `packages/backend/convex` : schéma, propriété, paiements et modération ; `_generated` est généré par Convex.
+- `packages/backend/tests` : tests du métier et de l’intégration de paiement.

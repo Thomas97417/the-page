@@ -4,16 +4,16 @@ import VerifyEmailForm from "@/components/verify-email-form";
 export const Route = createFileRoute("/(auth)/verify-email")({
   head: () => ({
     meta: [
-      { title: "Verify Email — Toma Stack" },
+      { title: "Vérification de l’email — the page" },
       {
         name: "description",
-        content: "Resend your email verification link.",
+        content: "Vérifiez votre adresse email.",
       },
     ],
   }),
   beforeLoad: async ({ context }) => {
     if (context.isAuthenticated) {
-      throw redirect({ to: "/dashboard" });
+      throw redirect({ to: "/" });
     }
   },
   component: RouteComponent,
