@@ -91,6 +91,7 @@ export default function AuthForm({ signup = false }: { signup?: boolean }) {
           <Input
             id="auth-email"
             type="email"
+            placeholder="Votre adresse email"
             autoComplete="email"
             required
             value={email}

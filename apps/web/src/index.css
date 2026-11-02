@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #ffffff;
+  --background: #faf9f6;
   --foreground: #202020;
   --card: #ffffff;
   --card-foreground: #202020;
@@ -24,6 +24,10 @@
   --input: #dedede;
   --ring: #737373;
   --manuscript-placeholder: #9a9a9a;
+  --paper-line: rgb(117 105 85 / 0.07);
+  --paper-glow: rgb(255 255 255 / 0.85);
+  --paper-shade: rgb(214 199 171 / 0.12);
+  --paper-grain-opacity: 0.035;
   --radius: 0.375rem;
 }
 
@@ -48,6 +52,10 @@
   --input: #3a3a3a;
   --ring: #a3a3a3;
   --manuscript-placeholder: #777777;
+  --paper-line: rgb(226 216 195 / 0.045);
+  --paper-glow: rgb(255 255 255 / 0.025);
+  --paper-shade: rgb(0 0 0 / 0.15);
+  --paper-grain-opacity: 0.045;
 }
 
 @theme inline {
@@ -107,6 +115,43 @@
 }
 
 @layer components {
+  .paper-background {
+    position: relative;
+    isolation: isolate;
+    background-image:
+      radial-gradient(ellipse at 50% 15%, var(--paper-glow), transparent 70%),
+      radial-gradient(ellipse at 0% 100%, var(--paper-shade), transparent 55%);
+  }
+
+  .paper-background::before,
+  .paper-background::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  .paper-background::before {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0 31px,
+      var(--paper-line) 31px 32px
+    );
+    mask-image: linear-gradient(
+      to right,
+      #000,
+      transparent 32%,
+      transparent 68%,
+      #000
+    );
+  }
+
+  .paper-background::after {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.78' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23808080' filter='url(%23grain)' d='M0 0h180v180H0z'/%3E%3C/svg%3E");
+    opacity: var(--paper-grain-opacity);
+  }
+
   .manuscript {
     font-size: clamp(1.625rem, 3.3vw, 2.25rem);
     line-height: 2;

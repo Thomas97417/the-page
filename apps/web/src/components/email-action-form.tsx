@@ -69,6 +69,7 @@ export default function EmailActionForm({
                 className="h-12"
                 id="request-email"
                 type="email"
+                placeholder="Votre adresse email"
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
