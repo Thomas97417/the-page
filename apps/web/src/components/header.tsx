@@ -5,7 +5,7 @@ import { ArrowUpRight } from "lucide-react";
 import UserMenu from "./user-menu";
 import ThemeToggle from "./theme-toggle";
 import LanguageToggle from "./language-toggle";
-import { DEFAULT_PAGE_ID, pageIdFromPath } from "@my-better-t-app/backend/convex/lib/pages";
+import { DEFAULT_PAGE_ID, getPage, pageIdFromPath } from "@my-better-t-app/backend/convex/lib/pages";
 import { rememberReturnPath, validatePageSearch } from "@/lib/page";
 import { PageNavigation } from "./page-navigation";
 
@@ -19,7 +19,7 @@ export default function Header() {
       <div className="flex shrink-0 items-baseline">
         <Link
           to={pageId === DEFAULT_PAGE_ID ? "/" : "/$page"}
-          params={pageId === DEFAULT_PAGE_ID ? {} : { page: pageId }}
+          params={pageId === DEFAULT_PAGE_ID ? {} : { page: getPage(pageId).slug }}
           search={{}}
           aria-label={t("header.home", { page: t(`pages.${pageId}`) })}
           className="py-2 font-serif text-[26px] leading-none tracking-[-0.055em]"

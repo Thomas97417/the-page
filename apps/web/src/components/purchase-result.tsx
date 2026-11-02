@@ -7,7 +7,7 @@ import { Check, Loader2, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { rememberReturnPath } from "@/lib/page";
 import { errorMessage } from "@/lib/errors";
-import { DEFAULT_PAGE_ID, type PageId } from "@my-better-t-app/backend/convex/lib/pages";
+import { DEFAULT_PAGE_ID, getPage, type PageId } from "@my-better-t-app/backend/convex/lib/pages";
 
 export function PurchaseResult({ purchaseId, pageId }: { purchaseId: string; pageId: PageId }) {
   const { t } = useTranslation();
@@ -96,7 +96,7 @@ export function PurchaseResult({ purchaseId, pageId }: { purchaseId: string; pag
           aria-label={t("payment.close")}
           onClick={() => navigate({
             to: pageId === DEFAULT_PAGE_ID ? "/" : "/$page",
-            params: pageId === DEFAULT_PAGE_ID ? {} : { page: pageId },
+            params: pageId === DEFAULT_PAGE_ID ? {} : { page: getPage(pageId).slug },
             search: {},
             replace: true,
           })}

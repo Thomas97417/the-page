@@ -4,6 +4,7 @@ import { I18nextProvider, useTranslation } from "react-i18next";
 import { ConvexError } from "convex/values";
 import { languageFromCookie } from "@my-better-t-app/backend/convex/lib/language";
 import { validateContent } from "@my-better-t-app/backend/convex/lib/content";
+import { PAGES } from "@my-better-t-app/backend/convex/lib/pages";
 import { createI18n } from "./i18n";
 import { errorMessage } from "./errors";
 import { euros, pageHead } from "./page";
@@ -53,6 +54,7 @@ describe("application languages", () => {
   });
 
   it("has an English translation and the same parameters for every French message", () => {
+    expect(Object.keys(fr.pages).sort()).toEqual(PAGES.map((page) => page.id).sort());
     const french = messages(fr);
     const english = messages(en);
     expect(Object.keys(english).sort()).toEqual(Object.keys(french).sort());
