@@ -15,6 +15,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { Toaster } from "@/components/ui/sonner";
 import { authClient } from "@/lib/auth-client";
 import { getToken } from "@/lib/auth-server";
+import { loadRouteAuth, type RouteAuthContext } from "@/lib/route-auth";
 
 import Header from "../components/header";
 import TargetCursor from "@/components/target-cursor";
@@ -28,7 +29,7 @@ const getAuth = createServerFn({ method: "GET" }).handler(async () => {
   return await getToken();
 });
 
-export interface RouterAppContext {
+export interface RouterAppContext extends RouteAuthContext {
   queryClient: QueryClient;
   convexQueryClient: ConvexQueryClient;
 }
@@ -57,15 +58,16 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 
   component: RootComponent,
   shellComponent: RootDocument,
-  beforeLoad: async (ctx) => {
-    const token = await getAuth();
-    if (token) {
-      ctx.context.convexQueryClient.serverHttpClient?.setAuth(token);
+  beforeLoad: async ({ context, location }) => {
+    const auth = await loadRouteAuth({
+      pathname: location.pathname,
+      isServer: typeof window === "undefined",
+      getToken: getAuth,
+    });
+    if (auth?.token) {
+      context.convexQueryClient.serverHttpClient?.setAuth(auth.token);
     }
-    return {
-      isAuthenticated: !!token,
-      token,
-    };
+    return auth;
   },
   errorComponent: ErrorBoundary,
   notFoundComponent: NotFound,

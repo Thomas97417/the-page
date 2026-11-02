@@ -46,6 +46,7 @@ export function PageNavigation({ pageId }: { pageId: PageId }) {
             aria-label={`.${PAGE_SUFFIXES[page.id]} — ${page.label}`}
             render={
               <Link
+                preload="render"
                 to={page.id === DEFAULT_PAGE_ID ? "/" : "/$page"}
                 params={page.id === DEFAULT_PAGE_ID ? {} : { page: page.id }}
                 search={{}}

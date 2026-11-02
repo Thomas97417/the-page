@@ -6,6 +6,8 @@ import { WordPage } from "@/components/word-page";
 import { pageHead, validatePageSearch } from "@/lib/page";
 
 export const Route = createFileRoute("/")({
+  pendingMs: 150,
+  pendingMinMs: 150,
   loader: ({ context }) =>
     context.queryClient.ensureQueryData(
       convexQuery(api.slots.list, { pageId: DEFAULT_PAGE_ID }),
