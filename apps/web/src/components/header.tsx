@@ -1,7 +1,6 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useConvexAuth } from "convex/react";
 import { ArrowUpRight } from "lucide-react";
-import { usePage } from "./page-provider";
 import UserMenu from "./user-menu";
 import ThemeToggle from "./theme-toggle";
 import { DEFAULT_PAGE_ID, getPage, pageIdFromPath } from "@my-better-t-app/backend/convex/lib/pages";
@@ -10,7 +9,6 @@ import { PageNavigation } from "./page-navigation";
 
 export default function Header() {
   const { isAuthenticated, isLoading } = useConvexAuth();
-  const { showWords } = usePage();
   const { pathname, search } = useLocation();
   const pageId = pageIdFromPath(pathname) ?? DEFAULT_PAGE_ID;
   return (
@@ -32,15 +30,7 @@ export default function Header() {
         className="flex items-center gap-1.5 text-xs sm:gap-6"
       >
         {isAuthenticated ? (
-          <>
-            <button
-              onClick={showWords}
-              className="min-h-11 transition-colors hover:text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring"
-            >
-              Mes mots
-            </button>
-            <UserMenu />
-          </>
+          <UserMenu />
         ) : (
           <Link
             to="/sign-in"

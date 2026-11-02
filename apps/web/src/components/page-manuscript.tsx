@@ -1,8 +1,9 @@
 import { Fragment } from "react";
 import { Popover } from "@base-ui/react/popover";
+import { useConvexAuth, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import type { api } from "@my-better-t-app/backend/convex/_generated/api";
-import { ArrowUpRight, X } from "lucide-react";
+import { api } from "@my-better-t-app/backend/convex/_generated/api";
+import { ArrowUpRight, Loader2, X } from "lucide-react";
 import { usePage } from "./page-provider";
 import { buttonVariants } from "./ui/button";
 import { euros } from "@/lib/page";
@@ -27,7 +28,14 @@ function linkLabel(url: string) {
 }
 
 function WordDetails({ slot }: { slot: Slot }) {
-  const { buy } = usePage();
+  const { buy, showWords } = usePage();
+  const { isAuthenticated, isLoading } = useConvexAuth();
+  const purchases = useQuery(api.purchases.mine, isAuthenticated ? {} : "skip");
+  const checkingOwnership =
+    isLoading || (isAuthenticated && purchases === undefined);
+  const owned = isAuthenticated
+    ? purchases?.find((purchase) => purchase.current && purchase.slotId === slot.id)
+    : undefined;
 
   return (
     <>
@@ -65,29 +73,60 @@ function WordDetails({ slot }: { slot: Slot }) {
           <span className="sr-only"> (nouvel onglet)</span>
         </a>
       )}
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
-        <p className="font-serif text-3xl leading-none tabular-nums">
-          <span className="sr-only">Prix de cette place : </span>
-          {euros(slot.price)}
-        </p>
-        <Popover.Close
-          disabled={slot.reserved}
-          onClick={() =>
-            buy({
-              slotId: slot.id,
-              pageId: slot.pageId,
-              position: slot.position,
-              acquisition: slot.acquisitions,
-              word: "",
-              url: "",
-            })
-          }
-          className={cn(buttonVariants(), "h-10 gap-3 px-3 text-xs")}
+      {checkingOwnership ? (
+        <div
+          role="status"
+          className="mt-5 flex min-h-14 items-center gap-2 border-t pt-4 text-xs text-muted-foreground"
         >
-          {slot.reserved ? "Réservée" : slot.word ? "Prendre la place" : "Écrire ici"}
-          {!slot.reserved && <ArrowUpRight aria-hidden="true" className="size-3.5" />}
-        </Popover.Close>
-      </div>
+          <Loader2
+            aria-hidden="true"
+            className="size-3.5 animate-spin motion-reduce:animate-none"
+          />
+          Chargement de vos mots…
+        </div>
+      ) : owned ? (
+        <div className="mt-5 border-t pt-4">
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            {owned.hidden
+              ? "Cette place est à vous. Ce mot est masqué par la modération."
+              : "Cette place est à vous. Vous pouvez modifier votre mot gratuitement."}
+          </p>
+          <Popover.Close
+            onClick={showWords}
+            className={cn(
+              buttonVariants(),
+              "mt-4 h-10 w-full justify-between gap-3 px-3 text-xs",
+            )}
+          >
+            Voir mes mots
+            <ArrowUpRight aria-hidden="true" className="size-3.5" />
+          </Popover.Close>
+        </div>
+      ) : (
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+          <p className="font-serif text-3xl leading-none tabular-nums">
+            <span className="sr-only">Prix de cette place : </span>
+            {euros(slot.price)}
+          </p>
+          <Popover.Close
+            disabled={slot.reserved}
+            onClick={() =>
+              buy({
+                slotId: slot.id,
+                pageId: slot.pageId,
+                position: slot.position,
+                acquisition: slot.acquisitions,
+                word: "",
+                url: "",
+              })
+            }
+            className={cn(buttonVariants(), "h-10 gap-3 px-3 text-xs")}
+          >
+            {slot.reserved ? "Réservée" : slot.word ? "Prendre la place" : "Écrire ici"}
+            {!slot.reserved && <ArrowUpRight aria-hidden="true" className="size-3.5" />}
+          </Popover.Close>
+        </div>
+      )}
     </>
   );
 }
