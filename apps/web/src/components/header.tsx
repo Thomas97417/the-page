@@ -40,7 +40,7 @@ export default function Header() {
             }}
             aria-disabled={isLoading || undefined}
             tabIndex={isLoading ? -1 : undefined}
-            className={`group inline-flex h-9 shrink-0 items-center gap-2 rounded-full border px-3 text-xs font-medium transition-colors hover:border-foreground/25 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:px-4 ${isLoading ? "pointer-events-none opacity-40" : ""}`}
+            className={`group inline-flex h-9 shrink-0 items-center gap-2 rounded-none border px-3 text-xs font-medium transition-colors hover:border-foreground/25 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:px-4 ${isLoading ? "pointer-events-none opacity-40" : ""}`}
           >
             <span>Connexion</span>
             <ArrowUpRight

@@ -27,7 +27,7 @@ export default function ThemeToggle() {
       onClick={() => setTheme(next.value)}
       aria-label={active ? `Thème ${active.label.toLowerCase()}. Passer au thème ${next.label.toLowerCase()}` : "Changer le thème"}
       title={active ? `${active.label} → ${next.label}` : "Changer le thème"}
-      className="flex size-9 shrink-0 items-center justify-center rounded-full border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      className="flex size-9 shrink-0 items-center justify-center rounded-none border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
     >
       <Icon aria-hidden="true" className="size-4" strokeWidth={1.5} />
     </button>
