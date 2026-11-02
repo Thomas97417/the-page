@@ -57,7 +57,7 @@ function Admin() {
           <thead className="border-b font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
             <tr>
               <th className="py-4 pr-4 font-normal">Place</th>
-              <th className="pr-4 font-normal">Mot / lien</th>
+              <th className="pr-4 font-normal">Mot / description / lien</th>
               <th className="pr-4 font-normal">Prix suivant</th>
               <th className="text-right font-normal">Actions</th>
             </tr>
@@ -91,6 +91,11 @@ function Admin() {
                     >
                       {slot.word ?? "—"}
                     </span>
+                    {slot.description && (
+                      <p className="mt-2 whitespace-pre-line break-words text-xs leading-relaxed text-muted-foreground">
+                        {slot.description}
+                      </p>
+                    )}
                     {slot.url && (
                       <span className="mt-1 block break-all text-xs text-muted-foreground">
                         {slot.url}

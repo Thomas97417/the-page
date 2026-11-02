@@ -18,6 +18,7 @@ export default defineSchema({
     currentPurchaseId: v.optional(v.id("purchases")),
     word: v.optional(v.string()),
     url: v.optional(v.string()),
+    description: v.optional(v.string()),
     visibility: v.union(
       v.literal("visible"),
       v.literal("hidden"),
@@ -32,6 +33,7 @@ export default defineSchema({
     userId: v.string(),
     word: v.string(),
     url: v.optional(v.string()),
+    description: v.optional(v.string()),
     acquisition: v.number(),
     amount: v.number(),
     status: purchaseStatus,
