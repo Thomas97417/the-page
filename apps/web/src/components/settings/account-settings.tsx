@@ -1,5 +1,4 @@
-import { Link } from "@tanstack/react-router";
-import { ArrowLeft, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 
 import ChangePasswordCard from "./change-password-card";
 import DeleteAccountCard from "./delete-account-card";
@@ -19,32 +18,8 @@ export function AccountSettings({ name, email }: { name: string; email: string }
 
   return (
     <main className="mx-auto w-full max-w-296 flex-1 px-5 pb-12 pt-8 sm:px-10 sm:pb-20 sm:pt-12 lg:px-14">
-      <Link
-        to="/"
-        search={{}}
-        className="group inline-flex min-h-11 items-center gap-2 text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
-      >
-        <ArrowLeft
-          aria-hidden="true"
-          className="size-3.5 transition-transform group-hover:-translate-x-1 motion-reduce:transform-none"
-          strokeWidth={1.5}
-        />
-        <span>Retour à la page</span>
-      </Link>
-
-      <div className="border-b pb-9 pt-6 sm:pb-12 sm:pt-8">
-        <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-          Votre espace personnel
-        </p>
-        <h1 className="font-serif text-5xl tracking-tight sm:text-6xl">
-          Mon compte.
-        </h1>
-        <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
-          Vos informations personnelles et les accès à votre compte.
-        </p>
-      </div>
-
-      <div className="grid gap-9 pt-7 sm:pt-10 lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-20">
+      <h1 className="sr-only">Mon compte</h1>
+      <div className="grid gap-9 lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-20">
         <aside className="min-w-0 lg:sticky lg:top-10 lg:self-start">
           <div className="hidden min-w-0 lg:block">
             <div
