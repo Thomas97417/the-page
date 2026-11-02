@@ -83,3 +83,7 @@ export function pageIdFromPath(pathname: string): PageId | null {
 export function purchaseReturnPath(pageId: PageId, purchaseId: string) {
   return `${pagePath(pageId)}?purchase=${encodeURIComponent(purchaseId)}`;
 }
+
+export function reclaimPath(pageId: PageId, notificationId: string) {
+  return `${pagePath(pageId)}?reclaim=${encodeURIComponent(notificationId)}`;
+}

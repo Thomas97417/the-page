@@ -57,11 +57,30 @@ export default defineSchema({
     failureReason: v.optional(v.string()),
     refundLeaseUntil: v.optional(v.number()),
     checkoutClaimed: v.optional(v.boolean()),
+    language: v.optional(v.union(v.literal("fr"), v.literal("en"))),
   })
     .index("by_user", ["userId"])
     .index("by_checkout", ["checkoutId"])
     .index("by_order", ["orderId"])
     .index("by_status", ["status"]),
+  notifications: defineTable({
+    userId: v.string(),
+    kind: v.union(v.literal("purchase_confirmed"), v.literal("word_replaced")),
+    purchaseId: v.id("purchases"),
+    slotId: v.id("slots"),
+    pageId: pageIdValidator,
+    position: v.number(),
+    word: v.string(),
+    url: v.optional(v.string()),
+    description: v.optional(v.string()),
+    language: v.union(v.literal("fr"), v.literal("en")),
+    readAt: v.optional(v.number()),
+    emailStatus: v.union(v.literal("pending"), v.literal("queued"), v.literal("skipped")),
+    emailId: v.optional(v.string()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_read", ["userId", "readAt"])
+    .index("by_email_status", ["emailStatus"]),
   moderationLog: defineTable({
     slotId: v.id("slots"),
     purchaseId: v.id("purchases"),

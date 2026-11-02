@@ -7,7 +7,7 @@ import {
 
 export function loadCountryPage(
   slug: string,
-  search: { purchase?: string },
+  search: { purchase?: string; reclaim?: string },
   hash: string,
 ) {
   const pageId = pageIdFromSlug(slug);

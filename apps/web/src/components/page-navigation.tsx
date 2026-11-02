@@ -49,7 +49,7 @@ export function PageNavigation({ pageId }: { pageId: PageId }) {
     >
       <Combobox.Trigger
         aria-label={t("header.choosePage", { page: t(`pages.${pageId}`) })}
-        className="group inline-flex min-h-11 items-center gap-1 pr-0.5 font-serif text-sm tracking-[-0.025em] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-popup-open:text-foreground sm:text-base"
+        className="group inline-flex min-h-11 items-center gap-1 pr-0.5 font-serif text-sm tracking-[-0.025em] text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:text-foreground data-popup-open:text-foreground sm:text-base"
       >
         <span>.{currentPage.suffix}</span>
         <ChevronDown

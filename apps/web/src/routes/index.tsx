@@ -18,6 +18,6 @@ export const Route = createFileRoute("/")({
 });
 
 function WorldPage() {
-  const { purchase } = Route.useSearch();
-  return <WordPage pageId={DEFAULT_PAGE_ID} purchase={purchase} />;
+  const { purchase, reclaim } = Route.useSearch();
+  return <WordPage pageId={DEFAULT_PAGE_ID} purchase={purchase} reclaim={reclaim} />;
 }

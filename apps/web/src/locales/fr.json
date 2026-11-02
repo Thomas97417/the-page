@@ -99,6 +99,7 @@
     "menu": "Menu du compte",
     "words": "Mes mots",
     "wordsDescription": "Vos mots et leur historique",
+    "notificationsDescription": "Vos achats et les mots rachetés",
     "account": "Mon compte",
     "admin": "Administration",
     "signOut": "Déconnexion"
@@ -209,6 +210,32 @@
       "refund_pending": "Remboursement en cours",
       "refunded": "Remboursé"
     }
+  },
+  "notifications": {
+    "title": "Notifications.",
+    "description": "Vos achats confirmés et vos mots rachetés, sur toutes les pages.",
+    "unread_one": "{{count}} notification non lue",
+    "unread_other": "{{count}} notifications non lues",
+    "unreadLimit": "99+ notifications non lues",
+    "menuUnread_one": "Menu du compte, {{count}} notification non lue",
+    "menuUnread_other": "Menu du compte, {{count}} notifications non lues",
+    "menuUnreadLimit": "Menu du compte, 99+ notifications non lues",
+    "upToDate": "Vous êtes à jour",
+    "markAllRead": "Tout marquer comme lu",
+    "new": "Non lue",
+    "loading": "Chargement des notifications…",
+    "empty": "Tout commence par un mot.",
+    "emptyDescription": "Vous retrouverez ici la confirmation de vos achats et une alerte lorsqu’un de vos mots est racheté.",
+    "purchase_confirmed": "Achat confirmé",
+    "purchase_confirmedDescription": "Félicitations, votre mot a rejoint the page.",
+    "word_replaced": "Mot racheté",
+    "word_replacedDescription": "Quelqu’un a racheté votre emplacement. Vous pouvez reprendre votre place.",
+    "reclaim": "Racheter mon mot",
+    "manageWords": "Gérer mes mots",
+    "loadMore": "Voir les notifications précédentes",
+    "opening": "Ouverture de votre mot…",
+    "signInToReclaim": "Connectez-vous pour racheter votre mot.",
+    "unavailable": "Ce lien de rachat est indisponible pour ce compte. Retrouvez vos notifications dans le menu utilisateur."
   },
   "auth": {
     "back": "← La page",

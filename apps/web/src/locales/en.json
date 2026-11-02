@@ -99,6 +99,7 @@
     "menu": "Account menu",
     "words": "My words",
     "wordsDescription": "Your words and their history",
+    "notificationsDescription": "Your purchases and replaced words",
     "account": "My account",
     "admin": "Administration",
     "signOut": "Sign out"
@@ -209,6 +210,32 @@
       "refund_pending": "Refund in progress",
       "refunded": "Refunded"
     }
+  },
+  "notifications": {
+    "title": "Notifications.",
+    "description": "Your confirmed purchases and replaced words, across all pages.",
+    "unread_one": "{{count}} unread notification",
+    "unread_other": "{{count}} unread notifications",
+    "unreadLimit": "99+ unread notifications",
+    "menuUnread_one": "Account menu, {{count}} unread notification",
+    "menuUnread_other": "Account menu, {{count}} unread notifications",
+    "menuUnreadLimit": "Account menu, 99+ unread notifications",
+    "upToDate": "You’re up to date",
+    "markAllRead": "Mark all as read",
+    "new": "Unread",
+    "loading": "Loading notifications…",
+    "empty": "It all starts with a word.",
+    "emptyDescription": "Your purchase confirmations and alerts when someone buys one of your places will appear here.",
+    "purchase_confirmed": "Purchase confirmed",
+    "purchase_confirmedDescription": "Congratulations, your word has joined the page.",
+    "word_replaced": "Word replaced",
+    "word_replacedDescription": "Someone bought your place. You can reclaim it.",
+    "reclaim": "Buy my word back",
+    "manageWords": "Manage my words",
+    "loadMore": "View earlier notifications",
+    "opening": "Opening your word…",
+    "signInToReclaim": "Sign in to buy your word back.",
+    "unavailable": "This repurchase link is unavailable for this account. Find your notifications in the user menu."
   },
   "auth": {
     "back": "← The page",

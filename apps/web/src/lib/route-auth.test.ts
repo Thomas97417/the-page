@@ -168,6 +168,17 @@ describe("authentication during page navigation", () => {
 });
 
 describe("country URL redirects", () => {
+  it("preserves repurchase email links when upgrading an old country URL", async () => {
+    const app = setup("/royaume-uni?reclaim=notification-123#word-12");
+    await app.router.load();
+    expect(app.router.state.redirect?.options).toMatchObject({
+      to: "/$page",
+      params: { page: "united-kingdom" },
+      search: { reclaim: "notification-123" },
+      hash: "word-12",
+      statusCode: 301,
+    });
+  });
   it.each(PAGES.filter((page) => page.id !== page.slug))(
     "permanently redirects /$id to /$slug while preserving purchase tracking and the word anchor",
     async (page) => {

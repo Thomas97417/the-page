@@ -13,6 +13,12 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("returning after authentication", () => {
+  it.each(["world", "france", "royaume-uni"] as const)("preserves a repurchase email destination on %s through sign-in", (pageId) => {
+    rememberReturnPath(pageId, undefined, "notification/value?next=1");
+    expect(returnPath()).toBe(`${pagePath(pageId)}?reclaim=notification%2Fvalue%3Fnext%3D1`);
+    sessionStorage.setItem("the-page:return", `${pagePath(pageId)}?reclaim=${"x".repeat(128)}`);
+    expect(returnPath()).toBe(pagePath(pageId));
+  });
   it.each([
     ["japon", "/japan"],
     ["royaume-uni", "/united-kingdom"],

@@ -8,4 +8,10 @@ crons.interval(
   internal.payments.recover,
   {},
 );
+crons.interval(
+  "recover notification emails",
+  { minutes: 5 },
+  internal.notifications.recoverEmails,
+  {},
+);
 export default crons;
