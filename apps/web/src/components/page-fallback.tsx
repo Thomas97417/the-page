@@ -54,12 +54,6 @@ export function PageFallback({
         </div>
         {children}
       </section>
-
-      <footer className="border-t py-6 text-center">
-        <p className="font-serif text-sm italic text-muted-foreground">
-          Une page à tous. Un mot de vous.
-        </p>
-      </footer>
     </main>
   );
 }

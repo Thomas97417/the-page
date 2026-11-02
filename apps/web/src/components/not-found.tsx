@@ -16,7 +16,7 @@ export default function NotFound() {
           <span className="italic">s’est égarée.</span>
         </>
       }
-      description="Cette page n’existe pas ou le lien a changé. Retrouvez notre histoire et reprenez le fil."
+      description="Cette page n’existe pas ou le lien a changé. Revenez à l’accueil pour retrouver les mots de la page."
       actions={
         <Link
           to="/"
