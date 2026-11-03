@@ -90,4 +90,11 @@ describe("application languages", () => {
       expect(errorMessage(error, t)).toBe("Something went wrong. Please try again.");
     }
   });
+
+  it.each(["fr", "en"] as const)("translates structured rate limit errors in %s", (language) => {
+    const { t } = createI18n(language);
+    const error = new ConvexError({ kind: "RateLimited", name: "checkoutStart", retryAfter: 6_000 });
+    expect(errorMessage(error, t)).toBe(t("errors.rateLimit"));
+    expect(errorMessage(new ConvexError({ kind: "Unknown", name: "checkoutStart" }), t)).toBe(t("errors.generic"));
+  });
 });

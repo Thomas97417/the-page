@@ -2,6 +2,7 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { convexTest } from "convex-test";
 import betterAuth from "@convex-dev/better-auth/test";
+import rateLimiterTest from "@convex-dev/rate-limiter/test";
 import schema from "../convex/schema";
 import { api, components, internal } from "../convex/_generated/api";
 import { validateContent } from "../convex/lib/content";
@@ -33,6 +34,7 @@ const modules = import.meta.glob("../convex/**/*.ts");
 function setup() {
   const t = convexTest(schema, modules);
   t.registerComponent("betterAuth", betterAuth.schema, betterAuth.modules);
+  rateLimiterTest.register(t);
   return t;
 }
 type Test = ReturnType<typeof setup>;
@@ -447,7 +449,7 @@ describe("purchases and ownership", () => {
       }),
     ).rejects.toThrow("prix a changé");
   });
-  it("limits a buyer to one outstanding reservation and five attempts per ten minutes", async () => {
+  it("limits a buyer to one outstanding reservation and a burst of five attempts", async () => {
     const t = setup();
     await t.mutation(internal.slots.initialize);
     const p = await reserve(t);
@@ -463,7 +465,9 @@ describe("purchases and ownership", () => {
         reason: "test",
       });
     }
-    await expect(reserve(t)).rejects.toThrow("Trop de tentatives");
+    await expect(reserve(t)).rejects.toThrow(
+      JSON.stringify({ kind: "RateLimited", name: "purchaseReservation", retryAfter: 120_000 }),
+    );
   });
   it("expired or failed attempts never increase the price", async () => {
     const t = setup();

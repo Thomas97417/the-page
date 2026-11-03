@@ -56,7 +56,7 @@ Sans configuration Polar, la page reste consultable et l’achat affiche une ind
 ### Confirmation et récupération
 
 - Un checkout réserve sa place cinq minutes. L’ancien mot reste visible et le prix reste inchangé jusqu’à confirmation.
-- Chaque utilisateur est limité à une réservation en cours et cinq tentatives par dix minutes.
+- Chaque utilisateur est limité à une réservation en cours. Le quota de nouvelles réservations accepte cinq créations rapprochées, puis récupère une place toutes les deux minutes.
 - Le webhook signé relit la commande Polar et vérifie commande, checkout, produit, utilisateur, devise et montant. La publication et l’augmentation de prix sont atomiques et idempotentes.
 - Avant de libérer une réservation expirée, le backend vérifie Polar. Une panne ou un paiement encore en cours conserve la réservation pendant la vérification.
 - Un paiement reçu après libération est remboursé ; il ne peut jamais écraser un achat plus récent. Une tâche planifiée toutes les cinq minutes récupère les paiements et remboursements interrompus.
@@ -76,6 +76,24 @@ La route `/admin` permet de sélectionner une page, puis de masquer, rétablir o
 
 Les routes utiles sont `/`, `/settings`, `/admin`, les écrans de connexion et récupération de compte, et `/api/auth/*`. Les anciennes démonstrations `/dashboard` et `/upload` ont été supprimées. Le stockage R2 préexistant n’est pas utilisé par les nouveaux parcours.
 
+## Limites des opérations Convex
+
+Le composant [Convex Rate Limiter](https://www.convex.dev/components/rate-limiter) est enregistré dans `packages/backend/convex/convex.config.ts`. Les quotas sont définis dans `packages/backend/convex/lib/rateLimits.ts`, persistés par le composant et appliqués côté serveur par ID utilisateur authentifié. Ils sont partagés entre toutes les pages et les sessions du compte. Chaque quota utilise un seau de jetons : la capacité fixe le nombre d’opérations rapprochées et le débit indique la vitesse de recharge.
+
+| Opération | Débit de recharge | Capacité |
+| --- | --- | --- |
+| Ouverture d’un paiement | 10 / minute | 3 |
+| Actualisation d’un paiement | 20 / minute | 5 |
+| Nouvelle réservation | 5 / 10 minutes | 5 |
+| Modification d’un mot | 20 / minute | 10 |
+| Modération | 60 / minute | 30 |
+| Notifications lues, seules ou en lot | 60 / minute | 30 |
+| URL d’upload et synchronisation R2 | 10 / minute | 5 |
+
+Les actions de paiement consomment leur quota avant de réserver ou d’appeler Polar, même en cas d’échec ultérieur. Les mutations consomment leur quota dans la même transaction que leurs modifications. Réutiliser une réservation existante ne consomme pas une nouvelle réservation. Les points d’entrée d’upload R2 exigent tous une authentification et partagent le même quota.
+
+Un dépassement renvoie l’erreur structurée `RateLimited` du composant, avec le nom du quota et `retryAfter` en millisecondes. L’interface affiche le message traduit « Trop de demandes. Réessayez dans un instant. ». Les lectures publiques, les webhooks signés et les tâches internes de récupération restent disponibles. Le composant est installé sur le déploiement lors du prochain `bun run dev:server` ou déploiement Convex ; aucune variable d’environnement supplémentaire n’est nécessaire.
+
 ## Vérification
 
 ```bash
@@ -84,7 +102,7 @@ bun run check-types
 bun run build
 ```
 
-Les tests Vitest/Convex utilisent une base en mémoire et des appels Polar simulés : ils ne créent ni utilisateur réel, ni paiement, ni mot sur le déploiement distant. Ils vérifient l’isolation des pages, la migration de World, les retours après connexion et paiement, les prix indépendants, la propriété, l’édition, les réservations concurrentes, la modération, les signatures invalides, les commandes incohérentes et la récupération des paiements/remboursements.
+Les tests Vitest/Convex utilisent une base en mémoire et des appels Polar simulés : ils ne créent ni utilisateur réel, ni paiement, ni mot sur le déploiement distant. Ils vérifient l’isolation des pages, la migration de World, les retours après connexion et paiement, les prix indépendants, la propriété, l’édition, les réservations concurrentes, la modération, les signatures invalides, les commandes incohérentes et la récupération des paiements/remboursements. Les tests de limitation vérifient les quotas par utilisateur, leur partage entre pages et points d’entrée, leur recharge et le blocage avant les effets de bord.
 
 Pour valider l’intégration réelle après configuration : acheter une place avec les moyens de paiement de test documentés par Polar ; vérifier `order.paid`, le mot publié et l’augmentation d’un euro ; racheter avec un second compte ; vérifier que le premier compte ne peut plus modifier la place. Tester aussi un checkout abandonné, un événement rejoué et un paiement après expiration. N’utiliser aucune carte réelle dans ce prototype.
 

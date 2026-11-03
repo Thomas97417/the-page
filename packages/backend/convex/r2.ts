@@ -1,35 +1,36 @@
 import { R2 } from "@convex-dev/r2";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
-import { mutation } from "./_generated/server";
-import { authComponent } from "./auth";
+import { mutation, type MutationCtx } from "./_generated/server";
+import { requireUser } from "./permissions";
+import { rateLimiter } from "./lib/rateLimits";
 
 export const r2 = new R2(components.r2);
 
-// Pass DataModel as a generic type parameter to get proper TypeScript typing
-// for all callback contexts. Without this, ctx will be typed as GenericDocument
-// instead of your specific table types.
-export const { generateUploadUrl, syncMetadata, listMetadata, getMetadata } = r2.clientApi<DataModel>({
-  checkUpload: async (_ctx, _bucket) => {
-    // const user = await userFromAuth(ctx);
-    // ...validate that the user can upload to this bucket
+async function requireUpload(ctx: MutationCtx) {
+  const user = await requireUser(ctx);
+  await rateLimiter.limit(ctx, "upload", { key: user._id, throws: true });
+  return user;
+}
+
+export const { syncMetadata, listMetadata, getMetadata } = r2.clientApi<DataModel>({
+  onUpload: async (ctx) => {
+    await requireUpload(ctx);
   },
-  onUpload: async (_ctx, _bucket, _key) => {
-    // ...do something with the key
-    // This technically runs in the `syncMetadata` mutation, as the upload
-    // is performed from the client side. Will run if using the `useUploadFile`
-    // hook, or if `syncMetadata` function is called directly. Runs after the
-    // `checkUpload` callback.
+});
+
+export const generateUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    await requireUpload(ctx);
+    return r2.generateUploadUrl();
   },
 });
 
 export const generateUserUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
-    const user = await authComponent.safeGetAuthUser(ctx);
-    if (!user) {
-      throw new Error("Not authenticated");
-    }
+    await requireUpload(ctx);
     const key = `uploads/${crypto.randomUUID()}`;
     return r2.generateUploadUrl(key);
   },
@@ -38,10 +39,7 @@ export const generateUserUploadUrl = mutation({
 export const generateAvatarUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
-    const user = await authComponent.safeGetAuthUser(ctx);
-    if (!user) {
-      throw new Error("Not authenticated");
-    }
+    const user = await requireUpload(ctx);
     // Delete the old avatar from R2 if it exists
     if (user.image && user.image.startsWith("avatars/")) {
       await r2.deleteObject(ctx, user.image);

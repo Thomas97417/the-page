@@ -8,6 +8,7 @@ import type { Doc } from "./_generated/dataModel";
 import { authComponent } from "./auth";
 import { requireUser } from "./permissions";
 import { wordNotificationEmail } from "./lib/notificationEmail";
+import { rateLimiter } from "./lib/rateLimits";
 
 async function reclaimDraft(ctx: QueryCtx, notification: Doc<"notifications">) {
   const slot = await ctx.db.get(notification.slotId);
@@ -76,6 +77,7 @@ export const markRead = mutation({
   args: { notificationId: v.id("notifications") },
   handler: async (ctx, { notificationId }) => {
     const user = await requireUser(ctx);
+    await rateLimiter.limit(ctx, "notificationRead", { key: user._id, throws: true });
     const notification = await ctx.db.get(notificationId);
     if (notification?.userId === user._id && notification.readAt === undefined)
       await ctx.db.patch(notificationId, { readAt: Date.now() });
@@ -99,6 +101,7 @@ export const markAllRead = mutation({
   args: {},
   handler: async (ctx) => {
     const user = await requireUser(ctx);
+    await rateLimiter.limit(ctx, "notificationRead", { key: user._id, throws: true });
     await markReadBatch(ctx, user._id, Date.now());
   },
 });

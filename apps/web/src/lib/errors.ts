@@ -48,6 +48,8 @@ export function errorMessage(error: unknown, t: TFunction) {
   else if (error && typeof error === "object" && "code" in error)
     message = error.code;
   else if (error instanceof Error) message = error.message;
+  if (message && typeof message === "object" && "kind" in message && message.kind === "RateLimited")
+    return t("errors.rateLimit");
   const key = typeof message === "string" && Object.hasOwn(ERROR_KEYS, message)
     ? ERROR_KEYS[message]
     : undefined;
