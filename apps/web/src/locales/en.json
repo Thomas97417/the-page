@@ -141,7 +141,7 @@
       },
       "hosting": {
         "title": "Hosting",
-        "body": "The site is hosted by Cloudflare, Inc.\n101 Townsend Street, San Francisco, CA 94107, United States.\nPhone: +1 888 993 5273."
+        "body": "The site is hosted by Cloudflare, Inc.\n101 Townsend Street, San Francisco, CA 94107, United States.\nPhone: +1 888 993 5273.\n\nThe application’s database is hosted by Convex in the Europe (Ireland) region."
       },
       "data": {
         "title": "Personal data",
