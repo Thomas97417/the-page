@@ -8,6 +8,7 @@ import { requireUser } from "./permissions";
 import { DEFAULT_PAGE_ID } from "./lib/pages";
 import { notifyPurchase } from "./lib/notifications";
 import { rateLimiter } from "./lib/rateLimits";
+import { capturePurchaseEvent } from "./lib/analytics";
 
 async function release(ctx: MutationCtx, purchase: Doc<"purchases">) {
   const slot = await ctx.db.get(purchase.slotId);
@@ -203,6 +204,13 @@ export const attachCheckout = internalMutation({
       checkoutUrl,
       ...(purchase.status === "creating" ? { status: "pending" as const } : {}),
     });
+    if (purchase.checkoutUrl === undefined) {
+      await capturePurchaseEvent(ctx, "checkout_created", {
+        ...purchase,
+        checkoutId,
+        checkoutUrl,
+      });
+    }
   },
 });
 
@@ -302,6 +310,11 @@ export const applyPaidOrder = internalMutation({
       status: "published",
       publishedAt: Date.now(),
     });
+    await capturePurchaseEvent(ctx, "purchase_completed", {
+      ...purchase,
+      orderId: order.id,
+      checkoutId: order.checkoutId,
+    });
     await notifyPurchase(ctx, purchase, slot);
     return "published";
   },
@@ -335,6 +348,13 @@ export const markRefunded = internalMutation({
         url: undefined,
         description: undefined,
         visibility: "visible",
+      });
+    }
+    if (purchase.status !== "refunded") {
+      await capturePurchaseEvent(ctx, "purchase_refunded", {
+        ...purchase,
+        refundedAmount: args.refundedAmount,
+        refundId: args.refundId ?? purchase.refundId,
       });
     }
   },

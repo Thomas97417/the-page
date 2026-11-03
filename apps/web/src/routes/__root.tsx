@@ -26,6 +26,7 @@ import NotFound from "../components/not-found";
 import appCss from "../index.css?url";
 import { ThemeProvider } from "@/components/theme-provider";
 import { PageProvider } from "@/components/page-provider";
+import { AnalyticsProvider } from "@/components/analytics-provider";
 
 const getAuth = createServerFn({ method: "GET" }).handler(async () => {
   return await getToken();
@@ -84,19 +85,21 @@ function RootComponent() {
       authClient={authClient}
       initialToken={context.token}
     >
-      <PageProvider>
-        <TargetCursor
-          targetSelector={'a[href]:not([aria-disabled="true"]), button:not(:disabled):not([aria-disabled="true"]), [role="menuitem"]:not([aria-disabled="true"]):not([data-disabled])'}
-          spinDuration={0}
-          hoverDuration={0.35}
-          size={30}
-          cornerSize={10}
-          thickness={1.5}
-          padding={8}
-        />
-        <Header />
-        <Outlet />
-      </PageProvider>
+      <AnalyticsProvider>
+        <PageProvider>
+          <TargetCursor
+            targetSelector={'a[href]:not([aria-disabled="true"]), button:not(:disabled):not([aria-disabled="true"]), [role="menuitem"]:not([aria-disabled="true"]):not([data-disabled])'}
+            spinDuration={0}
+            hoverDuration={0.35}
+            size={30}
+            cornerSize={10}
+            thickness={1.5}
+            padding={8}
+          />
+          <Header />
+          <Outlet />
+        </PageProvider>
+      </AnalyticsProvider>
     </ConvexBetterAuthProvider>
   );
 }

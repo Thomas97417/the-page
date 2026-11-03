@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useAction, useConvexAuth, useQuery } from "convex/react";
 import { api } from "@my-better-t-app/backend/convex/_generated/api";
 import { validateContent } from "@my-better-t-app/backend/convex/lib/content";
@@ -13,6 +13,7 @@ import { WordDescriptionField } from "./word-description-field";
 import { euros } from "@/lib/page";
 import { errorMessage } from "@/lib/errors";
 import { DEFAULT_PAGE_ID } from "@my-better-t-app/backend/convex/lib/pages";
+import { useAnalytics } from "@/hooks/use-analytics";
 
 export function BuySheet({
   draft,
@@ -22,6 +23,8 @@ export function BuySheet({
   onClose: () => void;
 }) {
   const { t, i18n } = useTranslation();
+  const analytics = useAnalytics();
+  const formTracked = useRef(false);
   const [word, setWord] = useState(draft.word);
   const [url, setUrl] = useState(draft.url);
   const [description, setDescription] = useState(draft.description ?? "");
@@ -40,6 +43,27 @@ export function BuySheet({
   const start = useAction(api.payments.start);
   const slot = slots?.find((s) => s.id === draft.slotId);
   const changed = !!slot && accepted !== slot.acquisitions;
+
+  useEffect(() => {
+    if (
+      !analytics ||
+      formTracked.current ||
+      isLoading ||
+      owned ||
+      (isAuthenticated && purchases === undefined)
+    ) return;
+
+    // Also covers drafts restored after login, without counting the owner's edit panel.
+    formTracked.current = true;
+    analytics.capture("purchase_form_opened", {
+      page_id: pageId,
+      slot_id: draft.slotId,
+      position: draft.position,
+      purchase_type: draft.acquisition === 0 ? "initial" : "takeover",
+      acquisition_number: draft.acquisition + 1,
+    });
+  }, [analytics, isLoading, isAuthenticated, purchases, owned, pageId, draft.slotId, draft.position, draft.acquisition]);
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     setError(null);

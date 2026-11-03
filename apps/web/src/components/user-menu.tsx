@@ -15,10 +15,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth-client";
+import { useAnalytics } from "@/hooks/use-analytics";
 
 export default function UserMenu() {
   const { t } = useTranslation();
   const user = useCurrentUser();
+  const analytics = useAnalytics();
   const viewer = useQuery(api.slots.viewer);
   const unread = useQuery(api.notifications.unreadCount);
   const navigate = useNavigate();
@@ -127,6 +129,7 @@ export default function UserMenu() {
             className="min-h-11 cursor-pointer gap-2 px-0 pb-0 pt-3 text-xs text-muted-foreground transition-colors focus:bg-transparent data-highlighted:bg-transparent data-highlighted:text-foreground motion-reduce:transition-none"
             onClick={async () => {
               await authClient.signOut();
+              analytics?.reset();
               window.location.assign("/");
             }}
           >
