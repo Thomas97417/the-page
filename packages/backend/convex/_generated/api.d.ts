@@ -9,10 +9,12 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as authRateLimits from "../authRateLimits.js";
 import type * as crons from "../crons.js";
 import type * as env from "../env.js";
 import type * as healthCheck from "../healthCheck.js";
 import type * as http from "../http.js";
+import type * as lib_authProxy from "../lib/authProxy.js";
 import type * as lib_content from "../lib/content.js";
 import type * as lib_emailContent from "../lib/emailContent.js";
 import type * as lib_language from "../lib/language.js";
@@ -38,10 +40,12 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  authRateLimits: typeof authRateLimits;
   crons: typeof crons;
   env: typeof env;
   healthCheck: typeof healthCheck;
   http: typeof http;
+  "lib/authProxy": typeof lib_authProxy;
   "lib/content": typeof lib_content;
   "lib/emailContent": typeof lib_emailContent;
   "lib/language": typeof lib_language;

@@ -95,6 +95,7 @@ describe("application languages", () => {
     const { t } = createI18n(language);
     const error = new ConvexError({ kind: "RateLimited", name: "checkoutStart", retryAfter: 6_000 });
     expect(errorMessage(error, t)).toBe(t("errors.rateLimit"));
+    expect(errorMessage({ status: 429, message: "Too many requests. Please try again later." }, t)).toBe(t("errors.rateLimit"));
     expect(errorMessage(new ConvexError({ kind: "Unknown", name: "checkoutStart" }), t)).toBe(t("errors.generic"));
   });
 });

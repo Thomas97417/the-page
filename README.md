@@ -76,6 +76,32 @@ La route `/admin` permet de sélectionner une page, puis de masquer, rétablir o
 
 Les routes utiles sont `/`, `/settings`, `/admin`, les écrans de connexion et récupération de compte, et `/api/auth/*`.
 
+## Limites de l’authentification
+
+Les routes HTTP utilisent le [rate limiter de Better Auth](https://better-auth.com/docs/concepts/rate-limit), activé en développement et en production. Les compteurs sont persistés dans la table `rateLimit` du composant Better Auth, par IP et par route. Les adresses IPv6 sont normalisées et regroupées par sous-réseau `/64` ; les adresses IPv4 mappées en IPv6 partagent le quota de leur équivalent IPv4. Les règles sont définies dans `packages/backend/convex/authRateLimits.ts`.
+
+| Route | Maximum | Fenêtre |
+| --- | --- | --- |
+| Connexion email | 5 | 60 secondes |
+| Connexion sociale | 10 | 60 secondes |
+| Inscription | 3 | 60 secondes |
+| Demande de réinitialisation et renvoi de vérification, chacune | 3 | 5 minutes |
+| Réinitialisation et modification du mot de passe, chacune | 5 | 60 secondes |
+| Changement d’email | 3 | 5 minutes |
+| Autres routes | 100 | 10 secondes |
+
+Les lectures de session (`/get-session`) et renouvellements JWT (`/convex/token`) sont exemptés pour préserver l’authentification en arrière-plan. Un dépassement renvoie HTTP **429** avec `X-Retry-After` en secondes ; le frontend affiche le message traduit de limitation. Les requêtes refusées ne prolongent pas l’attente.
+
+Better Auth 1.4, compatible avec l’adaptateur installé, fournit une API de stockage `get`/`set`. La consommation relit et incrémente le compteur dans une seule mutation Convex pour empêcher les dépassements sous concurrence. Aucune migration de schéma ni mise à niveau de Better Auth n’est nécessaire.
+
+### IP des visiteurs sur Cloudflare
+
+Les [sous-requêtes Worker entre zones Cloudflare](https://developers.cloudflare.com/fundamentals/reference/http-headers/#cf-connecting-ip) peuvent remplacer l’IP du visiteur par une adresse du Worker. Le serveur TanStack Start signe donc l’IP reçue de l’edge avant de transmettre la requête à Convex. Convex vérifie la signature, la route, la méthode et un horodatage de moins d’une minute avant d’utiliser cette IP. Les en-têtes du navigateur sont remplacés ; une IP transmise sans signature valide est refusée. Les appels directs à Convex utilisent l’en-tête `CF-Connecting-IP` de son edge.
+
+Avant le déploiement Cloudflare, créer un secret dédié **`AUTH_PROXY_SECRET`** de 32 caractères minimum, distinct de `BETTER_AUTH_SECRET`, et configurer la même valeur dans les **bindings secrets du Worker** et dans les **variables du déploiement Convex**. Ce secret reste exclusivement côté serveur : ne jamais le préfixer par `VITE_` ni copier les secrets backend dans les variables publiques du frontend. Sans ce binding, les requêtes d’authentification reçues depuis Cloudflare renvoient 503. Le développement local direct ne requiert pas de signature.
+
+Le serveur lit ce binding via `process.env` : activer la [compatibilité Node.js de Cloudflare](https://developers.cloudflare.com/workers/runtime-apis/nodejs/process/#processenv) avec une date de compatibilité récente (au moins `2025-04-01`) et sans désactiver `nodejs_compat_populate_process_env`.
+
 ## Limites des opérations Convex
 
 Le composant [Convex Rate Limiter](https://www.convex.dev/components/rate-limiter) est enregistré dans `packages/backend/convex/convex.config.ts`. Les quotas sont définis dans `packages/backend/convex/lib/rateLimits.ts`, persistés par le composant et appliqués côté serveur par ID utilisateur authentifié. Ils sont partagés entre toutes les pages et les sessions du compte. Chaque quota utilise un seau de jetons : la capacité fixe le nombre d’opérations rapprochées et le débit indique la vitesse de recharge.
@@ -102,6 +128,8 @@ bun run build
 ```
 
 Les tests Vitest/Convex utilisent une base en mémoire et des appels Polar simulés : ils ne créent ni utilisateur réel, ni paiement, ni mot sur le déploiement distant. Ils vérifient l’isolation des pages, la migration de World, les retours après connexion et paiement, les prix indépendants, la propriété, l’édition, les réservations concurrentes, la modération, les signatures invalides, les commandes incohérentes et la récupération des paiements/remboursements. Les tests de limitation vérifient les quotas par utilisateur, leur partage entre pages et points d’entrée, leur recharge et le blocage avant les effets de bord.
+
+Les tests HTTP Better Auth couvrent aussi la persistance entre invocations, l’isolation des IP, les appels simultanés, le délai de reprise et l’absence d’email ou de token supplémentaire après un refus. Les tests du proxy Cloudflare vérifient les signatures, leur expiration et le rejet des en-têtes modifiés.
 
 Pour valider l’intégration réelle après configuration : acheter une place avec les moyens de paiement de test documentés par Polar ; vérifier `order.paid`, le mot publié et l’augmentation d’un euro ; racheter avec un second compte ; vérifier que le premier compte ne peut plus modifier la place. Tester aussi un checkout abandonné, un événement rejoué et un paiement après expiration. N’utiliser aucune carte réelle dans ce prototype.
 
