@@ -29,6 +29,34 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe("Cloudflare authentication proxy", () => {
+  it.each(["GET", "POST"])(
+    "forwards a server-adapter %s request without relying on Node's private Request state",
+    async (method) => {
+      const body = method === "POST" ? JSON.stringify({ email: "test@example.com" }) : undefined;
+      const native = new Request("http://localhost:3003/api/auth/get-session?test=1", {
+        method,
+        headers: { cookie: "better-auth.session_token=test", "content-type": "application/json" },
+        body,
+      });
+      // Like srvx's NodeRequest, the adapter exposes the Fetch API without
+      // exposing undici's private state to another Request constructor.
+      const request = new Proxy(native, {
+        get(target, property) {
+          if (typeof property === "symbol") return undefined;
+          const value = Reflect.get(target, property, target);
+          return typeof value === "function" ? value.bind(target) : value;
+        },
+      });
+      proxyRequest.mockResolvedValue(new Response(null, { status: 200 }));
+      expect((await handler(request)).status).toBe(200);
+      const forwarded = proxyRequest.mock.calls[0]![0];
+      expect(forwarded.url).toBe(native.url);
+      expect(forwarded.method).toBe(method);
+      expect(forwarded.headers.get("cookie")).toBe("better-auth.session_token=test");
+      expect(await forwarded.text()).toBe(body ?? "");
+    },
+  );
+
   it("signs the edge-provided IP instead of a forged visitor header", async () => {
     const secret = "test-only-auth-proxy-secret-0123456789abcdef";
     vi.stubEnv("AUTH_PROXY_SECRET", secret);

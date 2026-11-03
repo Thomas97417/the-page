@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { useQuery } from "convex/react";
+import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "@my-better-t-app/backend/convex/_generated/api";
 import { useNavigate } from "@tanstack/react-router";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -20,9 +20,10 @@ import { useAnalytics } from "@/hooks/use-analytics";
 export default function UserMenu() {
   const { t } = useTranslation();
   const user = useCurrentUser();
+  const { isAuthenticated } = useConvexAuth();
   const analytics = useAnalytics();
   const viewer = useQuery(api.slots.viewer);
-  const unread = useQuery(api.notifications.unreadCount);
+  const unread = useQuery(api.notifications.unreadCount, isAuthenticated && user ? {} : "skip");
   const navigate = useNavigate();
   const { showWords, showNotifications } = usePage();
   const name = user?.name?.trim() || t("user.space");
