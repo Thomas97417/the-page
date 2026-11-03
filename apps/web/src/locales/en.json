@@ -126,6 +126,57 @@
     "reserved": "reserved",
     "empty": "available, placeholder text"
   },
+  "footer": {
+    "legalNotice": "Legal notice",
+    "terms": "Terms of use"
+  },
+  "legal": {
+    "updated": "Updated on November 3, 2026",
+    "notice": {
+      "title": "Legal notice.",
+      "description": "The essentials about the page, its publisher and your data.",
+      "publisher": {
+        "title": "Publisher & contact",
+        "body": "the page is published by TOMA, who is responsible for publication. For any request about the site or to report content, please email us."
+      },
+      "hosting": {
+        "title": "Hosting",
+        "body": "The site is hosted by Cloudflare, Inc.\n101 Townsend Street, San Francisco, CA 94107, United States.\nPhone: +1 888 993 5273."
+      },
+      "data": {
+        "title": "Personal data",
+        "body": "Your name, email address and purchase history are used to manage your account, publications and related notifications. You can manage or delete your account in its settings. To exercise your rights to access, correct or erase your data, contact contact@thepage.com.\n\nCookies and local storage keep your session, language, theme and draft."
+      },
+      "rights": {
+        "title": "Content & links",
+        "body": "Authors retain the rights to their contributions. The site’s own elements remain protected by applicable rights. Published links may lead to third-party websites, whose publishers are responsible for their content."
+      }
+    },
+    "terms": {
+      "title": "Terms of use.",
+      "description": "A few rules for writing together on the page.",
+      "service": {
+        "title": "The idea",
+        "body": "the page offers a World page and country pages. Each page has 50 independent places. Anyone can publish a word, with an optional description and link. Browsing is free."
+      },
+      "account": {
+        "title": "Your account",
+        "body": "You need an account to take a place and manage your words. Use accurate information, protect your credentials and respect other users’ rights. You can delete your account in its settings; doing so ends your access to editing your words."
+      },
+      "places": {
+        "title": "Your place, your word",
+        "body": "Each place starts at €1, including taxes. Its price increases by €1 with every confirmed purchase. The amount is shown before confirmation. You can edit your word, description and link for free while you hold the place.\n\nA new purchase replaces the previous word, with no compensation for its author. No display duration or audience is guaranteed.\n\nThe site currently operates in test mode: payments take place in the payment provider’s test environment."
+      },
+      "content": {
+        "title": "What you publish",
+        "body": "You are responsible for your word, description and associated link. Only publish content you have the right to share. Illegal, hateful, misleading content or content that infringes others’ rights may be hidden or removed.\n\nYou retain your rights to your contributions and allow them to be displayed on the page as part of the service. To report content, email contact@thepage.com with the relevant page and place."
+      },
+      "availability": {
+        "title": "Availability & contact",
+        "body": "The service may evolve or be temporarily interrupted for maintenance. These terms may be updated; the revision date appears at the top of this page. For any request, please contact us."
+      }
+    }
+  },
   "rules": {
     "title": "How does it work?",
     "description": "A World page and pages for individual countries. 50 places per page. One word per place.",
@@ -343,7 +394,9 @@
     "resetPasswordDescription": "Choose a new password.",
     "settings": "My account — the page",
     "settingsDescription": "Manage your the page account.",
-    "admin": "Moderation — the page"
+    "admin": "Moderation — the page",
+    "legalNotice": "Legal notice — the page",
+    "terms": "Terms of use — the page"
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",

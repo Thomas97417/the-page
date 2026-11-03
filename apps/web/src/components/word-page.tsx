@@ -2,18 +2,19 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@my-better-t-app/backend/convex/_generated/api";
-import { ArrowUp, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { usePage } from "@/components/page-provider";
 import { PageManuscript } from "@/components/page-manuscript";
 import { Button } from "@/components/ui/button";
 import { PurchaseResult } from "@/components/purchase-result";
 import { ReclaimWord } from "@/components/reclaim-word";
 import { type PageId } from "@my-better-t-app/backend/convex/lib/pages";
+import { Footer } from "@/components/footer";
 
 export function WordPage({ pageId, purchase, reclaim }: { pageId: PageId; purchase?: string; reclaim?: string }) {
   const { t } = useTranslation();
   const { data: slots } = useQuery(convexQuery(api.slots.list, { pageId }));
-  const { buy, showRules } = usePage();
+  const { buy } = usePage();
   const available = slots
     ?.filter((slot) => !slot.reserved)
     .sort((a, b) => a.price - b.price || a.position - b.position)[0];
@@ -52,38 +53,7 @@ export function WordPage({ pageId, purchase, reclaim }: { pageId: PageId; purcha
           )}
         </section>
       </main>
-      <footer className="w-full shrink-0 pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto w-full max-w-296 px-5 sm:px-10 lg:px-14">
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t py-6 sm:py-8">
-            <p className="flex shrink-0 items-start gap-2">
-              <span className="text-sm font-medium leading-none tracking-[0.22em]">TOMA</span>
-              <span className="whitespace-nowrap font-mono text-[10px] leading-none text-muted-foreground">© 2026</span>
-            </p>
-            <nav aria-label={t("page.footerNavigation")} className="ml-auto flex shrink-0 items-center gap-3 sm:gap-6">
-              <button
-                className="group flex min-h-11 items-center gap-2 whitespace-nowrap text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
-                onClick={showRules}
-              >
-                <span className="underline-offset-4 group-hover:underline">{t("page.howItWorks")}</span>
-                <ArrowUpRight aria-hidden="true" className="size-3.5" strokeWidth={1.5} />
-              </button>
-              <div className="border-l pl-3 sm:pl-6">
-                <a
-                  href="#top"
-                  aria-label={t("page.backToTop")}
-                  className="group flex size-10 items-center justify-center rounded-full border text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
-                >
-                  <ArrowUp
-                    aria-hidden="true"
-                    className="size-4 transition-transform group-hover:-translate-y-0.5 motion-reduce:transform-none"
-                    strokeWidth={1.5}
-                  />
-                </a>
-              </div>
-            </nav>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </>
   );
 }

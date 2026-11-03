@@ -76,6 +76,12 @@ La route `/admin` permet de sélectionner une page, puis de masquer, rétablir o
 
 Les routes utiles sont `/`, `/settings`, `/admin`, les écrans de connexion et récupération de compte, et `/api/auth/*`. Les anciennes démonstrations `/dashboard` et `/upload` ont été supprimées. Le stockage R2 préexistant n’est pas utilisé par les nouveaux parcours.
 
+## Pages légales
+
+Le footer commun aux pages publiques donne accès à `/mentions-legales` et `/conditions-utilisation`. Les textes français et anglais sont dans `apps/web/src/locales`, avec TOMA comme éditeur, `contact@thepage.com` comme contact et Cloudflare comme hébergeur. Les conditions reflètent le fonctionnement actuel du prototype et ses paiements de test.
+
+L’adresse postale de l’éditeur et les éventuelles informations d’immatriculation restent à compléter selon son statut avant publication. Références : [mentions obligatoires — Service Public](https://entreprendre.service-public.gouv.fr/vosdroits/F37351?lang=fr), [coordonnées de Cloudflare](https://www.cloudflare.com/website-terms/), [téléphone de Cloudflare — rapport annuel](https://www.sec.gov/Archives/edgar/data/1477333/000147733326000026/cloud-20251231.htm), [cookies — CNIL](https://www.cnil.fr/fr/cookies-et-autres-traceurs/que-dit-la-loi).
+
 ## Vérification
 
 ```bash
