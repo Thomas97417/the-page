@@ -68,7 +68,10 @@ bun run --cwd apps/web deploy
 
 Pour **Workers Builds** connecté au dépôt Git, garder la racine du dépôt comme répertoire de travail pour installer les workspaces Bun. Utiliser `bun run --cwd apps/web build` comme commande de build et `cd apps/web && bunx wrangler deploy` comme commande de déploiement. Renseigner les variables `VITE_*` dans les variables de build et `AUTH_PROXY_SECRET` dans les secrets du Worker.
 
+Pour les déploiements de branches avec **Cloudflare Previews**, utiliser `cd apps/web && bunx wrangler preview` après le build. Le bloc `previews: {}` de `wrangler.jsonc` est requis pour cette commande. Configurer aussi `AUTH_PROXY_SECRET` dans **Previews Base**, avec la même valeur que dans le déploiement Convex ciblé ; les secrets de production ne sont pas hérités. La commande locale `bun run --cwd apps/web preview` sert uniquement l’aperçu sur la machine.
+
 Référence : [TanStack Start sur Cloudflare Workers](https://developers.cloudflare.com/workers/framework-guides/web-apps/tanstack-start/).
+Configuration des previews : [Cloudflare Previews](https://developers.cloudflare.com/workers/previews/configuration/).
 
 ## Paiement Polar : sandbox uniquement
 
