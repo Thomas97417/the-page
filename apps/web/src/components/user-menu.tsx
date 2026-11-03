@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { useQuery } from "convex/react";
+import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "@my-better-t-app/backend/convex/_generated/api";
 import { useNavigate } from "@tanstack/react-router";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -15,12 +15,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth-client";
+import { useAnalytics } from "@/hooks/use-analytics";
 
 export default function UserMenu() {
   const { t } = useTranslation();
   const user = useCurrentUser();
+  const { isAuthenticated } = useConvexAuth();
+  const analytics = useAnalytics();
   const viewer = useQuery(api.slots.viewer);
-  const unread = useQuery(api.notifications.unreadCount);
+  const unread = useQuery(api.notifications.unreadCount, isAuthenticated && user ? {} : "skip");
   const navigate = useNavigate();
   const { showWords, showNotifications } = usePage();
   const name = user?.name?.trim() || t("user.space");
@@ -127,6 +130,7 @@ export default function UserMenu() {
             className="min-h-11 cursor-pointer gap-2 px-0 pb-0 pt-3 text-xs text-muted-foreground transition-colors focus:bg-transparent data-highlighted:bg-transparent data-highlighted:text-foreground motion-reduce:transition-none"
             onClick={async () => {
               await authClient.signOut();
+              analytics?.reset();
               window.location.assign("/");
             }}
           >

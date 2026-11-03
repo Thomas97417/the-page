@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
+import { useConvexAuth, useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { api } from "@my-better-t-app/backend/convex/_generated/api";
 import type { FunctionReturnType } from "convex/server";
 import { ArrowUpRight, Bell, Check, Loader2, Repeat2 } from "lucide-react";
@@ -15,8 +15,9 @@ type Notification = FunctionReturnType<typeof api.notifications.list>["page"][nu
 export function Notifications({ onClose }: { onClose: () => void }) {
   const { t, i18n } = useTranslation();
   const { buy, showWords } = usePage();
-  const { results, status, loadMore } = usePaginatedQuery(api.notifications.list, {}, { initialNumItems: 20 });
-  const unread = useQuery(api.notifications.unreadCount);
+  const { isAuthenticated } = useConvexAuth();
+  const { results, status, loadMore } = usePaginatedQuery(api.notifications.list, isAuthenticated ? {} : "skip", { initialNumItems: 20 });
+  const unread = useQuery(api.notifications.unreadCount, isAuthenticated ? {} : "skip");
   const markRead = useMutation(api.notifications.markRead);
   const markAllRead = useMutation(api.notifications.markAllRead);
   const [busy, setBusy] = useState(false);

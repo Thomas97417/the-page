@@ -116,7 +116,7 @@ describe("purchase notifications", () => {
     const lost = notifications.find((n) => n.kind === "word_replaced")!;
     expect(await first.client.query(api.notifications.unreadCount)).toBe(2);
     expect(await second.client.query(api.notifications.unreadCount)).toBe(1);
-    await expect(t.query(api.notifications.unreadCount)).rejects.toThrow("Connectez-vous");
+    expect(await t.query(api.notifications.unreadCount)).toBe(0);
     await expect(t.query(api.notifications.list, { paginationOpts: { numItems: 20, cursor: null } })).rejects.toThrow("Connectez-vous");
     await expect(t.mutation(api.notifications.markRead, { notificationId: lost._id })).rejects.toThrow("Connectez-vous");
     expect(await second.client.query(api.notifications.reclaim, { notificationId: lost._id })).toBeNull();
@@ -156,6 +156,16 @@ describe("purchase notifications", () => {
     await t.run((ctx) => ctx.db.insert("notifications", fields));
     await t.mutation(internal.notifications.continueMarkAllRead, { userId: owner.id, before });
     expect(await owner.client.query(api.notifications.unreadCount)).toBe(1);
+  });
+
+  it("returns an empty badge when a session expires while its Convex identity still exists", async () => {
+    const t = setup();
+    const owner = await account(t, "expired-owner");
+    await publish(t, await reserve(t, await place(t), owner.id));
+    expect(await owner.client.query(api.notifications.unreadCount)).toBe(1);
+    vi.setSystemTime(Date.now() + 3_600_001);
+    expect(await owner.client.query(api.notifications.unreadCount)).toBe(0);
+    await expect(owner.client.query(api.notifications.list, { paginationOpts: { numItems: 20, cursor: null } })).rejects.toThrow("Connectez-vous");
   });
 });
 

@@ -52,7 +52,9 @@ export const list = query({
 export const unreadCount = query({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    // An active subscription can rerun after logout or session revocation.
+    const user = await authComponent.safeGetAuthUser(ctx);
+    if (!user) return 0;
     const unread = await ctx.db
       .query("notifications")
       .withIndex("by_user_read", (q) => q.eq("userId", user._id).eq("readAt", undefined))

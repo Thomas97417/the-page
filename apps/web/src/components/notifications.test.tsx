@@ -13,6 +13,7 @@ import UserMenu from "./user-menu";
 const mocks = vi.hoisted(() => ({
   unread: 2,
   authenticated: true,
+  user: { name: "Thomas", email: "thomas@example.com" } as { name: string; email: string } | null | undefined,
   results: [] as unknown[],
   status: "Exhausted",
   reclaim: null as unknown,
@@ -23,21 +24,28 @@ const mocks = vi.hoisted(() => ({
   markRead: vi.fn(),
   markAllRead: vi.fn(),
   loadMore: vi.fn(),
+  query: vi.fn(),
+  paginatedQuery: vi.fn(),
 }));
 
 vi.mock("convex/react", () => ({
   useConvexAuth: () => ({ isAuthenticated: mocks.authenticated, isLoading: false }),
-  useQuery: (reference: Parameters<typeof getFunctionName>[0]) => {
+  useQuery: (reference: Parameters<typeof getFunctionName>[0], args?: unknown) => {
     const name = getFunctionName(reference);
+    mocks.query(name, args);
+    if (args === "skip") return undefined;
     if (name === "notifications:unreadCount") return mocks.unread;
     if (name === "notifications:reclaim") return mocks.reclaim;
     return { isAdmin: false };
   },
   useMutation: (reference: Parameters<typeof getFunctionName>[0]) => getFunctionName(reference) === "notifications:markRead" ? mocks.markRead : mocks.markAllRead,
-  usePaginatedQuery: () => ({ results: mocks.results, status: mocks.status, loadMore: mocks.loadMore }),
+  usePaginatedQuery: (reference: Parameters<typeof getFunctionName>[0], args?: unknown) => {
+    mocks.paginatedQuery(getFunctionName(reference), args);
+    return { results: args === "skip" ? [] : mocks.results, status: mocks.status, loadMore: mocks.loadMore };
+  },
 }));
 vi.mock("./page-provider", () => ({ usePage: () => mocks }));
-vi.mock("@/hooks/use-current-user", () => ({ useCurrentUser: () => ({ name: "Thomas", email: "thomas@example.com" }) }));
+vi.mock("@/hooks/use-current-user", () => ({ useCurrentUser: () => mocks.user }));
 vi.mock("@/lib/auth-client", () => ({ authClient: { signOut: vi.fn() } }));
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => mocks.navigate,
@@ -55,6 +63,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.unread = 2;
   mocks.authenticated = true;
+  mocks.user = { name: "Thomas", email: "thomas@example.com" };
   mocks.results = [];
   mocks.status = "Exhausted";
   mocks.reclaim = null;
@@ -66,6 +75,31 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("notifications menu and sidebar", () => {
+  it("waits for a validated user before subscribing to the unread badge", () => {
+    mocks.user = undefined;
+    const view = render(localized(<UserMenu />));
+    expect(mocks.query).toHaveBeenCalledWith("notifications:unreadCount", "skip");
+    mocks.query.mockClear();
+    mocks.user = { name: "Thomas", email: "thomas@example.com" };
+    view.rerender(localized(<UserMenu />));
+    expect(mocks.query).toHaveBeenCalledWith("notifications:unreadCount", {});
+    mocks.query.mockClear();
+    mocks.authenticated = false;
+    view.rerender(localized(<UserMenu />));
+    expect(mocks.query).toHaveBeenCalledWith("notifications:unreadCount", "skip");
+  });
+
+  it("stops notification subscriptions when authentication is lost", () => {
+    const view = render(localized(<Notifications onClose={vi.fn()} />));
+    expect(mocks.paginatedQuery).toHaveBeenCalledWith("notifications:list", {});
+    mocks.query.mockClear();
+    mocks.paginatedQuery.mockClear();
+    mocks.authenticated = false;
+    view.rerender(localized(<Notifications onClose={vi.fn()} />));
+    expect(mocks.query).toHaveBeenCalledWith("notifications:unreadCount", "skip");
+    expect(mocks.paginatedQuery).toHaveBeenCalledWith("notifications:list", "skip");
+  });
+
   it("shows the unread count and opens notifications from the user menu", async () => {
     render(localized(<UserMenu />));
     fireEvent.click(screen.getByRole("button", { name: "Menu du compte, 2 notifications non lues" }));

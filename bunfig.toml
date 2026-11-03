@@ -1,0 +1,3 @@
+[install]
+# Share Convex's types across workspaces and component peer dependencies.
+linker = "hoisted"

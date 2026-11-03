@@ -17,7 +17,9 @@ cp apps/web/.env.example apps/web/.env
 bun run dev
 ```
 
-L’application écoute sur [localhost:3003](http://localhost:3003). Libérer ce port si une autre instance du projet tourne déjà. Les deux variables frontend sont uniquement les URL publiques `VITE_CONVEX_URL` et `VITE_CONVEX_SITE_URL`. Ne jamais copier les secrets du backend vers le frontend.
+L’application écoute sur [localhost:3003](http://localhost:3003). Libérer ce port si une autre instance du projet tourne déjà. Les variables Convex du frontend sont les URL publiques `VITE_CONVEX_URL` et `VITE_CONVEX_SITE_URL`. Ne jamais copier les secrets du backend vers le frontend.
+
+`bunfig.toml` utilise le linker `hoisted` pour partager une même copie de Convex entre les workspaces et les composants, et conserver des types compatibles. Après une ancienne installation avec le linker isolé, supprimer les répertoires `node_modules` du dépôt et des workspaces avant de relancer `bun install --frozen-lockfile`.
 
 Le déploiement de développement existant est `affable-ptarmigan-378`, projet `the-page`, équipe `throuquette`, région Europe (Irlande). Pour utiliser un projet indépendant : `bun run dev:setup`, puis adapter les deux URL publiques.
 
@@ -61,6 +63,58 @@ Sans configuration Polar, la page reste consultable et l’achat affiche une ind
 - Avant de libérer une réservation expirée, le backend vérifie Polar. Une panne ou un paiement encore en cours conserve la réservation pendant la vérification.
 - Un paiement reçu après libération est remboursé ; il ne peut jamais écraser un achat plus récent. Une tâche planifiée toutes les cinq minutes récupère les paiements et remboursements interrompus.
 - Les remboursements complets retirent uniquement le mot correspondant s’il est encore actuel. Ils ne diminuent pas le prix d’un emplacement.
+
+## Analytique PostHog (EU)
+
+Le frontend utilise `@posthog/react` et `posthog-js` ; le backend utilise le composant officiel `@posthog/convex`, avec Convex **1.49.0**. L’ingestion est configurée en Europe (`https://eu.i.posthog.com`).
+
+| Événement | Déclenchement |
+| --- | --- |
+| `$pageview` | Premier affichage et chaque changement de chemin côté navigateur ; les changements de paramètres ou d’ancre ne créent pas une nouvelle vue. |
+| `purchase_form_opened` | Ouverture du formulaire depuis un emplacement ou une action de rachat. |
+| `checkout_created` | Première association d’un checkout Polar à l’achat dans Convex. |
+| `purchase_completed` | Commande validée et achat publié, depuis le webhook ou la récupération du paiement. |
+| `purchase_refunded` | Premier passage de l’achat à l’état entièrement remboursé. |
+
+Les événements métier sont planifiés dans la même mutation que leur changement d’état. Une transaction annulée ne produit pas de capture, et les commandes ou remboursements rejoués ne créent pas de nouvelle conversion. Les appels HTTP PostHog sont exécutés séparément par le composant, après la transaction.
+
+Chaque événement d’achat contient `purchase_id`, `checkout_id` et `order_id` lorsqu’ils sont disponibles, `page_id`, `slot_id`, `position`, `amount_cents`, `currency: "EUR"` et `acquisition_number` (à partir de 1). `purchase_type` vaut `initial` pour le premier achat d’un emplacement, puis `takeover` pour les suivants. Les remboursements ajoutent `refunded_amount_cents` et, lorsqu’il est disponible, `refund_id`. Les paiements portent toujours `payment_mode: "sandbox"`.
+
+Le navigateur appelle `identify()` avec le même ID Better Auth que `purchase.userId` côté serveur, puis réinitialise l’identité à la déconnexion ou au changement de compte. Le mot, la description, le lien de l’acheteur, son nom et son email ne sont pas ajoutés aux captures. Les paramètres et ancres des URL sont retirés des événements et des propriétés initiales de la personne. L’autocapture des interactions, les enregistrements de session et les enquêtes sont désactivés.
+
+### Configuration
+
+1. Créer un projet dans [PostHog EU](https://eu.posthog.com) et récupérer son **jeton public de projet** (`phc_…`). Utiliser des projets distincts pour le développement et la production.
+2. Renseigner dans `apps/web/.env` :
+
+   ```dotenv
+   VITE_POSTHOG_PROJECT_TOKEN=phc_...
+   VITE_POSTHOG_HOST=https://eu.i.posthog.com
+   VITE_POSTHOG_ENVIRONMENT=development
+   ```
+
+3. Depuis `packages/backend`, configurer **le même jeton** dans les variables du déploiement Convex, puis déployer les fonctions de développement :
+
+   ```bash
+   bunx --bun convex env set POSTHOG_PROJECT_TOKEN 'phc_...'
+   bunx --bun convex env set POSTHOG_ENVIRONMENT development
+   bunx --bun convex dev --once
+   ```
+
+4. Redémarrer le frontend. En production, renseigner les variables publiques au build et `POSTHOG_ENVIRONMENT=production` côté Convex. Le navigateur utilise `production` par défaut lors d’un build de production, et `development` en mode dev ; le backend utilise `development` si la variable n’est pas précisée. Ne pas mélanger les projets PostHog entre frontend et backend d’un même environnement.
+
+Sans jeton frontend, le SDK n’est pas initialisé. Le composant exige que la variable backend **existe**, mais elle peut rester vide pour désactiver toutes les captures métier :
+
+```bash
+# Depuis packages/backend, avant le premier déploiement sans jeton.
+bunx --bun convex env set POSTHOG_PROJECT_TOKEN ''
+```
+
+Cette valeur vide est déjà configurée sur le déploiement de développement partagé. L’ajout ultérieur du vrai jeton active les nouveaux événements ; les achats historiques ne sont pas renvoyés. Aucune clé personnelle ou secrète PostHog n’est nécessaire pour ce suivi et aucune ne doit être ajoutée aux variables `VITE_*`.
+
+Dans PostHog, utiliser `$pageview` pour les vues et visiteurs uniques, et un entonnoir `$pageview` → `purchase_form_opened` → `checkout_created` → `purchase_completed` pour la conversion. Filtrer `purchase_type` pour comparer achats initiaux et rachats. Les tests couvrent les navigations, l’identité, les URL expurgées, les événements rejoués et le fonctionnement sans jeton ; ils n’envoient rien à PostHog.
+
+Références : [intégration Convex](https://posthog.com/docs/libraries/convex), [intégration TanStack Start](https://posthog.com/docs/libraries/tanstack-start).
 
 ## Comptes et administration
 
