@@ -31,6 +31,48 @@ bunx --bun convex run slots:initialize '{}'
 
 Cette fonction interne rattache les anciens emplacements à World et crée seulement les places manquantes de chaque page. Elle conserve les IDs, les mots, les prix, les propriétaires et les réservations existants ; elle peut être relancée sans doublons. Après un déploiement effectué sans `dev:server`, l’exécuter une fois pour ouvrir les nouvelles pages. La liste des pages est définie dans `packages/backend/convex/lib/pages.ts`.
 
+## Déploiement Cloudflare Workers
+
+Le frontend SSR utilise `@cloudflare/vite-plugin` et Wrangler. Le Worker s’appelle **`the-page`** ; sa configuration est dans `apps/web/wrangler.jsonc`. Il utilise l’entrée serveur standard de TanStack Start, la compatibilité Node.js et les logs Cloudflare. Le backend reste hébergé sur Convex et se déploie séparément.
+
+Depuis la racine du dépôt :
+
+```bash
+bun install --frozen-lockfile
+bun run --cwd apps/web cf-typegen
+bun run --cwd apps/web build
+bun run --cwd apps/web preview
+```
+
+`preview` sert le build dans le runtime local Cloudflare. `cf-typegen` génère les types des bindings dans `apps/web/worker-configuration.d.ts`, ignoré par Git ; le relancer après un changement de bindings. Les types globaux du runtime sont exclus pour conserver les types DOM de l’application React. Le plugin génère `dist/client`, `dist/server` et la redirection Wrangler dans `.wrangler/deploy`. Turborepo conserve aussi cette redirection dans son cache de build.
+
+Configurer les variables publiques **au moment du build**, avec les URL du déploiement Convex choisi :
+
+| Variable | Valeur |
+| --- | --- |
+| `VITE_CONVEX_URL` | URL publique `https://…convex.cloud` |
+| `VITE_CONVEX_SITE_URL` | URL publique `https://…convex.site` |
+| `VITE_POSTHOG_PROJECT_TOKEN` | Jeton public du projet PostHog de production, ou vide pour désactiver le suivi |
+| `VITE_POSTHOG_HOST` | `https://eu.i.posthog.com` |
+| `VITE_POSTHOG_ENVIRONMENT` | `production` |
+
+Pour un build local destiné à la production, renseigner ces valeurs dans `apps/web/.env.production.local` afin de remplacer les valeurs de développement de `.env`. Les variables `VITE_*` sont intégrées au bundle : toute modification nécessite un nouveau build.
+
+Ajouter **`AUTH_PROXY_SECRET`** aux secrets du Worker et configurer la même valeur côté Convex, comme décrit dans « IP des visiteurs sur Cloudflare ». Ce secret privé de 32 caractères minimum est lu à l’exécution ; il ne doit jamais devenir une variable `VITE_*`. Pour le runtime local Cloudflare, le renseigner dans `apps/web/.dev.vars` (ignoré par Git). Côté Convex, régler `SITE_URL` et `BETTER_AUTH_URL` sur l’origine HTTPS publiée, puis adapter les callbacks OAuth et le webhook Polar au déploiement choisi.
+
+Après connexion à Cloudflare avec Wrangler, la commande suivante reconstruit et déploie le frontend :
+
+```bash
+bun run --cwd apps/web deploy
+```
+
+Pour **Workers Builds** connecté au dépôt Git, garder la racine du dépôt comme répertoire de travail pour installer les workspaces Bun. Utiliser `bun run --cwd apps/web build` comme commande de build et `cd apps/web && bunx wrangler deploy` comme commande de déploiement. Renseigner les variables `VITE_*` dans les variables de build et `AUTH_PROXY_SECRET` dans les secrets du Worker.
+
+Pour les déploiements de branches avec **Cloudflare Previews**, utiliser `cd apps/web && bunx wrangler preview` après le build. Le bloc `previews: {}` de `wrangler.jsonc` est requis pour cette commande. Configurer aussi `AUTH_PROXY_SECRET` dans **Previews Base**, avec la même valeur que dans le déploiement Convex ciblé ; les secrets de production ne sont pas hérités. La commande locale `bun run --cwd apps/web preview` sert uniquement l’aperçu sur la machine.
+
+Référence : [TanStack Start sur Cloudflare Workers](https://developers.cloudflare.com/workers/framework-guides/web-apps/tanstack-start/).
+Configuration des previews : [Cloudflare Previews](https://developers.cloudflare.com/workers/previews/configuration/).
+
 ## Paiement Polar : sandbox uniquement
 
 L’intégration utilise `@convex-dev/polar`, son endpoint signé **`/polar/events`** et le SDK Polar pour les prix fixes calculés côté serveur. Il n’existe aucun commutateur de production.
