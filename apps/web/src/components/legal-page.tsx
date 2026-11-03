@@ -6,7 +6,7 @@ type LegalDocument = "notice" | "terms";
 type LegalSection = {
   title: string;
   body: string;
-  link?: { href: string; label: string };
+  links?: { href: string; label: string }[];
 };
 
 const contact = { href: "mailto:contact@thepage.com", label: "contact@thepage.com" };
@@ -18,12 +18,15 @@ export function LegalPage({ document }: { document: LegalDocument }) {
       {
         title: t("legal.notice.publisher.title"),
         body: t("legal.notice.publisher.body"),
-        link: contact,
+        links: [contact],
       },
       {
         title: t("legal.notice.hosting.title"),
         body: t("legal.notice.hosting.body"),
-        link: { href: "https://www.cloudflare.com/website-terms/", label: "cloudflare.com" },
+        links: [
+          { href: "https://www.cloudflare.com/website-terms/", label: "cloudflare.com" },
+          { href: "https://www.convex.dev/", label: "convex.dev" },
+        ],
       },
       { title: t("legal.notice.data.title"), body: t("legal.notice.data.body") },
       { title: t("legal.notice.rights.title"), body: t("legal.notice.rights.body") },
@@ -36,7 +39,7 @@ export function LegalPage({ document }: { document: LegalDocument }) {
       {
         title: t("legal.terms.availability.title"),
         body: t("legal.terms.availability.body"),
-        link: contact,
+        links: [contact],
       },
     ],
   };
@@ -72,14 +75,19 @@ export function LegalPage({ document }: { document: LegalDocument }) {
                   {section.body.split("\n\n").map((paragraph, index) => (
                     <p key={index} className="whitespace-pre-line">{paragraph}</p>
                   ))}
-                  {section.link && (
-                    <a
-                      href={section.link.href}
-                      className="inline-flex min-h-8 items-center gap-1.5 text-foreground underline decoration-foreground/30 underline-offset-4 transition-colors hover:decoration-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
-                    >
-                      {section.link.label}
-                      <ArrowUpRight aria-hidden="true" className="size-3" strokeWidth={1.5} />
-                    </a>
+                  {section.links && (
+                    <div className="flex flex-wrap gap-x-5 gap-y-1">
+                      {section.links.map((link) => (
+                        <a
+                          key={link.href}
+                          href={link.href}
+                          className="inline-flex min-h-8 items-center gap-1.5 text-foreground underline decoration-foreground/30 underline-offset-4 transition-colors hover:decoration-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+                        >
+                          {link.label}
+                          <ArrowUpRight aria-hidden="true" className="size-3" strokeWidth={1.5} />
+                        </a>
+                      ))}
+                    </div>
                   )}
                 </div>
               </section>

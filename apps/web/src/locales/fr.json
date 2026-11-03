@@ -141,7 +141,7 @@
       },
       "hosting": {
         "title": "Hébergement",
-        "body": "Le site est hébergé par Cloudflare, Inc.\n101 Townsend Street, San Francisco, CA 94107, États-Unis.\nTéléphone : +1 888 993 5273.\n\nLa base de données de l’application est hébergée par Convex, dans la région Europe (Irlande)."
+        "body": "Le site web est hébergé par Cloudflare, Inc.\n101 Townsend Street, San Francisco, CA 94107, États-Unis.\nTéléphone : +1 888 993 5273.\n\nLa base de données et les fonctions serveur de l’application sont hébergées par Convex, dans la région Europe (Irlande)."
       },
       "data": {
         "title": "Données personnelles",
