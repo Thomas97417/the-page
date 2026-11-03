@@ -1,5 +1,4 @@
-import { Link } from "@tanstack/react-router";
-import { ArrowLeft, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Footer } from "@/components/footer";
 
@@ -46,19 +45,6 @@ export function LegalPage({ document }: { document: LegalDocument }) {
     <>
       <main className="mx-auto w-full max-w-296 flex-1 px-5 pb-16 pt-8 sm:px-10 sm:pb-24 sm:pt-14 lg:px-14">
         <article className="mx-auto max-w-160">
-          <Link
-            to="/"
-            search={{}}
-            className="group mb-10 inline-flex min-h-10 items-center gap-2 text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring sm:mb-14"
-          >
-            <ArrowLeft
-              aria-hidden="true"
-              className="size-3.5 transition-transform group-hover:-translate-x-0.5 motion-reduce:transform-none"
-              strokeWidth={1.5}
-            />
-            {t("common.backToPage")}
-          </Link>
-
           <header className="pb-10 sm:pb-12">
             <h1 className="max-w-140 font-serif text-4xl leading-[1.1] tracking-[-0.04em] sm:text-5xl">
               {t(`legal.${document}.title`)}

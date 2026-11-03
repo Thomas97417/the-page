@@ -38,6 +38,8 @@ export function Footer() {
           >
             <Link
               to="/mentions-legales"
+              hash="top"
+              hashScrollIntoView={{ behavior: "instant" }}
               className={legalLinkClassName}
               activeProps={{ className: "text-foreground underline", "aria-current": "page" }}
             >
@@ -45,6 +47,8 @@ export function Footer() {
             </Link>
             <Link
               to="/conditions-utilisation"
+              hash="top"
+              hashScrollIntoView={{ behavior: "instant" }}
               className={legalLinkClassName}
               activeProps={{ className: "text-foreground underline", "aria-current": "page" }}
             >
