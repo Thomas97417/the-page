@@ -13,7 +13,6 @@
   "dependencies": {
     "@convex-dev/better-auth": "catalog:",
     "@convex-dev/polar": "^0.9.2",
-    "@convex-dev/r2": "^0.9.1",
     "@convex-dev/rate-limiter": "^0.3.2",
     "@convex-dev/resend": "^0.2.3",
     "@polar-sh/checkout": "0.2.0",

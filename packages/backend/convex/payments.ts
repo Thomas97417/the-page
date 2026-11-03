@@ -14,6 +14,7 @@ import { polar, paymentConfigured } from "./polar";
 import { requireUser } from "./permissions";
 import { normalizePaidOrder } from "./lib/orders";
 import { DEFAULT_PAGE_ID, purchaseReturnPath } from "./lib/pages";
+import { rateLimiter } from "./lib/rateLimits";
 
 const REQUEST_OPTIONS = {
   timeoutMs: 20_000,
@@ -61,6 +62,9 @@ export const start = action({
     const user = await requireUser(ctx);
     if (!paymentConfigured())
       throw new ConvexError("Le paiement est momentanément indisponible.");
+    // Actions consume their quota before any reservation or external API call,
+    // including attempts that subsequently fail.
+    await rateLimiter.limit(ctx, "checkoutStart", { key: user._id, throws: true });
     const productId = process.env.POLAR_PRODUCT_ID!;
     const { language, ...purchaseArgs } = args;
     const purchase = await ctx.runMutation(internal.purchases.reserve, {
@@ -216,6 +220,7 @@ export const refresh = action({
   args: { purchaseId: v.string() },
   handler: async (ctx, { purchaseId }): Promise<void> => {
     const user = await requireUser(ctx);
+    await rateLimiter.limit(ctx, "checkoutRefresh", { key: user._id, throws: true });
     const purchase = await ctx.runQuery(internal.purchases.findOwned, {
       purchaseId,
       userId: user._id,

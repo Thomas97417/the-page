@@ -6,6 +6,7 @@ import { isAdminId, requireAdmin, requireUser } from "./permissions";
 import { authComponent } from "./auth";
 import { DEFAULT_PAGE_ID, PAGES, type PageId } from "./lib/pages";
 import { pageIdValidator } from "./schema";
+import { rateLimiter } from "./lib/rateLimits";
 
 async function pageSlots(ctx: QueryCtx, pageId: PageId) {
   const slots = await ctx.db
@@ -106,6 +107,7 @@ export const updateContent = mutation({
     } catch (error) {
       throw new ConvexError((error as Error).message);
     }
+    await rateLimiter.limit(ctx, "updateContent", { key: user._id, throws: true });
     // Keep the original purchased content in the financial history.
     await ctx.db.patch(slot._id, content);
   },
@@ -134,6 +136,7 @@ export const moderate = mutation({
     const slot = await ctx.db.get(slotId);
     if (!slot || slot.currentPurchaseId !== purchaseId)
       throw new ConvexError("Le propriétaire a changé. Actualisez la liste.");
+    await rateLimiter.limit(ctx, "moderate", { key: admin._id, throws: true });
     if (action === "remove") {
       await ctx.db.patch(slotId, {
         visibility: "removed",

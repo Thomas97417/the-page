@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { convexTest } from "convex-test";
 import betterAuth from "@convex-dev/better-auth/test";
 import resendTest from "@convex-dev/resend/test";
+import rateLimiterTest from "@convex-dev/rate-limiter/test";
 import { Resend } from "@convex-dev/resend";
 import schema from "../convex/schema";
 import { api, components, internal } from "../convex/_generated/api";
@@ -14,6 +15,7 @@ function setup() {
   const t = convexTest(schema, modules);
   t.registerComponent("betterAuth", betterAuth.schema, betterAuth.modules);
   resendTest.register(t);
+  rateLimiterTest.register(t);
   return t;
 }
 type Test = ReturnType<typeof setup>;

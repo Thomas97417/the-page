@@ -5,7 +5,7 @@ export default defineConfig({
     include: ["tests/**/*.test.ts"],
     environment: "node",
     server: {
-      deps: { inline: ["@convex-dev/better-auth", "@convex-dev/polar", "@convex-dev/resend"] },
+      deps: { inline: ["@convex-dev/better-auth", "@convex-dev/polar", "@convex-dev/rate-limiter", "@convex-dev/resend"] },
     },
   },
 });

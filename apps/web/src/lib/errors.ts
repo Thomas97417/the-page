@@ -43,11 +43,16 @@ const ERROR_KEYS: Record<string, ErrorKey> = {
 };
 
 export function errorMessage(error: unknown, t: TFunction) {
+  // Better Auth 1.4 returns HTTP 429 without a machine-readable error code.
+  if (error && typeof error === "object" && "status" in error && error.status === 429)
+    return t("errors.rateLimit");
   let message: unknown = error;
   if (error instanceof ConvexError) message = error.data;
   else if (error && typeof error === "object" && "code" in error)
     message = error.code;
   else if (error instanceof Error) message = error.message;
+  if (message && typeof message === "object" && "kind" in message && message.kind === "RateLimited")
+    return t("errors.rateLimit");
   const key = typeof message === "string" && Object.hasOwn(ERROR_KEYS, message)
     ? ERROR_KEYS[message]
     : undefined;

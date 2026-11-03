@@ -7,6 +7,7 @@ import { RESERVATION_MS, priceFor, validateContent } from "./lib/content";
 import { requireUser } from "./permissions";
 import { DEFAULT_PAGE_ID } from "./lib/pages";
 import { notifyPurchase } from "./lib/notifications";
+import { rateLimiter } from "./lib/rateLimits";
 
 async function release(ctx: MutationCtx, purchase: Doc<"purchases">) {
   const slot = await ctx.db.get(purchase.slotId);
@@ -159,14 +160,12 @@ export const reserve = internalMutation({
       throw new ConvexError(
         "Un paiement est déjà en cours sur cet emplacement.",
       );
-    if (
-      recent.filter((p) => p._creationTime > Date.now() - 10 * 60_000).length >=
-      5
-    ) {
-      throw new ConvexError(
-        "Trop de tentatives. Réessayez dans quelques minutes.",
-      );
-    }
+    // Reusing an existing checkout above does not consume another reservation.
+    // This quota is committed atomically with the new purchase.
+    await rateLimiter.limit(ctx, "purchaseReservation", {
+      key: args.userId,
+      throws: true,
+    });
     const reservedUntil = Date.now() + RESERVATION_MS;
     const id = await ctx.db.insert("purchases", {
       slotId: slot._id,

@@ -8,6 +8,8 @@ import { components, internal } from "./_generated/api";
 import { query, type ActionCtx } from "./_generated/server";
 import authConfig from "./auth.config";
 import { languageFromCookie } from "./lib/language";
+import { authRateLimitOptions, AuthRateLimitError } from "./authRateLimits";
+import { AUTH_PROXY_IP, verifyAuthProxy } from "./lib/authProxy";
 import {
   SITE_URL,
   EMAIL_FROM,
@@ -21,10 +23,24 @@ import {
 export const authComponent = createClient<DataModel>(components.betterAuth);
 
 function createAuth(ctx: GenericCtx<DataModel>) {
-  return betterAuth({
+  const auth = betterAuth({
     baseURL: BETTER_AUTH_URL,
     trustedOrigins: [SITE_URL],
     database: authComponent.adapter(ctx),
+    advanced: { ipAddress: { ipAddressHeaders: [AUTH_PROXY_IP, "cf-connecting-ip"] } },
+    rateLimit: {
+      ...authRateLimitOptions,
+      // Compatibility with Better Auth 1.4's documented get/set storage API.
+      // consume rechecks and increments atomically, including concurrent calls.
+      customStorage: {
+        get: async (key) => (await ctx.runQuery(internal.authRateLimits.read, { key })) ?? undefined,
+        set: async (key) => {
+          if (!("runMutation" in ctx)) throw new Error("Auth rate limiting requires a mutation-capable context");
+          const result = await ctx.runMutation(internal.authRateLimits.consume, { key });
+          if (!result.allowed) throw new AuthRateLimitError(result.retryAfter);
+        },
+      },
+    },
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
@@ -77,6 +93,20 @@ function createAuth(ctx: GenericCtx<DataModel>) {
       }),
     ],
   });
+  return {
+    ...auth,
+    handler: async (request: Request) => {
+      if (!(await verifyAuthProxy(request, process.env.AUTH_PROXY_SECRET)))
+        return Response.json({ code: "AUTH_ERROR", message: "Invalid authentication request" }, { status: 403 });
+      try {
+        return await auth.handler(request);
+      } catch (error) {
+        // Better Auth 1.4's request hook does not convert storage errors to HTTP.
+        if (error instanceof AuthRateLimitError) return error.toResponse();
+        throw error;
+      }
+    },
+  };
 }
 
 export { createAuth };

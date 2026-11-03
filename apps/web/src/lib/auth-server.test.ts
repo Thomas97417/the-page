@@ -1,12 +1,13 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { fetchToken, requestHeaders } = vi.hoisted(() => ({
+const { fetchToken, requestHeaders, proxyRequest } = vi.hoisted(() => ({
   fetchToken: vi.fn<() => Promise<string | undefined>>(),
   requestHeaders: vi.fn<() => Headers>(),
+  proxyRequest: vi.fn<(request: Request) => Promise<Response>>(),
 }));
 
 vi.mock("@convex-dev/better-auth/react-start", () => ({
-  convexBetterAuthReactStart: () => ({ getToken: fetchToken }),
+  convexBetterAuthReactStart: () => ({ getToken: fetchToken, handler: proxyRequest }),
 }));
 vi.mock("@tanstack/react-start/server", () => ({
   getRequestHeaders: requestHeaders,
@@ -18,11 +19,32 @@ vi.mock("@my-better-t-app/env/web", () => ({
   },
 }));
 
-import { getToken } from "./auth-server";
+import { getToken, handler } from "./auth-server";
+import { AUTH_PROXY_IP, verifyAuthProxy } from "@my-better-t-app/backend/convex/lib/authProxy";
 
 beforeEach(() => {
   vi.resetAllMocks();
   requestHeaders.mockReturnValue(new Headers());
+});
+afterEach(() => vi.unstubAllEnvs());
+
+describe("Cloudflare authentication proxy", () => {
+  it("signs the edge-provided IP instead of a forged visitor header", async () => {
+    const secret = "test-only-auth-proxy-secret-0123456789abcdef";
+    vi.stubEnv("AUTH_PROXY_SECRET", secret);
+    proxyRequest.mockResolvedValue(new Response(null, { status: 200 }));
+    const response = await handler(new Request("https://the-page.example/api/auth/sign-in/email", { headers: { "cf-connecting-ip": "203.0.113.10", [AUTH_PROXY_IP]: "forged" } }));
+    expect(response.status).toBe(200);
+    const forwarded = proxyRequest.mock.calls[0]![0];
+    expect(forwarded.headers.get(AUTH_PROXY_IP)).toBe("203.0.113.10");
+    expect(await verifyAuthProxy(forwarded, secret)).toBe(true);
+  });
+
+  it("fails closed when the Cloudflare signing secret is missing", async () => {
+    vi.stubEnv("AUTH_PROXY_SECRET", "");
+    expect((await handler(new Request("https://the-page.example/api/auth/sign-in/email", { headers: { "cf-connecting-ip": "203.0.113.10" } }))).status).toBe(503);
+    expect(proxyRequest).not.toHaveBeenCalled();
+  });
 });
 
 describe("server session lookup", () => {

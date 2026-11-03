@@ -9,10 +9,12 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as authRateLimits from "../authRateLimits.js";
 import type * as crons from "../crons.js";
 import type * as env from "../env.js";
 import type * as healthCheck from "../healthCheck.js";
 import type * as http from "../http.js";
+import type * as lib_authProxy from "../lib/authProxy.js";
 import type * as lib_content from "../lib/content.js";
 import type * as lib_emailContent from "../lib/emailContent.js";
 import type * as lib_language from "../lib/language.js";
@@ -20,13 +22,13 @@ import type * as lib_notificationEmail from "../lib/notificationEmail.js";
 import type * as lib_notifications from "../lib/notifications.js";
 import type * as lib_orders from "../lib/orders.js";
 import type * as lib_pages from "../lib/pages.js";
+import type * as lib_rateLimits from "../lib/rateLimits.js";
 import type * as notifications from "../notifications.js";
 import type * as payments from "../payments.js";
 import type * as permissions from "../permissions.js";
 import type * as polar from "../polar.js";
 import type * as privateData from "../privateData.js";
 import type * as purchases from "../purchases.js";
-import type * as r2 from "../r2.js";
 import type * as sendEmails from "../sendEmails.js";
 import type * as slots from "../slots.js";
 
@@ -38,10 +40,12 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  authRateLimits: typeof authRateLimits;
   crons: typeof crons;
   env: typeof env;
   healthCheck: typeof healthCheck;
   http: typeof http;
+  "lib/authProxy": typeof lib_authProxy;
   "lib/content": typeof lib_content;
   "lib/emailContent": typeof lib_emailContent;
   "lib/language": typeof lib_language;
@@ -49,13 +53,13 @@ declare const fullApi: ApiFromModules<{
   "lib/notifications": typeof lib_notifications;
   "lib/orders": typeof lib_orders;
   "lib/pages": typeof lib_pages;
+  "lib/rateLimits": typeof lib_rateLimits;
   notifications: typeof notifications;
   payments: typeof payments;
   permissions: typeof permissions;
   polar: typeof polar;
   privateData: typeof privateData;
   purchases: typeof purchases;
-  r2: typeof r2;
   sendEmails: typeof sendEmails;
   slots: typeof slots;
 }>;
@@ -2213,130 +2217,6 @@ export declare const components: {
       >;
     };
   };
-  r2: {
-    lib: {
-      deleteMetadata: FunctionReference<
-        "mutation",
-        "internal",
-        { bucket: string; key: string },
-        null
-      >;
-      deleteObject: FunctionReference<
-        "mutation",
-        "internal",
-        {
-          accessKeyId: string;
-          bucket: string;
-          endpoint: string;
-          key: string;
-          secretAccessKey: string;
-        },
-        null
-      >;
-      deleteR2Object: FunctionReference<
-        "action",
-        "internal",
-        {
-          accessKeyId: string;
-          bucket: string;
-          endpoint: string;
-          key: string;
-          secretAccessKey: string;
-        },
-        null
-      >;
-      getMetadata: FunctionReference<
-        "query",
-        "internal",
-        {
-          accessKeyId: string;
-          bucket: string;
-          endpoint: string;
-          key: string;
-          secretAccessKey: string;
-        },
-        {
-          bucket: string;
-          bucketLink: string;
-          contentType?: string;
-          key: string;
-          lastModified: string;
-          link: string;
-          sha256?: string;
-          size?: number;
-          url: string;
-        } | null
-      >;
-      listMetadata: FunctionReference<
-        "query",
-        "internal",
-        {
-          accessKeyId: string;
-          bucket: string;
-          cursor?: string;
-          endpoint: string;
-          limit?: number;
-          secretAccessKey: string;
-        },
-        {
-          continueCursor: string;
-          isDone: boolean;
-          page: Array<{
-            bucket: string;
-            bucketLink: string;
-            contentType?: string;
-            key: string;
-            lastModified: string;
-            link: string;
-            sha256?: string;
-            size?: number;
-            url: string;
-          }>;
-          pageStatus?: null | "SplitRecommended" | "SplitRequired";
-          splitCursor?: null | string;
-        }
-      >;
-      store: FunctionReference<
-        "action",
-        "internal",
-        {
-          accessKeyId: string;
-          bucket: string;
-          endpoint: string;
-          secretAccessKey: string;
-          url: string;
-        },
-        any
-      >;
-      syncMetadata: FunctionReference<
-        "action",
-        "internal",
-        {
-          accessKeyId: string;
-          bucket: string;
-          endpoint: string;
-          key: string;
-          onComplete?: string;
-          secretAccessKey: string;
-        },
-        null
-      >;
-      upsertMetadata: FunctionReference<
-        "mutation",
-        "internal",
-        {
-          bucket: string;
-          contentType?: string;
-          key: string;
-          lastModified: string;
-          link: string;
-          sha256?: string;
-          size?: number;
-        },
-        { isNew: boolean }
-      >;
-    };
-  };
   polar: {
     lib: {
       createProduct: FunctionReference<
@@ -3200,6 +3080,140 @@ export declare const components: {
         },
         any
       >;
+    };
+  };
+  rateLimiter: {
+    lib: {
+      checkRateLimit: FunctionReference<
+        "query",
+        "internal",
+        {
+          config:
+            | {
+                capacity?: number;
+                kind: "token bucket";
+                maxReserved?: number;
+                period: number;
+                rate: number;
+                shards?: number;
+                start?: null;
+              }
+            | {
+                capacity?: number;
+                kind: "fixed window";
+                maxReserved?: number;
+                period: number;
+                rate: number;
+                shards?: number;
+                start?: number;
+              };
+          count?: number;
+          key?: string;
+          name: string;
+          reserve?: boolean;
+          throws?: boolean;
+        },
+        { ok: true; retryAfter?: number } | { ok: false; retryAfter: number }
+      >;
+      clearAll: FunctionReference<
+        "mutation",
+        "internal",
+        { before?: number },
+        null
+      >;
+      getServerTime: FunctionReference<"mutation", "internal", {}, number>;
+      getValue: FunctionReference<
+        "query",
+        "internal",
+        {
+          config:
+            | {
+                capacity?: number;
+                kind: "token bucket";
+                maxReserved?: number;
+                period: number;
+                rate: number;
+                shards?: number;
+                start?: null;
+              }
+            | {
+                capacity?: number;
+                kind: "fixed window";
+                maxReserved?: number;
+                period: number;
+                rate: number;
+                shards?: number;
+                start?: number;
+              };
+          key?: string;
+          name: string;
+          sampleShards?: number;
+        },
+        {
+          config:
+            | {
+                capacity?: number;
+                kind: "token bucket";
+                maxReserved?: number;
+                period: number;
+                rate: number;
+                shards?: number;
+                start?: null;
+              }
+            | {
+                capacity?: number;
+                kind: "fixed window";
+                maxReserved?: number;
+                period: number;
+                rate: number;
+                shards?: number;
+                start?: number;
+              };
+          shard: number;
+          ts: number;
+          value: number;
+        }
+      >;
+      rateLimit: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          config:
+            | {
+                capacity?: number;
+                kind: "token bucket";
+                maxReserved?: number;
+                period: number;
+                rate: number;
+                shards?: number;
+                start?: null;
+              }
+            | {
+                capacity?: number;
+                kind: "fixed window";
+                maxReserved?: number;
+                period: number;
+                rate: number;
+                shards?: number;
+                start?: number;
+              };
+          count?: number;
+          key?: string;
+          name: string;
+          reserve?: boolean;
+          throws?: boolean;
+        },
+        { ok: true; retryAfter?: number } | { ok: false; retryAfter: number }
+      >;
+      resetRateLimit: FunctionReference<
+        "mutation",
+        "internal",
+        { key?: string; name: string },
+        null
+      >;
+    };
+    time: {
+      getServerTime: FunctionReference<"mutation", "internal", {}, number>;
     };
   };
 };
