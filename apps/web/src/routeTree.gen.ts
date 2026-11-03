@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
+import { Route as ConditionsUtilisationRouteImport } from './routes/conditions-utilisation'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as PageRouteImport } from './routes/$page'
 import { Route as IndexRouteImport } from './routes/index'
@@ -23,6 +25,16 @@ import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
+  id: '/mentions-legales',
+  path: '/mentions-legales',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConditionsUtilisationRoute = ConditionsUtilisationRouteImport.update({
+  id: '/conditions-utilisation',
+  path: '/conditions-utilisation',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -75,6 +87,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$page': typeof PageRoute
   '/admin': typeof AdminRoute
+  '/conditions-utilisation': typeof ConditionsUtilisationRoute
+  '/mentions-legales': typeof MentionsLegalesRoute
   '/settings': typeof SettingsRoute
   '/forgot-password': typeof authForgotPasswordRoute
   '/reset-password': typeof authResetPasswordRoute
@@ -87,6 +101,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$page': typeof PageRoute
   '/admin': typeof AdminRoute
+  '/conditions-utilisation': typeof ConditionsUtilisationRoute
+  '/mentions-legales': typeof MentionsLegalesRoute
   '/settings': typeof SettingsRoute
   '/forgot-password': typeof authForgotPasswordRoute
   '/reset-password': typeof authResetPasswordRoute
@@ -100,6 +116,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/$page': typeof PageRoute
   '/admin': typeof AdminRoute
+  '/conditions-utilisation': typeof ConditionsUtilisationRoute
+  '/mentions-legales': typeof MentionsLegalesRoute
   '/settings': typeof SettingsRoute
   '/(auth)/forgot-password': typeof authForgotPasswordRoute
   '/(auth)/reset-password': typeof authResetPasswordRoute
@@ -114,6 +132,8 @@ export interface FileRouteTypes {
     | '/'
     | '/$page'
     | '/admin'
+    | '/conditions-utilisation'
+    | '/mentions-legales'
     | '/settings'
     | '/forgot-password'
     | '/reset-password'
@@ -126,6 +146,8 @@ export interface FileRouteTypes {
     | '/'
     | '/$page'
     | '/admin'
+    | '/conditions-utilisation'
+    | '/mentions-legales'
     | '/settings'
     | '/forgot-password'
     | '/reset-password'
@@ -138,6 +160,8 @@ export interface FileRouteTypes {
     | '/'
     | '/$page'
     | '/admin'
+    | '/conditions-utilisation'
+    | '/mentions-legales'
     | '/settings'
     | '/(auth)/forgot-password'
     | '/(auth)/reset-password'
@@ -151,6 +175,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   PageRoute: typeof PageRoute
   AdminRoute: typeof AdminRoute
+  ConditionsUtilisationRoute: typeof ConditionsUtilisationRoute
+  MentionsLegalesRoute: typeof MentionsLegalesRoute
   SettingsRoute: typeof SettingsRoute
   authForgotPasswordRoute: typeof authForgotPasswordRoute
   authResetPasswordRoute: typeof authResetPasswordRoute
@@ -167,6 +193,20 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mentions-legales': {
+      id: '/mentions-legales'
+      path: '/mentions-legales'
+      fullPath: '/mentions-legales'
+      preLoaderRoute: typeof MentionsLegalesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/conditions-utilisation': {
+      id: '/conditions-utilisation'
+      path: '/conditions-utilisation'
+      fullPath: '/conditions-utilisation'
+      preLoaderRoute: typeof ConditionsUtilisationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -239,6 +279,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   PageRoute: PageRoute,
   AdminRoute: AdminRoute,
+  ConditionsUtilisationRoute: ConditionsUtilisationRoute,
+  MentionsLegalesRoute: MentionsLegalesRoute,
   SettingsRoute: SettingsRoute,
   authForgotPasswordRoute: authForgotPasswordRoute,
   authResetPasswordRoute: authResetPasswordRoute,

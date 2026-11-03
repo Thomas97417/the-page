@@ -16,7 +16,11 @@ export async function loadRouteAuth({
 }) {
   // Keep the initial route context on public client navigations. The auth
   // provider tracks session changes; private and auth routes still revalidate.
-  if (!isServer && pageIdFromPath(pathname) !== null) return;
+  if (
+    !isServer &&
+    (pageIdFromPath(pathname) !== null ||
+      ["/mentions-legales", "/conditions-utilisation"].includes(pathname.replace(/\/$/, "")))
+  ) return;
 
   const token = await getToken();
   return { token, isAuthenticated: !!token };

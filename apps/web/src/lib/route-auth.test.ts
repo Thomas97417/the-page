@@ -13,7 +13,8 @@ import { loadRouteAuth, type RouteAuthContext } from "./route-auth";
 import { loadCountryPage } from "./page-route";
 import { validatePageSearch } from "./page";
 
-const PUBLIC_PATHS = PAGES.map((page) => pagePath(page.id));
+const LEGAL_PATHS = ["/mentions-legales", "/conditions-utilisation"];
+const PUBLIC_PATHS = [...PAGES.map((page) => pagePath(page.id)), ...LEGAL_PATHS];
 const PRIVATE_PATHS = ["/settings", "/admin"];
 const AUTH_PATHS = [
   "/sign-in",
@@ -51,6 +52,9 @@ function setup(initialPath = "/") {
       queryFn: () => loadWords(context.pageId),
     }),
   });
+  const legalRoutes = LEGAL_PATHS.map((path) =>
+    createRoute({ getParentRoute: () => root, path }),
+  );
   const privateRoutes = PRIVATE_PATHS.map((path) =>
     createRoute({
       getParentRoute: () => root,
@@ -71,7 +75,7 @@ function setup(initialPath = "/") {
   );
   const history = createMemoryHistory({ initialEntries: [initialPath] });
   const router = createRouter({
-    routeTree: root.addChildren([world, country, ...privateRoutes, ...authRoutes]),
+    routeTree: root.addChildren([world, country, ...legalRoutes, ...privateRoutes, ...authRoutes]),
     history,
     isServer: true,
     context: { queryClient },
@@ -118,6 +122,31 @@ describe("authentication during page navigation", () => {
       });
     }
     expect(app.getToken).toHaveBeenCalledOnce();
+  });
+
+  it.each(LEGAL_PATHS)("initializes server authentication on %s", async (path) => {
+    const app = setup(path);
+    await app.router.load();
+    expect(app.getToken).toHaveBeenCalledOnce();
+    expect(app.router.state.matches[0]?.context).toMatchObject({
+      token: "initial-token",
+      isAuthenticated: true,
+    });
+    expect(app.router.state.matches.at(-1)?.status).toBe("success");
+    expect(app.loadWords).not.toHaveBeenCalled();
+  });
+
+  it.each(LEGAL_PATHS)("preloads %s and navigates without another session lookup", async (path) => {
+    const app = setup();
+    await app.router.load();
+    app.switchToClient();
+    app.getToken.mockRejectedValue(new Error("Auth service unavailable"));
+
+    await app.router.preloadRoute({ to: path });
+    await app.load(path);
+    expect(app.router.state.matches.at(-1)?.status).toBe("success");
+    expect(app.getToken).toHaveBeenCalledOnce();
+    expect(app.loadWords).toHaveBeenCalledTimes(1);
   });
 
   it("preloads a public destination and reuses its words without another session lookup", async () => {

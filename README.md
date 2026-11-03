@@ -119,6 +119,12 @@ Les actions de paiement consomment leur quota avant de réserver ou d’appeler 
 
 Un dépassement renvoie l’erreur structurée `RateLimited` du composant, avec le nom du quota et `retryAfter` en millisecondes. L’interface affiche le message traduit « Trop de demandes. Réessayez dans un instant. ». Les lectures publiques, les webhooks signés et les tâches internes de récupération restent disponibles. Le composant est installé sur le déploiement lors du prochain `bun run dev:server` ou déploiement Convex ; aucune variable d’environnement supplémentaire n’est nécessaire.
 
+## Pages légales
+
+Le footer commun aux pages publiques donne accès à `/mentions-legales` et `/conditions-utilisation`. Les textes français et anglais sont dans `apps/web/src/locales`, avec TOMA comme éditeur, `contact@thepage.com` comme contact et Cloudflare comme hébergeur. Les conditions reflètent le fonctionnement actuel du prototype et ses paiements de test.
+
+L’adresse postale de l’éditeur et les éventuelles informations d’immatriculation restent à compléter selon son statut avant publication. Références : [mentions obligatoires — Service Public](https://entreprendre.service-public.gouv.fr/vosdroits/F37351?lang=fr), [coordonnées de Cloudflare](https://www.cloudflare.com/website-terms/), [téléphone de Cloudflare — rapport annuel](https://www.sec.gov/Archives/edgar/data/1477333/000147733326000026/cloud-20251231.htm), [cookies — CNIL](https://www.cnil.fr/fr/cookies-et-autres-traceurs/que-dit-la-loi).
+
 ## Vérification
 
 ```bash
