@@ -5,6 +5,9 @@
   "scripts": {
     "build": "vite build",
     "serve": "vite preview",
+    "preview": "vite preview",
+    "deploy": "bun run build && wrangler deploy",
+    "cf-typegen": "wrangler types --include-runtime=false",
     "dev": "vite dev",
     "test": "vitest run",
     "check-types": "tsc --noEmit"
@@ -45,6 +48,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.62.5",
     "@my-better-t-app/config": "workspace:*",
     "@tanstack/react-router-devtools": "^1.141.1",
     "@testing-library/dom": "^10.4.0",
@@ -56,6 +60,7 @@
     "typescript": "catalog:",
     "vite": "^7.0.2",
     "vitest": "3.2.4",
-    "web-vitals": "^5.0.3"
+    "web-vitals": "^5.0.3",
+    "wrangler": "^4.147.0"
   }
 }
