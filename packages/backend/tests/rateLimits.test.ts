@@ -7,7 +7,6 @@ import { checkoutsCreate } from "@polar-sh/sdk/funcs/checkoutsCreate.js";
 import { productsGet } from "@polar-sh/sdk/funcs/productsGet.js";
 import schema from "../convex/schema";
 import { api, components, internal } from "../convex/_generated/api";
-import { r2 } from "../convex/r2";
 
 vi.mock("@polar-sh/sdk/funcs/checkoutsCreate.js", () => ({ checkoutsCreate: vi.fn() }));
 vi.mock("@polar-sh/sdk/funcs/productsGet.js", () => ({ productsGet: vi.fn() }));
@@ -163,36 +162,4 @@ describe("application rate limits", () => {
     await expect(user.client.mutation(api.notifications.markAllRead, {})).resolves.toBeNull();
   });
 
-  it("authenticates every upload entry point and shares the quota before upload side effects", async () => {
-    const t = setup();
-    const user = await account(t, "uploader");
-    const other = await account(t, "other-uploader");
-    const generate = vi.spyOn(r2, "generateUploadUrl").mockResolvedValue({ key: "key", url: "https://upload.example" });
-    const remove = vi.spyOn(r2, "deleteObject").mockResolvedValue();
-    for (const endpoint of [api.r2.generateUploadUrl, api.r2.generateUserUploadUrl, api.r2.generateAvatarUploadUrl]) {
-      await expect(t.mutation(endpoint, {})).rejects.toThrow("Connectez-vous");
-    }
-    await expect(t.mutation(api.r2.syncMetadata, { key: "key" })).rejects.toThrow("Connectez-vous");
-    for (let i = 0; i < 5; i++) await user.client.mutation(i % 2 ? api.r2.generateUploadUrl : api.r2.generateUserUploadUrl, {});
-    await expectRateLimit(user.client.mutation(api.r2.generateAvatarUploadUrl, {}), "upload", 6_000);
-    await expectRateLimit(user.client.mutation(api.r2.syncMetadata, { key: "key" }), "upload", 6_000);
-    expect(generate).toHaveBeenCalledTimes(5);
-    expect(remove).not.toHaveBeenCalled();
-    expect(await t.run((ctx) => ctx.db.system.query("_scheduled_functions").collect())).toHaveLength(0);
-    await other.client.mutation(api.r2.generateAvatarUploadUrl, {});
-    vi.setSystemTime(Date.now() + 6_000);
-    await user.client.mutation(api.r2.generateAvatarUploadUrl, {});
-    expect(generate).toHaveBeenCalledTimes(7);
-  });
-
-  it("rolls back quota consumption when the surrounding mutation fails", async () => {
-    const t = setup();
-    const user = await account(t, "uploader");
-    vi.spyOn(r2, "generateUploadUrl")
-      .mockRejectedValueOnce(new Error("Storage unavailable"))
-      .mockResolvedValue({ key: "key", url: "https://upload.example" });
-    await expect(user.client.mutation(api.r2.generateUploadUrl, {})).rejects.toThrow("Storage unavailable");
-    for (let i = 0; i < 5; i++) await user.client.mutation(api.r2.generateUploadUrl, {});
-    await expectRateLimit(user.client.mutation(api.r2.generateUploadUrl, {}), "upload", 6_000);
-  });
 });

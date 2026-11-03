@@ -10,5 +10,4 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
   updateContent: { kind: "token bucket", rate: 20, period: MINUTE, capacity: 10 },
   moderate: { kind: "token bucket", rate: 60, period: MINUTE, capacity: 30 },
   notificationRead: { kind: "token bucket", rate: 60, period: MINUTE, capacity: 30 },
-  upload: { kind: "token bucket", rate: 10, period: MINUTE, capacity: 5 },
 });

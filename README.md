@@ -74,7 +74,7 @@ Pour activer la modération, ajouter **`ADMIN_USER_IDS`** dans les variables Con
 
 La route `/admin` permet de sélectionner une page, puis de masquer, rétablir ou retirer le mot actuel. Chaque action vérifie les permissions côté serveur et conserve une trace. Un mot masqué, sa description et son URL ne sont jamais renvoyés aux visiteurs ; l’édition par le propriétaire ne contourne pas la modération.
 
-Les routes utiles sont `/`, `/settings`, `/admin`, les écrans de connexion et récupération de compte, et `/api/auth/*`. Les anciennes démonstrations `/dashboard` et `/upload` ont été supprimées. Le stockage R2 préexistant n’est pas utilisé par les nouveaux parcours.
+Les routes utiles sont `/`, `/settings`, `/admin`, les écrans de connexion et récupération de compte, et `/api/auth/*`.
 
 ## Limites des opérations Convex
 
@@ -88,9 +88,8 @@ Le composant [Convex Rate Limiter](https://www.convex.dev/components/rate-limite
 | Modification d’un mot | 20 / minute | 10 |
 | Modération | 60 / minute | 30 |
 | Notifications lues, seules ou en lot | 60 / minute | 30 |
-| URL d’upload et synchronisation R2 | 10 / minute | 5 |
 
-Les actions de paiement consomment leur quota avant de réserver ou d’appeler Polar, même en cas d’échec ultérieur. Les mutations consomment leur quota dans la même transaction que leurs modifications. Réutiliser une réservation existante ne consomme pas une nouvelle réservation. Les points d’entrée d’upload R2 exigent tous une authentification et partagent le même quota.
+Les actions de paiement consomment leur quota avant de réserver ou d’appeler Polar, même en cas d’échec ultérieur. Les mutations consomment leur quota dans la même transaction que leurs modifications. Réutiliser une réservation existante ne consomme pas une nouvelle réservation.
 
 Un dépassement renvoie l’erreur structurée `RateLimited` du composant, avec le nom du quota et `retryAfter` en millisecondes. L’interface affiche le message traduit « Trop de demandes. Réessayez dans un instant. ». Les lectures publiques, les webhooks signés et les tâches internes de récupération restent disponibles. Le composant est installé sur le déploiement lors du prochain `bun run dev:server` ou déploiement Convex ; aucune variable d’environnement supplémentaire n’est nécessaire.
 
