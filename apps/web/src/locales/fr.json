@@ -126,6 +126,57 @@
     "reserved": "réservée",
     "empty": "libre, texte de remplissage"
   },
+  "footer": {
+    "legalNotice": "Mentions légales",
+    "terms": "Conditions d’utilisation"
+  },
+  "legal": {
+    "updated": "Mise à jour le 3 novembre 2026",
+    "notice": {
+      "title": "Mentions légales.",
+      "description": "Les informations essentielles sur the page, son éditeur et vos données.",
+      "publisher": {
+        "title": "Édition & contact",
+        "body": "the page est édité par TOMA, responsable de la publication. Pour toute demande concernant le site ou pour signaler un contenu, écrivez-nous."
+      },
+      "hosting": {
+        "title": "Hébergement",
+        "body": "Le site web est hébergé par Cloudflare, Inc.\n101 Townsend Street, San Francisco, CA 94107, États-Unis.\nTéléphone : +1 888 993 5273.\n\nLa base de données et les fonctions serveur de l’application sont hébergées par Convex, dans la région Europe (Irlande)."
+      },
+      "data": {
+        "title": "Données personnelles",
+        "body": "Votre nom, votre adresse email et l’historique de vos achats permettent de gérer votre compte, vos publications et les notifications associées. Vous pouvez gérer ou supprimer votre compte depuis ses paramètres. Pour exercer vos droits d’accès, de rectification ou d’effacement, contactez contact@thepage.com.\n\nLes cookies et le stockage local servent à conserver votre session, votre langue, votre thème et votre brouillon."
+      },
+      "rights": {
+        "title": "Contenus & liens",
+        "body": "Les auteurs conservent les droits sur leurs contributions. Les éléments propres au site restent protégés par les droits applicables. Les liens publiés peuvent mener vers des sites tiers, dont les contenus relèvent de leurs éditeurs."
+      }
+    },
+    "terms": {
+      "title": "Conditions d’utilisation.",
+      "description": "Quelques règles pour écrire ensemble sur the page.",
+      "service": {
+        "title": "Le principe",
+        "body": "the page propose une page World et des pages par pays. Chaque page dispose de 50 emplacements indépendants. Chacun peut y publier un mot, accompagné d’une description et d’un lien facultatifs. La consultation est libre."
+      },
+      "account": {
+        "title": "Votre compte",
+        "body": "Un compte est nécessaire pour prendre un emplacement et gérer vos mots. Utilisez des informations exactes, protégez vos identifiants et respectez les droits des autres utilisateurs. Votre compte peut être supprimé depuis ses paramètres ; cette action met fin à l’accès à l’édition de vos mots."
+      },
+      "places": {
+        "title": "Votre place, votre mot",
+        "body": "Chaque emplacement commence à 1 € TTC. Son prix augmente de 1 € à chaque achat confirmé. Le montant est indiqué avant validation. Vous pouvez modifier gratuitement votre mot, sa description et son lien tant que la place vous appartient.\n\nUn nouvel achat remplace le mot précédent, sans compensation pour son auteur. Aucune durée d’affichage ni audience n’est garantie.\n\nLe site fonctionne actuellement en mode test : les paiements sont effectués dans l’environnement de test du prestataire."
+      },
+      "content": {
+        "title": "Ce que vous publiez",
+        "body": "Vous restez responsable de votre mot, de sa description et du lien associé. Publiez uniquement des contenus que vous avez le droit de partager. Les contenus illicites, haineux, trompeurs ou portant atteinte aux droits d’autrui peuvent être masqués ou retirés.\n\nVous conservez vos droits sur vos contributions et autorisez leur affichage sur the page dans le cadre du service. Un contenu peut être signalé à contact@thepage.com en précisant la page et l’emplacement concernés."
+      },
+      "availability": {
+        "title": "Disponibilité & contact",
+        "body": "Le service peut évoluer ou être temporairement interrompu pour maintenance. Ces conditions pourront être mises à jour ; leur date de révision figure en haut de cette page. Pour toute demande, contactez-nous."
+      }
+    }
+  },
   "rules": {
     "title": "Comment ça marche ?",
     "description": "Une page World et des pages par pays. 50 emplacements par page. Un mot par place.",
@@ -343,7 +394,9 @@
     "resetPasswordDescription": "Choisissez un nouveau mot de passe.",
     "settings": "Mon compte — the page",
     "settingsDescription": "Gérez votre compte the page.",
-    "admin": "Modération — the page"
+    "admin": "Modération — the page",
+    "legalNotice": "Mentions légales — the page",
+    "terms": "Conditions d’utilisation — the page"
   },
   "errors": {
     "generic": "Une erreur est survenue. Réessayez.",
