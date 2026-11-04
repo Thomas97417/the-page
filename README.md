@@ -172,6 +172,8 @@ Pour activer la modération, ajouter **`ADMIN_USER_IDS`** dans les variables Con
 
 La route `/admin` permet de sélectionner une page, puis de masquer, rétablir ou retirer le mot actuel. Chaque action vérifie les permissions côté serveur et conserve une trace. Un mot masqué, sa description et son URL ne sont jamais renvoyés aux visiteurs ; l’édition par le propriétaire ne contourne pas la modération.
 
+Lorsqu’un mot est masqué ou révélé, son propriétaire reçoit un email dans la langue de son achat, avec le dernier texte du mot, la page et l’emplacement concernés. La mise en attente est atomique avec la modération et réutilise Resend et la reprise toutes les cinq minutes. Répéter une action sans changer la visibilité n’envoie pas d’autre email. Les anciens événements ne déclenchent aucun envoi rétroactif, et les comptes supprimés sont exclus.
+
 Les routes utiles sont `/`, `/settings`, `/admin`, les écrans de connexion et récupération de compte, et `/api/auth/*`.
 
 ## Limites de l’authentification

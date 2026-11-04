@@ -2,13 +2,18 @@ import type { Doc } from "../_generated/dataModel";
 import { EMAIL_CONTENT } from "./emailContent";
 import { getPage, pagePath, reclaimPath } from "./pages";
 
+type WordEmail = Pick<Doc<"notifications">, "language" | "word" | "position" | "pageId"> & (
+  | Pick<Doc<"notifications">, "kind" | "_id">
+  | { kind: "word_hidden" | "word_restored" }
+);
+
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (character) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
   })[character]!);
 }
 
-export function wordNotificationEmail(notification: Doc<"notifications">, siteUrl: string) {
+export function wordNotificationEmail(notification: WordEmail, siteUrl: string) {
   const { kind, language, word, position, pageId } = notification;
   const copy = EMAIL_CONTENT[language][kind];
   const page = getPage(pageId);

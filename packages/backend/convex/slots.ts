@@ -4,7 +4,9 @@ import type { QueryCtx } from "./_generated/server";
 import { SLOT_COUNT, priceFor, validateContent } from "./lib/content";
 import { isAdminId, requireAdmin, requireUser } from "./permissions";
 import { authComponent } from "./auth";
+import { internal } from "./_generated/api";
 import { DEFAULT_PAGE_ID, PAGES, type PageId } from "./lib/pages";
+import { normalizeLanguage } from "./lib/language";
 import { pageIdValidator } from "./schema";
 import { rateLimiter } from "./lib/rateLimits";
 
@@ -137,6 +139,20 @@ export const moderate = mutation({
     if (!slot || slot.currentPurchaseId !== purchaseId)
       throw new ConvexError("Le propriétaire a changé. Actualisez la liste.");
     await rateLimiter.limit(ctx, "moderate", { key: admin._id, throws: true });
+    const nextVisibility = action === "hide" ? "hidden" : "visible";
+    const purchase = action !== "remove" && slot.visibility !== nextVisibility
+      ? await ctx.db.get(purchaseId)
+      : null;
+    // Snapshot the current owner's edited word in the same transaction as moderation.
+    // Repeating hide/show still writes an audit entry, but never sends another email.
+    const email = purchase && purchase.slotId === slotId ? {
+      userId: purchase.userId,
+      word: slot.word ?? purchase.word,
+      pageId: slot.pageId ?? purchase.pageId ?? DEFAULT_PAGE_ID,
+      position: slot.position,
+      language: normalizeLanguage(purchase.language),
+      status: "pending" as const,
+    } : undefined;
     if (action === "remove") {
       await ctx.db.patch(slotId, {
         visibility: "removed",
@@ -147,14 +163,17 @@ export const moderate = mutation({
       });
     } else {
       await ctx.db.patch(slotId, {
-        visibility: action === "hide" ? "hidden" : "visible",
+        visibility: nextVisibility,
       });
     }
-    await ctx.db.insert("moderationLog", {
+    const logId = await ctx.db.insert("moderationLog", {
       slotId,
       purchaseId,
       adminId: admin._id,
       action,
+      email,
     });
+    if (email)
+      await ctx.scheduler.runAfter(0, internal.notifications.sendModerationEmail, { logId });
   },
 });

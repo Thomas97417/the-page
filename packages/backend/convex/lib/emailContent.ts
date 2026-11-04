@@ -14,6 +14,20 @@ export const EMAIL_CONTENT = {
       notice: "Le prix actuel vous sera présenté avant tout paiement. Le rachat reste soumis à la disponibilité de l’emplacement.",
       position: "Emplacement",
     },
+    word_hidden: {
+      title: "Votre mot a été masqué",
+      description: "La modération a masqué votre mot sur la page publique. Sa description et son lien ne sont plus visibles non plus.",
+      button: "Consulter la page",
+      notice: "Votre mot n’a pas été supprimé. La modération peut le rendre à nouveau visible.",
+      position: "Emplacement",
+    },
+    word_restored: {
+      title: "Votre mot est de nouveau visible",
+      description: "La modération a rétabli l’affichage de votre mot sur la page publique.",
+      button: "Voir mon mot",
+      notice: "Retrouvez votre mot à l’emplacement indiqué ci-dessus.",
+      position: "Emplacement",
+    },
     reset: {
       title: "Votre mot de passe the page",
       description: "Choisissez un nouveau mot de passe pour votre compte.",
@@ -40,6 +54,20 @@ export const EMAIL_CONTENT = {
       description: "Someone bought your place and replaced your word. Reclaim your place to put it back on the page.",
       button: "Buy my word back",
       notice: "You will see the current price before paying. Repurchasing is subject to the place’s availability.",
+      position: "Place",
+    },
+    word_hidden: {
+      title: "Your word has been hidden",
+      description: "Moderation has hidden your word from the public page. Its description and link are no longer visible either.",
+      button: "Open the page",
+      notice: "Your word has not been deleted. Moderation can make it visible again.",
+      position: "Place",
+    },
+    word_restored: {
+      title: "Your word is visible again",
+      description: "Moderation has restored your word to the public page.",
+      button: "View my word",
+      notice: "Find your word at the place shown above.",
       position: "Place",
     },
     reset: {
