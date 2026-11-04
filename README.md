@@ -8,11 +8,11 @@ React 19, TanStack Start, Convex, Better Auth, Tailwind CSS et shadcn/ui (Base U
 
 ## Référencement et positionnement publicitaire
 
-Le contenu français et anglais présente the page comme un espace publicitaire en édition limitée : un mot pour une marque ou un projet, une description et un lien, parmi 50 emplacements par page. Les pages disposent d’un titre H1 visible, de textes sur la visibilité, la rareté et le prestige du format, ainsi que d’une FAQ sur les prix, les rachats et la durée d’affichage. L’annuaire repliable relie World et toutes les pages nationales dans le HTML rendu côté serveur.
+L’accueil et les pages pays affichent la composition des mots, le bouton « Prendre ma place » et la mention courte du prix. Leur titre H1 reste accessible aux lecteurs d’écran. La page publique `/about`, reliée depuis le footer, regroupe les explications françaises et anglaises sur le format publicitaire, la visibilité, la rareté et les 50 emplacements, ainsi que la FAQ sur les prix, les rachats et la durée d’affichage. Son annuaire repliable relie World et toutes les pages nationales dans le HTML rendu côté serveur.
 
 Chaque page publique possède un titre et une description spécifiques, une URL canonique absolue, des métadonnées Open Graph et Twitter, ainsi qu’un visuel PNG de partage de 1 200 × 630 pixels. Les sources SVG des deux visuels sont dans `apps/web/public/`. Les pages d’emplacements exposent aussi des données structurées JSON-LD `WebSite`, `WebPage` et `Service`, avec un fil d’Ariane pour les pays. Aucun prix de vente réel ni avis fictif n’est déclaré dans ces données. Les liens achetés conservent `rel="sponsored ugc nofollow noopener noreferrer"`.
 
-`/sitemap.xml` est généré à partir de `PAGES` et des deux pages légales ; il exclut les alias français, `/world`, les paramètres d’achat et les pages de compte. `/robots.txt` annonce ce sitemap. Les routes de compte, d’authentification, de modération et les URL inconnues héritent de `noindex, follow` ; les pages publiques activent explicitement l’indexation. Les routes de compte restent explorables pour que les moteurs puissent lire `noindex`.
+`/sitemap.xml` est généré à partir de `PAGES`, de `/about` et des deux pages légales ; il exclut les alias français, `/world`, les paramètres d’achat et les pages de compte. `/robots.txt` annonce ce sitemap. Les routes de compte, d’authentification, de modération et les URL inconnues héritent de `noindex, follow` ; les pages publiques activent explicitement l’indexation. Les routes de compte restent explorables pour que les moteurs puissent lire `noindex`.
 
 En production, définir **`VITE_SITE_URL`** sur l’origine HTTPS publique, sans chemin ni paramètres, puis reconstruire le frontend. Cette origine commune est utilisée par les canoniques, le sitemap, les partages et les données structurées. En l’absence de configuration, l’application utilise l’origine de la requête, ce qui permet les vérifications locales sans inventer de domaine de production. Protéger les previews Cloudflare contre l’indexation dans leur configuration d’hébergement. Après publication, valider le domaine dans Google Search Console et soumettre `/sitemap.xml`.
 
@@ -32,6 +32,8 @@ bun run dev
 ```
 
 L’application écoute sur [localhost:3003](http://localhost:3003). Libérer ce port si une autre instance du projet tourne déjà. Les variables Convex du frontend sont les URL publiques `VITE_CONVEX_URL` et `VITE_CONVEX_SITE_URL`. Ne jamais copier les secrets du backend vers le frontend.
+
+Le serveur local utilise le runtime Cloudflare : définir aussi un secret dédié `AUTH_PROXY_SECRET` (32 caractères minimum) dans `apps/web/.env.local` et la même valeur dans les variables du déploiement Convex de développement. Redémarrer le serveur après configuration. Voir [IP des visiteurs sur Cloudflare](#ip-des-visiteurs-sur-cloudflare) pour le rôle de ce secret privé.
 
 `bunfig.toml` utilise le linker `hoisted` pour partager une même copie de Convex entre les workspaces et les composants, et conserver des types compatibles. Après une ancienne installation avec le linker isolé, supprimer les répertoires `node_modules` du dépôt et des workspaces avant de relancer `bun install --frozen-lockfile`.
 
@@ -73,7 +75,7 @@ Configurer les variables publiques **au moment du build**, avec les URL du dépl
 
 Pour un build local destiné à la production, renseigner ces valeurs dans `apps/web/.env.production.local` afin de remplacer les valeurs de développement de `.env`. Les variables `VITE_*` sont intégrées au bundle : toute modification nécessite un nouveau build.
 
-Ajouter **`AUTH_PROXY_SECRET`** aux secrets du Worker et configurer la même valeur côté Convex, comme décrit dans « IP des visiteurs sur Cloudflare ». Ce secret privé de 32 caractères minimum est lu à l’exécution ; il ne doit jamais devenir une variable `VITE_*`. Pour le runtime local Cloudflare, le renseigner dans `apps/web/.dev.vars` (ignoré par Git). Côté Convex, régler `SITE_URL` et `BETTER_AUTH_URL` sur l’origine HTTPS publiée, puis adapter les callbacks OAuth et le webhook Polar au déploiement choisi.
+Ajouter **`AUTH_PROXY_SECRET`** aux secrets du Worker et configurer la même valeur côté Convex, comme décrit dans « IP des visiteurs sur Cloudflare ». Ce secret privé de 32 caractères minimum est lu à l’exécution ; il ne doit jamais devenir une variable `VITE_*`. Pour le runtime local Cloudflare, y compris `bun run dev:web` et `bun run --cwd apps/web preview`, le renseigner dans `apps/web/.env.local` ou `apps/web/.dev.vars` (ignorés par Git), avec la même valeur dans le déploiement Convex de développement. Si `.dev.vars` existe, Wrangler utilise ce fichier pour les secrets et ignore les fichiers `.env*`. Redémarrer le serveur après un changement de configuration. Côté Convex, régler `SITE_URL` et `BETTER_AUTH_URL` sur l’origine HTTPS publiée, puis adapter les callbacks OAuth et le webhook Polar au déploiement choisi.
 
 Après connexion à Cloudflare avec Wrangler, la commande suivante reconstruit et déploie le frontend :
 
@@ -185,6 +187,8 @@ Pour activer la modération, ajouter **`ADMIN_USER_IDS`** dans les variables Con
 
 La route `/admin` permet de sélectionner une page, puis de masquer, rétablir ou retirer le mot actuel. Chaque action vérifie les permissions côté serveur et conserve une trace. Un mot masqué, sa description et son URL ne sont jamais renvoyés aux visiteurs ; l’édition par le propriétaire ne contourne pas la modération.
 
+Lorsqu’un mot est masqué ou révélé, son propriétaire reçoit un email dans la langue de son achat, avec le dernier texte du mot, la page et l’emplacement concernés. La mise en attente est atomique avec la modération et réutilise Resend et la reprise toutes les cinq minutes. Répéter une action sans changer la visibilité n’envoie pas d’autre email. Les anciens événements ne déclenchent aucun envoi rétroactif, et les comptes supprimés sont exclus.
+
 Les routes utiles sont `/`, `/settings`, `/admin`, les écrans de connexion et récupération de compte, et `/api/auth/*`.
 
 ## Limites de l’authentification
@@ -209,7 +213,7 @@ Better Auth 1.4, compatible avec l’adaptateur installé, fournit une API de st
 
 Les [sous-requêtes Worker entre zones Cloudflare](https://developers.cloudflare.com/fundamentals/reference/http-headers/#cf-connecting-ip) peuvent remplacer l’IP du visiteur par une adresse du Worker. Le serveur TanStack Start signe donc l’IP reçue de l’edge avant de transmettre la requête à Convex. Convex vérifie la signature, la route, la méthode et un horodatage de moins d’une minute avant d’utiliser cette IP. Les en-têtes du navigateur sont remplacés ; une IP transmise sans signature valide est refusée. Les appels directs à Convex utilisent l’en-tête `CF-Connecting-IP` de son edge.
 
-Avant le déploiement Cloudflare, créer un secret dédié **`AUTH_PROXY_SECRET`** de 32 caractères minimum, distinct de `BETTER_AUTH_SECRET`, et configurer la même valeur dans les **bindings secrets du Worker** et dans les **variables du déploiement Convex**. Ce secret reste exclusivement côté serveur : ne jamais le préfixer par `VITE_` ni copier les secrets backend dans les variables publiques du frontend. Sans ce binding, les requêtes d’authentification reçues depuis Cloudflare renvoient 503. Le développement local direct ne requiert pas de signature.
+Avant le déploiement Cloudflare, créer un secret dédié **`AUTH_PROXY_SECRET`** de 32 caractères minimum, distinct de `BETTER_AUTH_SECRET`, et configurer la même valeur dans les **bindings secrets du Worker** et dans les **variables du déploiement Convex**. Ce secret reste exclusivement côté serveur : ne jamais le préfixer par `VITE_` ni copier les secrets backend dans les variables publiques du frontend. Sans ce binding, les requêtes d’authentification reçues depuis Cloudflare renvoient 503. Le plugin Vite exécute aussi le serveur de développement dans Miniflare, qui ajoute un en-tête `CF-Connecting-IP` simulé : ce mode local nécessite donc lui aussi le secret partagé avec son déploiement Convex. Le développement local direct, sans runtime Cloudflare, ne requiert pas de signature.
 
 Le serveur lit ce binding via `process.env` : activer la [compatibilité Node.js de Cloudflare](https://developers.cloudflare.com/workers/runtime-apis/nodejs/process/#processenv) avec une date de compatibilité récente (au moins `2025-04-01`) et sans désactiver `nodejs_compat_populate_process_env`.
 

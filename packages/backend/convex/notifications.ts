@@ -136,6 +136,33 @@ export const sendEmail = internalMutation({
   },
 });
 
+export const sendModerationEmail = internalMutation({
+  args: { logId: v.id("moderationLog") },
+  handler: async (ctx, { logId }) => {
+    const log = await ctx.db.get(logId);
+    if (!log?.email || log.email.status !== "pending") return;
+    const user = await authComponent.getAnyUserById(ctx, log.email.userId);
+    if (!user || log.action === "remove") {
+      await ctx.db.patch(logId, { email: { ...log.email, status: "skipped" } });
+      return;
+    }
+    const { EMAIL_FROM, RESEND_API_KEY, SITE_URL } = process.env;
+    if (!EMAIL_FROM || !RESEND_API_KEY || !SITE_URL) return;
+    const content = wordNotificationEmail({
+      ...log.email,
+      kind: log.action === "hide" ? "word_hidden" : "word_restored",
+    }, SITE_URL);
+    const resend = new Resend(components.resend, { testMode: false, apiKey: RESEND_API_KEY });
+    const emailId = await resend.sendEmail(ctx, {
+      from: EMAIL_FROM,
+      to: user.email,
+      ...content,
+      idempotencyKey: `moderation:${logId}`,
+    });
+    await ctx.db.patch(logId, { email: { ...log.email, status: "queued", emailId } });
+  },
+});
+
 export const recoverEmails = internalMutation({
   args: {},
   handler: async (ctx) => {
@@ -144,5 +171,10 @@ export const recoverEmails = internalMutation({
       .take(100);
     for (const notification of pending)
       await ctx.scheduler.runAfter(0, internal.notifications.sendEmail, { notificationId: notification._id });
+    const moderation = await ctx.db.query("moderationLog")
+      .withIndex("by_email_status", (q) => q.eq("email.status", "pending"))
+      .take(100);
+    for (const log of moderation)
+      await ctx.scheduler.runAfter(0, internal.notifications.sendModerationEmail, { logId: log._id });
   },
 });

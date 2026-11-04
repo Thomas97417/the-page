@@ -19,7 +19,7 @@ export async function loadRouteAuth({
   if (
     !isServer &&
     (pageIdFromPath(pathname) !== null ||
-      ["/privacy", "/terms", "/mentions-legales", "/conditions-utilisation"].includes(pathname.replace(/\/$/, "")))
+      ["/about", "/privacy", "/terms", "/mentions-legales", "/conditions-utilisation"].includes(pathname.replace(/\/$/, "")))
   ) return;
 
   const token = await getToken();

@@ -93,7 +93,7 @@ function RootComponent() {
       <AnalyticsProvider>
         <PageProvider>
           <TargetCursor
-            targetSelector={'a[href]:not([aria-disabled="true"]), button:not(:disabled):not([aria-disabled="true"]), [role="menuitem"]:not([aria-disabled="true"]):not([data-disabled])'}
+            targetSelector={'a[href]:not([aria-disabled="true"]), button:not(:disabled):not([aria-disabled="true"]), [role="menuitem"]:not([aria-disabled="true"]):not([data-disabled]), [role="option"]:not([aria-disabled="true"]):not([data-disabled])'}
             spinDuration={0}
             hoverDuration={0.35}
             size={30}

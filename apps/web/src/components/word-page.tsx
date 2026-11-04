@@ -8,10 +8,8 @@ import { PageManuscript } from "@/components/page-manuscript";
 import { Button } from "@/components/ui/button";
 import { PurchaseResult } from "@/components/purchase-result";
 import { ReclaimWord } from "@/components/reclaim-word";
-import { DEFAULT_PAGE_ID, type PageId } from "@my-better-t-app/backend/convex/lib/pages";
-import { SLOT_COUNT } from "@my-better-t-app/backend/convex/lib/content";
+import { type PageId } from "@my-better-t-app/backend/convex/lib/pages";
 import { Footer } from "@/components/footer";
-import { AdvertisingDetails } from "@/components/advertising-details";
 import { euros } from "@/lib/page";
 
 export function WordPage({ pageId, purchase, reclaim }: { pageId: PageId; purchase?: string; reclaim?: string }) {
@@ -27,24 +25,7 @@ export function WordPage({ pageId, purchase, reclaim }: { pageId: PageId; purcha
       <main className="mx-auto flex w-full max-w-296 flex-1 flex-col justify-center px-5 sm:px-10 lg:px-14">
         {purchase && <PurchaseResult key={purchase} purchaseId={purchase} pageId={pageId} />}
         {reclaim && <ReclaimWord key={reclaim} notificationId={reclaim} pageId={pageId} />}
-        <section aria-labelledby="page-title" className="mx-auto w-full max-w-184 pb-2 pt-10 sm:pt-16">
-          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-            {t("marketing.eyebrow")}
-          </p>
-          <h1 id="page-title" className="mt-5 text-balance font-serif text-4xl leading-[1.12] tracking-tight sm:text-5xl lg:text-6xl">
-            {pageId === DEFAULT_PAGE_ID
-              ? t("marketing.worldTitle")
-              : t("marketing.countryTitle", { page: t(`pages.${pageId}`) })}
-          </h1>
-          <p className="mt-5 max-w-xl text-pretty text-sm leading-relaxed text-muted-foreground sm:text-base">
-            {t(pageId === DEFAULT_PAGE_ID ? "marketing.worldIntro" : "marketing.countryIntro", {
-              page: t(`pages.${pageId}`), count: SLOT_COUNT,
-            })}
-          </p>
-          <p className="mt-7 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            {t("marketing.edition", { page: t(`pages.${pageId}`), count: SLOT_COUNT })}
-          </p>
-        </section>
+        <h1 className="sr-only">the page — {t(`pages.${pageId}`)}</h1>
         <PageManuscript slots={slots} />
 
         <section aria-label={t("page.participate")} className="flex flex-col items-center gap-4 pb-14 pt-8 sm:pb-18 sm:pt-10">
@@ -77,7 +58,6 @@ export function WordPage({ pageId, purchase, reclaim }: { pageId: PageId; purcha
             </p>
           )}
         </section>
-        <AdvertisingDetails pageId={pageId} />
       </main>
       <Footer />
     </>

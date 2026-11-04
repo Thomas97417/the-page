@@ -90,5 +90,15 @@ export default defineSchema({
       v.literal("restore"),
       v.literal("remove"),
     ),
-  }),
+    // Optional so historical moderation events never trigger retrospective emails.
+    email: v.optional(v.object({
+      userId: v.string(),
+      word: v.string(),
+      pageId: pageIdValidator,
+      position: v.number(),
+      language: v.union(v.literal("fr"), v.literal("en")),
+      status: v.union(v.literal("pending"), v.literal("queued"), v.literal("skipped")),
+      emailId: v.optional(v.string()),
+    })),
+  }).index("by_email_status", ["email.status"]),
 });

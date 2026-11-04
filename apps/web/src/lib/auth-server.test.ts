@@ -20,10 +20,11 @@ vi.mock("@my-better-t-app/env/web", () => ({
 }));
 
 import { getToken, handler } from "./auth-server";
-import { AUTH_PROXY_IP, verifyAuthProxy } from "@my-better-t-app/backend/convex/lib/authProxy";
+import { AUTH_PROXY_IP, AUTH_PROXY_TIME, AUTH_PROXY_SIGNATURE, verifyAuthProxy } from "@my-better-t-app/backend/convex/lib/authProxy";
 
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.stubEnv("AUTH_PROXY_SECRET", "");
   requestHeaders.mockReturnValue(new Headers());
 });
 afterEach(() => vi.unstubAllEnvs());
@@ -68,10 +69,54 @@ describe("Cloudflare authentication proxy", () => {
     expect(await verifyAuthProxy(forwarded, secret)).toBe(true);
   });
 
-  it("fails closed when the Cloudflare signing secret is missing", async () => {
-    vi.stubEnv("AUTH_PROXY_SECRET", "");
+  it.each(["", "too-short"])("fails closed when the Cloudflare signing secret is missing or invalid (%s)", async (secret) => {
+    vi.stubEnv("AUTH_PROXY_SECRET", secret);
     expect((await handler(new Request("https://the-page.example/api/auth/sign-in/email", { headers: { "cf-connecting-ip": "203.0.113.10" } }))).status).toBe(503);
     expect(proxyRequest).not.toHaveBeenCalled();
+  });
+
+  it("does not allow a localhost URL to bypass production signing", async () => {
+    expect((await handler(new Request("http://localhost:3003/api/auth/get-session", { headers: { "cf-connecting-ip": "127.0.0.1" } }))).status).toBe(503);
+    expect(proxyRequest).not.toHaveBeenCalled();
+  });
+});
+
+describe("Cloudflare local authentication configuration", () => {
+  it.each([
+    ["GET", "/get-session"],
+    ["GET", "/convex/token"],
+    ["POST", "/sign-in/email"],
+  ])("forwards %s %s with the shared signing secret configured", async (method, path) => {
+    const secret = "test-only-auth-proxy-secret-0123456789abcdef";
+    vi.stubEnv("AUTH_PROXY_SECRET", secret);
+    const body = method === "POST" ? JSON.stringify({ email: "test@example.com" }) : undefined;
+    const request = new Request(`http://localhost:3003/api/auth${path}?test=1`, {
+      method,
+      headers: {
+        "cf-connecting-ip": "127.0.0.1",
+        [AUTH_PROXY_IP]: "forged",
+        [AUTH_PROXY_TIME]: "0",
+        [AUTH_PROXY_SIGNATURE]: "forged",
+        cookie: "better-auth.session_token=test",
+        authorization: "Bearer test-token",
+        "content-type": "application/json",
+      },
+      body,
+    });
+    proxyRequest.mockResolvedValue(new Response(null, { status: 200 }));
+
+    expect((await handler(request)).status).toBe(200);
+    const forwarded = proxyRequest.mock.calls[0]![0];
+    expect(forwarded.headers.get(AUTH_PROXY_IP)).toBe("127.0.0.1");
+    expect(forwarded.headers.get(AUTH_PROXY_TIME)).not.toBe("0");
+    expect(forwarded.headers.get(AUTH_PROXY_SIGNATURE)).not.toBe("forged");
+    expect(await verifyAuthProxy(forwarded, secret)).toBe(true);
+    expect(forwarded.url).toBe(request.url);
+    expect(forwarded.method).toBe(method);
+    expect(forwarded.headers.get("cookie")).toBe("better-auth.session_token=test");
+    expect(forwarded.headers.get("authorization")).toBe("Bearer test-token");
+    expect(await forwarded.text()).toBe(body ?? "");
+    expect(request.headers.get("cf-connecting-ip")).toBe("127.0.0.1");
   });
 });
 

@@ -127,6 +127,7 @@
     "empty": "libre, texte de remplissage"
   },
   "footer": {
+    "about": "Le concept",
     "legalNotice": "Mentions légales",
     "terms": "Conditions d’utilisation"
   },
@@ -406,12 +407,25 @@
     "content": "Mot / description / lien",
     "nextPrice": "Prix suivant",
     "actions": "Actions",
-    "restore": "Rétablir la place {{position}}",
-    "hide": "Masquer la place {{position}}",
-    "remove": "Retirer la place {{position}}",
-    "removeTitle": "Retirer ce mot ?",
-    "removeDescription": "La place sera libérée au prix actuel. L’historique d’achat sera conservé.",
-    "confirmRemove": "Retirer"
+    "moderationHint": "Un mot masqué peut être révélé à tout moment. Supprimer libère définitivement sa place.",
+    "visible": "Visible",
+    "hidden": "Masqué",
+    "hideWord": "Masquer",
+    "restoreWord": "Révéler",
+    "removeWord": "Supprimer",
+    "restore": "Révéler « {{word}} » à la place {{position}}",
+    "hide": "Masquer « {{word}} » à la place {{position}}",
+    "remove": "Supprimer « {{word}} » à la place {{position}}",
+    "removeTitle": "Supprimer ce mot ?",
+    "removeDescription": "Le mot, sa description et son lien seront retirés. La place sera libérée au prix actuel ; l’historique d’achat sera conservé.",
+    "removalContext": "{{page}} · Place {{position}}",
+    "removeNotice": "La suppression est définitive. Pour pouvoir rétablir le mot, utilisez plutôt « Masquer ».",
+    "wordChanged": "Le contenu de cette place a changé. Fermez cette fenêtre et vérifiez le nouveau mot avant de continuer.",
+    "confirmRemove": "Supprimer le mot",
+    "removing": "Suppression…",
+    "wordHidden": "« {{word}} » est masqué.",
+    "wordRestored": "« {{word}} » est de nouveau visible.",
+    "wordRemoved": "« {{word}} » a été supprimé."
   },
   "fallback": {
     "notFound": "Page introuvable",
@@ -426,6 +440,7 @@
     "details": "Détails de l’erreur"
   },
   "meta": {
+    "about": "Le concept : un mot, un lien, 50 places — the page",
     "locale": "fr_FR",
     "worldTitle": "the page — Publicité exclusive, {{count}} emplacements",
     "pageTitle": "{{page}} : publicité exclusive | the page",

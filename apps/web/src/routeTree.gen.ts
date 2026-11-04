@@ -17,6 +17,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
 import { Route as ConditionsUtilisationRouteImport } from './routes/conditions-utilisation'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as PageRouteImport } from './routes/$page'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as authVerifyEmailRouteImport } from './routes/(auth)/verify-email'
@@ -66,6 +67,11 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PageRoute = PageRouteImport.update({
   id: '/$page',
   path: '/$page',
@@ -110,6 +116,7 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$page': typeof PageRoute
+  '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
   '/conditions-utilisation': typeof ConditionsUtilisationRoute
   '/mentions-legales': typeof MentionsLegalesRoute
@@ -128,6 +135,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$page': typeof PageRoute
+  '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
   '/conditions-utilisation': typeof ConditionsUtilisationRoute
   '/mentions-legales': typeof MentionsLegalesRoute
@@ -147,6 +155,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$page': typeof PageRoute
+  '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
   '/conditions-utilisation': typeof ConditionsUtilisationRoute
   '/mentions-legales': typeof MentionsLegalesRoute
@@ -167,6 +176,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$page'
+    | '/about'
     | '/admin'
     | '/conditions-utilisation'
     | '/mentions-legales'
@@ -185,6 +195,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/$page'
+    | '/about'
     | '/admin'
     | '/conditions-utilisation'
     | '/mentions-legales'
@@ -203,6 +214,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/$page'
+    | '/about'
     | '/admin'
     | '/conditions-utilisation'
     | '/mentions-legales'
@@ -222,6 +234,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   PageRoute: typeof PageRoute
+  AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRoute
   ConditionsUtilisationRoute: typeof ConditionsUtilisationRoute
   MentionsLegalesRoute: typeof MentionsLegalesRoute
@@ -296,6 +309,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/$page': {
       id: '/$page'
       path: '/$page'
@@ -358,6 +378,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   PageRoute: PageRoute,
+  AboutRoute: AboutRoute,
   AdminRoute: AdminRoute,
   ConditionsUtilisationRoute: ConditionsUtilisationRoute,
   MentionsLegalesRoute: MentionsLegalesRoute,
