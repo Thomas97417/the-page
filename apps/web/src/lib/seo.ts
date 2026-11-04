@@ -55,7 +55,7 @@ export function serializeJsonLd(data: unknown) {
   return JSON.stringify(data).replace(/</g, "\\u003c");
 }
 
-export const LEGAL_PATHS = ["/mentions-legales", "/conditions-utilisation"] as const;
+export const LEGAL_PATHS = ["/privacy", "/terms"] as const;
 
 function escapeXml(value: string) {
   return value.replace(/[<>&"']/g, (character) => ({

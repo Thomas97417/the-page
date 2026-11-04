@@ -232,7 +232,7 @@ Un dépassement renvoie l’erreur structurée `RateLimited` du composant, avec 
 
 ## Pages légales
 
-Le footer commun aux pages publiques donne accès à `/mentions-legales` et `/conditions-utilisation`. Les textes français et anglais sont dans `apps/web/src/locales`, avec TOMA comme éditeur, `contact@thepage.com` comme contact et Cloudflare comme hébergeur. Les conditions reflètent le fonctionnement actuel du prototype et ses paiements de test.
+Le footer commun aux pages publiques donne accès à `/privacy` et `/terms`. Les anciennes URL `/mentions-legales` et `/conditions-utilisation` redirigent vers ces routes avec un statut 301, en conservant les paramètres et l’ancre. Les textes français et anglais sont dans `apps/web/src/locales`, avec TOMA comme éditeur, `contact@thepage.com` comme contact et Cloudflare comme hébergeur. Les conditions reflètent le fonctionnement actuel du prototype et ses paiements de test.
 
 L’adresse postale de l’éditeur et les éventuelles informations d’immatriculation restent à compléter selon son statut avant publication. Références : [mentions obligatoires — Service Public](https://entreprendre.service-public.gouv.fr/vosdroits/F37351?lang=fr), [coordonnées de Cloudflare](https://www.cloudflare.com/website-terms/), [téléphone de Cloudflare — rapport annuel](https://www.sec.gov/Archives/edgar/data/1477333/000147733326000026/cloud-20251231.htm), [cookies — CNIL](https://www.cnil.fr/fr/cookies-et-autres-traceurs/que-dit-la-loi).
 
