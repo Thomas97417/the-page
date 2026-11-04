@@ -37,7 +37,7 @@ export function Footer() {
             className="col-span-2 flex flex-wrap items-center gap-x-4 md:col-span-1 md:gap-x-6"
           >
             <Link
-              to="/mentions-legales"
+              to="/privacy"
               hash="top"
               hashScrollIntoView={{ behavior: "instant" }}
               className={legalLinkClassName}
@@ -46,7 +46,7 @@ export function Footer() {
               {t("footer.legalNotice")}
             </Link>
             <Link
-              to="/conditions-utilisation"
+              to="/terms"
               hash="top"
               hashScrollIntoView={{ behavior: "instant" }}
               className={legalLinkClassName}

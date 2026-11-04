@@ -4,6 +4,7 @@ import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PageFallback } from "./page-fallback";
 import { buttonVariants } from "./ui/button";
+import { NOINDEX } from "@/lib/seo";
 
 export default function NotFound() {
   const { t } = useTranslation();
@@ -28,6 +29,9 @@ export default function NotFound() {
           <ArrowUpRight aria-hidden="true" className="size-4" />
         </Link>
       }
-    />
+    >
+      <title>{`${t("fallback.notFound")} — the page`}</title>
+      <meta name="robots" content={NOINDEX} />
+    </PageFallback>
   );
 }

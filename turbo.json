@@ -5,6 +5,7 @@
     "test": {},
     "build": {
       "dependsOn": ["^build"],
+      "env": ["VITE_*"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": ["dist/**", ".wrangler/deploy/**"]
     },

@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@my-better-t-app/backend/convex/_generated/api";
-import { DEFAULT_PAGE_ID, pageIdFromSlug } from "@my-better-t-app/backend/convex/lib/pages";
+import { pageIdFromSlug } from "@my-better-t-app/backend/convex/lib/pages";
 import { WordPage } from "@/components/word-page";
 import { pageHead, validatePageSearch } from "@/lib/page";
 import { loadCountryPage } from "@/lib/page-route";
+import { NOINDEX } from "@/lib/seo";
 
 export const Route = createFileRoute("/$page")({
   validateSearch: validatePageSearch,
@@ -16,7 +17,15 @@ export const Route = createFileRoute("/$page")({
     context.queryClient.ensureQueryData(
       convexQuery(api.slots.list, { pageId: context.pageId }),
     ),
-  head: ({ params, match }) => pageHead(pageIdFromSlug(params.page) ?? DEFAULT_PAGE_ID, match.context.i18n.t),
+  head: ({ params, match }) => {
+    const pageId = pageIdFromSlug(params.page);
+    return pageId
+      ? pageHead(pageId, match.context.i18n.t, match.context.siteUrl)
+      : { meta: [
+        { title: `${match.context.i18n.t("fallback.notFound")} — the page` },
+        { name: "robots", content: NOINDEX },
+      ] };
+  },
   component: CountryPage,
 });
 
