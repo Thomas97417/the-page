@@ -51,7 +51,7 @@ function Admin() {
       </main>
     );
   return (
-    <main className="mx-auto max-w-5xl px-5 py-14 sm:px-10">
+    <main className="mx-auto w-full max-w-5xl px-5 py-14 sm:px-10">
       <h1 className="font-serif text-5xl tracking-tight">{t("admin.title")}</h1>
       <div className="mt-8">
         <AdminPageSelector
@@ -68,7 +68,13 @@ function Admin() {
         </p>
       )}
       <div className="mt-10 overflow-x-auto">
-        <table className="w-full text-left text-sm">
+        <table className="w-full min-w-80 table-fixed text-left text-sm">
+          <colgroup>
+            <col className="w-12 sm:w-20" />
+            <col />
+            <col className="w-24 sm:w-32" />
+            <col className="w-20 sm:w-24" />
+          </colgroup>
           <thead className="border-b font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
             <tr>
               <th className="py-4 pr-4 font-normal">{t("admin.position")}</th>
@@ -100,7 +106,7 @@ function Admin() {
                   <td className="py-5 pr-4 font-mono text-xs text-muted-foreground">
                     {String(slot.position).padStart(2, "0")}
                   </td>
-                  <td className="max-w-60 py-5 pr-4">
+                  <td className="py-5 pr-4">
                     <span
                       className={`break-all font-serif text-xl ${slot.visibility === "hidden" ? "text-muted-foreground line-through" : ""}`}
                     >
@@ -117,7 +123,7 @@ function Admin() {
                       </span>
                     )}
                   </td>
-                  <td className="pr-4 tabular-nums">
+                  <td className="whitespace-nowrap pr-4 tabular-nums">
                     {euros((slot.acquisitions + 1) * 100, i18n.resolvedLanguage)}
                   </td>
                   <td>
