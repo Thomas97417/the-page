@@ -13,7 +13,7 @@ export const Route = createFileRoute("/")({
       convexQuery(api.slots.list, { pageId: DEFAULT_PAGE_ID }),
     ),
   validateSearch: validatePageSearch,
-  head: ({ match }) => pageHead(DEFAULT_PAGE_ID, match.context.i18n.t),
+  head: ({ match }) => pageHead(DEFAULT_PAGE_ID, match.context.i18n.t, match.context.siteUrl),
   component: WorldPage,
 });
 

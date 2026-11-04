@@ -1,4 +1,6 @@
 import type { TFunction } from "i18next";
+import { SLOT_COUNT } from "@my-better-t-app/backend/convex/lib/content";
+import { absoluteUrl, publicPageHead, serializeJsonLd } from "./seo";
 import { formatLocale } from "@my-better-t-app/backend/convex/lib/language";
 import {
   DEFAULT_PAGE_ID,
@@ -22,18 +24,62 @@ export function validatePageSearch(search: Record<string, unknown>): { purchase?
   };
 }
 
-export function pageHead(pageId: PageId, t: TFunction) {
+export function pageHead(pageId: PageId, t: TFunction, siteUrl: string) {
   const page = t(`pages.${pageId}`);
-  return {
-    meta: [
-      { title: t("meta.pageTitle", { page }) },
-      {
-        name: "description",
-        content: pageId === DEFAULT_PAGE_ID
-          ? t("meta.worldDescription")
-          : t("meta.countryDescription", { page }),
-      },
+  const title = pageId === DEFAULT_PAGE_ID
+    ? t("meta.worldTitle", { count: SLOT_COUNT })
+    : t("meta.pageTitle", { page });
+  const description = pageId === DEFAULT_PAGE_ID
+    ? t("meta.worldDescription", { count: SLOT_COUNT })
+    : t("meta.countryDescription", { page, count: SLOT_COUNT });
+  const url = absoluteUrl(pagePath(pageId), siteUrl);
+  const home = absoluteUrl("/", siteUrl);
+  const locale = t("meta.locale");
+  const websiteId = `${home}#website`;
+  const breadcrumbs = pageId === DEFAULT_PAGE_ID ? [] : [{
+    "@type": "BreadcrumbList",
+    "@id": `${url}#breadcrumb`,
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "the page · World", item: home },
+      { "@type": "ListItem", position: 2, name: page, item: url },
     ],
+  }];
+
+  return {
+    ...publicPageHead({ title, description, path: pagePath(pageId), siteUrl, locale }),
+    scripts: [{
+      type: "application/ld+json",
+      children: serializeJsonLd({
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": websiteId,
+            name: "the page",
+            url: home,
+            inLanguage: ["fr-FR", "en-GB"],
+          },
+          {
+            "@type": "WebPage",
+            "@id": `${url}#webpage`,
+            url,
+            name: title,
+            description,
+            inLanguage: locale.replace("_", "-"),
+            isPartOf: { "@id": websiteId },
+            ...(breadcrumbs.length ? { breadcrumb: { "@id": `${url}#breadcrumb` } } : {}),
+            about: {
+              "@type": "Service",
+              name: t("marketing.serviceName", { page }),
+              serviceType: t("marketing.serviceType"),
+              description,
+              url,
+            },
+          },
+          ...breadcrumbs,
+        ],
+      }),
+    }],
   };
 }
 
