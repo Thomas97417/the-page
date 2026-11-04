@@ -6,6 +6,20 @@ World reste la page par défaut sur `/`. Les pages nationales utilisent un slug 
 
 React 19, TanStack Start, Convex, Better Auth, Tailwind CSS et shadcn/ui (Base UI). Monorepo Bun / Turborepo.
 
+## Référencement et positionnement publicitaire
+
+Le contenu français et anglais présente the page comme un espace publicitaire en édition limitée : un mot pour une marque ou un projet, une description et un lien, parmi 50 emplacements par page. Les pages disposent d’un titre H1 visible, de textes sur la visibilité, la rareté et le prestige du format, ainsi que d’une FAQ sur les prix, les rachats et la durée d’affichage. L’annuaire repliable relie World et toutes les pages nationales dans le HTML rendu côté serveur.
+
+Chaque page publique possède un titre et une description spécifiques, une URL canonique absolue, des métadonnées Open Graph et Twitter, ainsi qu’un visuel PNG de partage de 1 200 × 630 pixels. Les sources SVG des deux visuels sont dans `apps/web/public/`. Les pages d’emplacements exposent aussi des données structurées JSON-LD `WebSite`, `WebPage` et `Service`, avec un fil d’Ariane pour les pays. Aucun prix de vente réel ni avis fictif n’est déclaré dans ces données. Les liens achetés conservent `rel="sponsored ugc nofollow noopener noreferrer"`.
+
+`/sitemap.xml` est généré à partir de `PAGES` et des deux pages légales ; il exclut les alias français, `/world`, les paramètres d’achat et les pages de compte. `/robots.txt` annonce ce sitemap. Les routes de compte, d’authentification, de modération et les URL inconnues héritent de `noindex, follow` ; les pages publiques activent explicitement l’indexation. Les routes de compte restent explorables pour que les moteurs puissent lire `noindex`.
+
+En production, définir **`VITE_SITE_URL`** sur l’origine HTTPS publique, sans chemin ni paramètres, puis reconstruire le frontend. Cette origine commune est utilisée par les canoniques, le sitemap, les partages et les données structurées. En l’absence de configuration, l’application utilise l’origine de la requête, ce qui permet les vérifications locales sans inventer de domaine de production. Protéger les previews Cloudflare contre l’indexation dans leur configuration d’hébergement. Après publication, valider le domaine dans Google Search Console et soumettre `/sitemap.xml`.
+
+La langue reste une préférence de cookie sur les mêmes URL : sans préférence, le HTML est en français. Les métadonnées suivent la langue affichée ; aucune fausse variante `hreflang` n’est déclarée. Un référencement anglais indépendant demanderait des URL anglaises distinctes.
+
+Références : [gestion SEO de TanStack Start](https://tanstack.com/start/latest/docs/framework/react/guide/seo), [URL canoniques Google](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls), [sitemaps Google](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap).
+
 ## Démarrage
 
 Prérequis : **Node 22.12+**, Bun 1.3+ et l’accès au projet Convex de développement.
@@ -52,6 +66,7 @@ Configurer les variables publiques **au moment du build**, avec les URL du dépl
 | --- | --- |
 | `VITE_CONVEX_URL` | URL publique `https://…convex.cloud` |
 | `VITE_CONVEX_SITE_URL` | URL publique `https://…convex.site` |
+| `VITE_SITE_URL` | Origine HTTPS publique du site, utilisée pour le référencement |
 | `VITE_POSTHOG_PROJECT_TOKEN` | Jeton public du projet PostHog de production, ou vide pour désactiver le suivi |
 | `VITE_POSTHOG_HOST` | `https://eu.i.posthog.com` |
 | `VITE_POSTHOG_ENVIRONMENT` | `production` |
@@ -217,7 +232,7 @@ Un dépassement renvoie l’erreur structurée `RateLimited` du composant, avec 
 
 ## Pages légales
 
-Le footer commun aux pages publiques donne accès à `/mentions-legales` et `/conditions-utilisation`. Les textes français et anglais sont dans `apps/web/src/locales`, avec TOMA comme éditeur, `contact@thepage.com` comme contact et Cloudflare comme hébergeur. Les conditions reflètent le fonctionnement actuel du prototype et ses paiements de test.
+Le footer commun aux pages publiques donne accès à `/privacy` et `/terms`. Les anciennes URL `/mentions-legales` et `/conditions-utilisation` redirigent vers ces routes avec un statut 301, en conservant les paramètres et l’ancre. Les textes français et anglais sont dans `apps/web/src/locales`, avec TOMA comme éditeur, `contact@thepage.com` comme contact et Cloudflare comme hébergeur. Les conditions reflètent le fonctionnement actuel du prototype et ses paiements de test.
 
 L’adresse postale de l’éditeur et les éventuelles informations d’immatriculation restent à compléter selon son statut avant publication. Références : [mentions obligatoires — Service Public](https://entreprendre.service-public.gouv.fr/vosdroits/F37351?lang=fr), [coordonnées de Cloudflare](https://www.cloudflare.com/website-terms/), [téléphone de Cloudflare — rapport annuel](https://www.sec.gov/Archives/edgar/data/1477333/000147733326000026/cloud-20251231.htm), [cookies — CNIL](https://www.cnil.fr/fr/cookies-et-autres-traceurs/que-dit-la-loi).
 

@@ -112,8 +112,8 @@
     "toggle": "Thème {{current}}. Passer au thème {{next}}"
   },
   "page": {
-    "participate": "Participer à la page",
-    "write": "Écrire un mot",
+    "participate": "Choisir un emplacement publicitaire",
+    "write": "Prendre ma place",
     "allReserved": "Toutes les places sont réservées pour le moment.",
     "footerNavigation": "Navigation de pied de page",
     "howItWorks": "Comment ça marche",
@@ -129,6 +129,53 @@
   "footer": {
     "legalNotice": "Mentions légales",
     "terms": "Conditions d’utilisation"
+  },
+  "marketing": {
+    "eyebrow": "Publicité en édition limitée",
+    "worldTitle": "Un mot. Une place à part.",
+    "countryTitle": "{{page}}. Votre marque, en un mot.",
+    "worldIntro": "Votre marque, votre projet, votre signature. Un mot et un lien vers votre site, parmi seulement {{count}} emplacements publicitaires sur une page unique.",
+    "countryIntro": "Sur la page {{page}}, votre marque s’exprime en un mot. Ajoutez votre description et votre lien dans un espace publicitaire limité à {{count}} emplacements.",
+    "edition": "{{page}} · {{count}} emplacements",
+    "startingPrice": "À partir de {{price}} · Un mot, votre lien",
+    "principlesTitle": "La rareté fait la différence.",
+    "features": {
+      "visibility": {
+        "title": "Votre mot, votre vitrine.",
+        "description": "Un nom de marque, un projet ou une idée. Associez votre mot à une description et à un lien vers votre site : chaque emplacement devient une invitation à vous découvrir."
+      },
+      "rarity": {
+        "title": "Seulement {{count}} places.",
+        "description": "Chaque page réunit {{count}} emplacements, partagés par ses annonceurs. Prenez une place libre ou rachetez une place occupée : votre mot rejoint une composition qui évolue à chaque achat."
+      },
+      "prestige": {
+        "title": "Le prestige de la simplicité.",
+        "description": "Une mise en page soignée, une présence singulière, la force d’un seul mot. Donnez à votre marque une place à part dans un format publicitaire aussi sobre que distinctif."
+      }
+    },
+    "faqTitle": "Une place rare. Des règles claires.",
+    "faq": {
+      "advertising": {
+        "question": "Comment promouvoir ma marque sur the page ?",
+        "answer": "Choisissez un emplacement et publiez un mot de 1 à 24 caractères, sans espace : votre marque, votre projet ou votre signature. Vous pouvez ajouter une description et un lien HTTPS vers votre site, accessibles depuis la fiche du mot."
+      },
+      "price": {
+        "question": "Combien coûte un emplacement publicitaire ?",
+        "answer": "Chaque emplacement commence à {{price}} TTC. Son prix augmente de {{price}} à chaque achat confirmé. Le montant actuel est affiché avant le paiement. Vous pouvez modifier gratuitement votre mot, sa description et son lien tant que la place vous appartient."
+      },
+      "duration": {
+        "question": "Mon emplacement est-il réservé définitivement ?",
+        "answer": "Votre mot reste affiché jusqu’au prochain rachat de votre emplacement, sous réserve de modération. Un nouvel achat remplace le mot précédent, sans compensation. Aucune durée d’affichage, audience ni nombre de clics n’est garanti."
+      },
+      "countries": {
+        "question": "Quelle différence entre World et les pages par pays ?",
+        "answer": "World et les {{countries}} pages nationales disposent chacune de leurs {{count}} emplacements indépendants. Choisissez la page qui correspond à votre identité ou à votre projet. Chacun peut consulter et rejoindre la page de son choix, quel que soit son pays ; aucune audience géographique n’est garantie."
+      }
+    },
+    "explore": "World et {{count}} pages par pays",
+    "directoryLabel": "Explorer les espaces publicitaires par pays",
+    "serviceName": "Emplacements publicitaires the page · {{page}}",
+    "serviceType": "Publicité en ligne en édition limitée"
   },
   "legal": {
     "updated": "Mise à jour le 3 novembre 2026",
@@ -179,8 +226,8 @@
   },
   "rules": {
     "title": "Comment ça marche ?",
-    "description": "Une page World et des pages par pays. 50 emplacements par page. Un mot par place.",
-    "choose": "Choisissez une place et écrivez votre mot. Ajoutez une description et un lien si vous le souhaitez. Chaque page est indépendante ; vous pouvez participer à celle de votre choix.",
+    "description": "Un espace publicitaire en édition limitée. Une page World et des pages par pays, avec 50 emplacements chacune.",
+    "choose": "Choisissez une place pour votre marque, votre projet ou votre signature. Écrivez un mot, puis ajoutez une description et un lien si vous le souhaitez. Chaque page est indépendante ; vous pouvez participer à celle de votre choix.",
     "price": "Chaque place commence à {{price}}. Son prix augmente de {{price}} à chaque achat.",
     "replace": "Un nouvel achat remplace votre mot, sans compensation. Tant que vous avez la place, vous pouvez le modifier gratuitement.",
     "notice": "Aucune durée ni audience garantie. Les paiements reviennent à the page. Les contenus abusifs peuvent être retirés."
@@ -200,7 +247,7 @@
     "take": "Prendre la place",
     "writeHere": "Écrire ici",
     "about": "À propos de votre mot",
-    "descriptionPlaceholder": "Une histoire, un projet, une dédicace…",
+    "descriptionPlaceholder": "Votre marque, votre projet, votre signature…",
     "descriptionHint": "Visible dans la fiche de votre mot.",
     "characters": "caractères"
   },
@@ -209,8 +256,8 @@
     "hidden": "Ce mot est masqué par la modération.",
     "editFree": "Vous pouvez modifier votre mot, sa description et son lien gratuitement.",
     "position": "{{page}} · EMPLACEMENT {{position}}",
-    "title": "À vous d’écrire.",
-    "description": "Choisissez votre mot, puis payez l’emplacement sélectionné. La description et le lien sont facultatifs.",
+    "title": "Votre place à part.",
+    "description": "Un mot pour représenter votre marque ou votre projet. Ajoutez une description et un lien si vous le souhaitez, puis confirmez votre emplacement publicitaire.",
     "yourWord": "Votre mot",
     "placeholder": "Inoubliable",
     "link": "Un lien",
@@ -379,9 +426,11 @@
     "details": "Détails de l’erreur"
   },
   "meta": {
-    "pageTitle": "{{page}} — the page · Une page à tous. Un mot de vous.",
-    "worldDescription": "La page mondiale écrite à plusieurs. 50 places, un mot par place. Ajoutez le vôtre à l’histoire.",
-    "countryDescription": "Une page pour {{page}}. 50 places, un mot par place. Ajoutez le vôtre à cette histoire collective.",
+    "locale": "fr_FR",
+    "worldTitle": "the page — Publicité exclusive, {{count}} emplacements",
+    "pageTitle": "{{page}} : publicité exclusive | the page",
+    "worldDescription": "Un mot pour votre marque, un lien vers votre site. Découvrez un espace publicitaire unique, limité à {{count}} emplacements par page. Prenez votre place à part.",
+    "countryDescription": "{{page}} : {{count}} emplacements publicitaires sur une page unique. Affirmez votre marque avec un mot, une description et un lien vers votre site.",
     "signIn": "Connexion — the page",
     "signInDescription": "Connectez-vous à the page.",
     "signUp": "Inscription — the page",

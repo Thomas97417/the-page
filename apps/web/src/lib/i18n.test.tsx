@@ -68,8 +68,8 @@ describe("application languages", () => {
   it("localizes country names, metadata and euro amounts without changing the currency", () => {
     const french = createI18n("fr");
     const english = createI18n("en");
-    expect(pageHead("royaume-uni", english.t).meta[0]?.title).toContain("United Kingdom");
-    expect(pageHead("royaume-uni", french.t).meta[0]?.title).toContain("Royaume-Uni");
+    expect(pageHead("royaume-uni", english.t, "https://example.com").meta[0]?.title).toContain("United Kingdom");
+    expect(pageHead("royaume-uni", french.t, "https://example.com").meta[0]?.title).toContain("Royaume-Uni");
     expect(euros(1234, "en")).toBe("€12.34");
     expect(euros(1234, "fr")).toContain("12,34");
   });

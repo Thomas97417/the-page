@@ -18,6 +18,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { authClient } from "@/lib/auth-client";
 import { getToken } from "@/lib/auth-server";
 import { loadRouteAuth, type RouteAuthContext } from "@/lib/route-auth";
+import { NOINDEX } from "@/lib/seo";
 
 import Header from "../components/header";
 import TargetCursor from "@/components/target-cursor";
@@ -36,6 +37,7 @@ export interface RouterAppContext extends RouteAuthContext {
   queryClient: QueryClient;
   convexQueryClient: ConvexQueryClient;
   i18n: i18n;
+  siteUrl: string;
 }
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
@@ -51,12 +53,15 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
       {
         title: "the page",
       },
+      // Only public content routes opt into indexing.
+      { name: "robots", content: NOINDEX },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
       },
+      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
     ],
   }),
 

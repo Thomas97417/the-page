@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <title>the page — One word. A place apart.</title>
+  <defs>
+    <pattern id="paper" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M0 31.5H32" stroke="#b3a58c" stroke-opacity=".09"/>
+    </pattern>
+  </defs>
+  <path fill="#faf9f6" d="M0 0h1200v630H0z"/>
+  <path fill="url(#paper)" d="M0 0h1200v630H0z"/>
+  <g fill="#202020">
+    <text x="76" y="118" font-family="Georgia,serif" font-size="60" letter-spacing="-3">the page.</text>
+    <text x="1120" y="103" text-anchor="end" font-family="Georgia,serif" font-size="54">50</text>
+    <text x="1120" y="131" text-anchor="end" font-family="Helvetica,Arial,sans-serif" font-size="12" letter-spacing="3">SPACES</text>
+    <text x="76" y="291" font-family="Georgia,serif" font-size="88" letter-spacing="-3">One word.</text>
+    <text x="76" y="392" font-family="Georgia,serif" font-size="88" font-style="italic" letter-spacing="-3">A place apart.</text>
+    <path d="M76 476h1048" stroke="#202020" stroke-opacity=".2"/>
+    <text x="76" y="533" font-family="Helvetica,Arial,sans-serif" font-size="15" letter-spacing="3">LIMITED EDITION ADVERTISING</text>
+    <path d="m1086 536 29-29m-29 0h29v29" fill="none" stroke="#202020" stroke-width="2"/>
+  </g>
+</svg>

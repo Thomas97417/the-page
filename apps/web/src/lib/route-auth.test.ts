@@ -13,7 +13,7 @@ import { loadRouteAuth, type RouteAuthContext } from "./route-auth";
 import { loadCountryPage } from "./page-route";
 import { validatePageSearch } from "./page";
 
-const LEGAL_PATHS = ["/mentions-legales", "/conditions-utilisation"];
+const LEGAL_PATHS = ["/privacy", "/terms"];
 const PUBLIC_PATHS = [...PAGES.map((page) => pagePath(page.id)), ...LEGAL_PATHS];
 const PRIVATE_PATHS = ["/settings", "/admin"];
 const AUTH_PATHS = [
