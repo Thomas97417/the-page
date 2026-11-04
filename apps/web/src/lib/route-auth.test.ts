@@ -13,8 +13,8 @@ import { loadRouteAuth, type RouteAuthContext } from "./route-auth";
 import { loadCountryPage } from "./page-route";
 import { validatePageSearch } from "./page";
 
-const LEGAL_PATHS = ["/privacy", "/terms"];
-const PUBLIC_PATHS = [...PAGES.map((page) => pagePath(page.id)), ...LEGAL_PATHS];
+const INFO_PATHS = ["/about", "/privacy", "/terms"];
+const PUBLIC_PATHS = [...PAGES.map((page) => pagePath(page.id)), ...INFO_PATHS];
 const PRIVATE_PATHS = ["/settings", "/admin"];
 const AUTH_PATHS = [
   "/sign-in",
@@ -52,7 +52,7 @@ function setup(initialPath = "/") {
       queryFn: () => loadWords(context.pageId),
     }),
   });
-  const legalRoutes = LEGAL_PATHS.map((path) =>
+  const legalRoutes = INFO_PATHS.map((path) =>
     createRoute({ getParentRoute: () => root, path }),
   );
   const privateRoutes = PRIVATE_PATHS.map((path) =>
@@ -124,7 +124,7 @@ describe("authentication during page navigation", () => {
     expect(app.getToken).toHaveBeenCalledOnce();
   });
 
-  it.each(LEGAL_PATHS)("initializes server authentication on %s", async (path) => {
+  it.each(INFO_PATHS)("initializes server authentication on %s", async (path) => {
     const app = setup(path);
     await app.router.load();
     expect(app.getToken).toHaveBeenCalledOnce();
@@ -136,7 +136,7 @@ describe("authentication during page navigation", () => {
     expect(app.loadWords).not.toHaveBeenCalled();
   });
 
-  it.each(LEGAL_PATHS)("preloads %s and navigates without another session lookup", async (path) => {
+  it.each(INFO_PATHS)("preloads %s and navigates without another session lookup", async (path) => {
     const app = setup();
     await app.router.load();
     app.switchToClient();

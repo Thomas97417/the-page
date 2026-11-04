@@ -60,6 +60,7 @@ describe("public SEO", () => {
     const urls = [...document.querySelectorAll("loc")].map((node) => node.textContent);
     expect(urls).toEqual([
       ...PAGES.map((page) => `${origin}${pagePath(page.id)}`),
+      `${origin}/about`,
       ...LEGAL_PATHS.map((path) => `${origin}${path}`),
     ]);
     expect(new Set(urls).size).toBe(urls.length);

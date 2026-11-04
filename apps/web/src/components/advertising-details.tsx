@@ -2,13 +2,13 @@ import { Link } from "@tanstack/react-router";
 import { ArrowUpRight, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { SLOT_COUNT } from "@my-better-t-app/backend/convex/lib/content";
-import { DEFAULT_PAGE_ID, PAGES, type PageId } from "@my-better-t-app/backend/convex/lib/pages";
+import { DEFAULT_PAGE_ID, PAGES } from "@my-better-t-app/backend/convex/lib/pages";
 import { euros } from "@/lib/page";
 
 const features = ["visibility", "rarity", "prestige"] as const;
 const questions = ["advertising", "price", "duration", "countries"] as const;
 
-export function AdvertisingDetails({ pageId }: { pageId: PageId }) {
+export function AdvertisingDetails() {
   const { t, i18n } = useTranslation();
 
   return (
@@ -68,7 +68,6 @@ export function AdvertisingDetails({ pageId }: { pageId: PageId }) {
               params={page.id === DEFAULT_PAGE_ID ? {} : { page: page.slug }}
               search={{}}
               preload={false}
-              aria-current={pageId === page.id ? "page" : undefined}
               className="inline-flex min-h-10 items-center justify-between gap-2 py-2 text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-[current=page]:text-foreground"
             >
               {t(`pages.${page.id}`)}

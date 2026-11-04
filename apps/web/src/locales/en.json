@@ -127,6 +127,7 @@
     "empty": "available, placeholder text"
   },
   "footer": {
+    "about": "About the page",
     "legalNotice": "Legal notice",
     "terms": "Terms of use"
   },
@@ -439,6 +440,7 @@
     "details": "Error details"
   },
   "meta": {
+    "about": "How it works: one word, one link, 50 places — the page",
     "locale": "en_GB",
     "worldTitle": "the page — Exclusive advertising, {{count}} spaces",
     "pageTitle": "{{page}}: exclusive advertising | the page",

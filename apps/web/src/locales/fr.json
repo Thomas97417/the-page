@@ -127,6 +127,7 @@
     "empty": "libre, texte de remplissage"
   },
   "footer": {
+    "about": "Le concept",
     "legalNotice": "Mentions légales",
     "terms": "Conditions d’utilisation"
   },
@@ -439,6 +440,7 @@
     "details": "Détails de l’erreur"
   },
   "meta": {
+    "about": "Le concept : un mot, un lien, 50 places — the page",
     "locale": "fr_FR",
     "worldTitle": "the page — Publicité exclusive, {{count}} emplacements",
     "pageTitle": "{{page}} : publicité exclusive | the page",

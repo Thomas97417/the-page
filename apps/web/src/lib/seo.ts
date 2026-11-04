@@ -68,7 +68,7 @@ function escapeXml(value: string) {
 }
 
 export function sitemapXml(siteUrl: string) {
-  const paths = [...PAGES.map((page) => pagePath(page.id)), ...LEGAL_PATHS];
+  const paths = [...PAGES.map((page) => pagePath(page.id)), "/about", ...LEGAL_PATHS];
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
