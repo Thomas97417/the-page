@@ -5,6 +5,7 @@ import { api } from "@my-better-t-app/backend/convex/_generated/api";
 import { useState } from "react";
 import { Eye, EyeOff, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AdminPageSelector } from "@/components/admin-page-selector";
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -18,7 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { euros } from "@/lib/page";
 import { errorMessage } from "@/lib/errors";
-import { DEFAULT_PAGE_ID, isPageId, PAGES, type PageId } from "@my-better-t-app/backend/convex/lib/pages";
+import { DEFAULT_PAGE_ID, type PageId } from "@my-better-t-app/backend/convex/lib/pages";
 
 export const Route = createFileRoute("/admin")({
   beforeLoad: ({ context }) => {
@@ -52,19 +53,15 @@ function Admin() {
   return (
     <main className="mx-auto max-w-5xl px-5 py-14 sm:px-10">
       <h1 className="font-serif text-5xl tracking-tight">{t("admin.title")}</h1>
-      <label className="mt-8 flex flex-wrap items-center gap-3 text-sm">
-        {t("admin.choosePage")}
-        <select
-          value={pageId}
-          onChange={(event) => {
-            if (isPageId(event.target.value)) setPageId(event.target.value);
+      <div className="mt-8">
+        <AdminPageSelector
+          pageId={pageId}
+          onPageChange={(nextPageId) => {
+            setPageId(nextPageId);
             setError(null);
           }}
-          className="h-11 min-w-44 border bg-background px-3 focus-visible:outline-2 focus-visible:outline-ring"
-        >
-          {PAGES.map((page) => <option key={page.id} value={page.id}>{t(`pages.${page.id}`)}</option>)}
-        </select>
-      </label>
+        />
+      </div>
       {error != null && (
         <p role="alert" className="mt-6 text-sm text-destructive">
           {errorMessage(error, t)}

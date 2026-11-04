@@ -9,23 +9,7 @@ import {
   PAGES,
   type PageId,
 } from "@my-better-t-app/backend/convex/lib/pages";
-
-type Page = (typeof PAGES)[number];
-
-function normalizeSearch(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "");
-}
-
-function matchesPage(page: Page, query: string, label: string) {
-  const search = normalizeSearch(query);
-  return [label, page.label, page.id, page.slug, page.suffix].some((value) =>
-    normalizeSearch(value).includes(search),
-  );
-}
+import { matchesPage, type Page } from "@/lib/page-search";
 
 export function PageNavigation({ pageId }: { pageId: PageId }) {
   const { t } = useTranslation();
