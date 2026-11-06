@@ -77,6 +77,7 @@ async function events(t: Test) {
 beforeEach(() => {
   vi.useFakeTimers();
   vi.stubEnv("POLAR_PRODUCT_ID", "product");
+  vi.stubEnv("POLAR_SERVER", "sandbox");
   vi.stubEnv("POSTHOG_PROJECT_TOKEN", "phc_test");
   vi.stubEnv("POSTHOG_ENVIRONMENT", "test");
 });
@@ -88,6 +89,17 @@ afterEach(() => {
 });
 
 describe("purchase analytics", () => {
+  it("labels real purchases with the production payment mode", async () => {
+    vi.stubEnv("POLAR_SERVER", "production");
+    const t = setup();
+    const purchase = await reserve(t, await place(t), "production-buyer");
+    await publish(t, purchase);
+    expect(await events(t)).toMatchObject([{
+      event: "purchase_completed",
+      properties: { payment_mode: "production" },
+    }]);
+  });
+
   it("captures each checkout once without treating it as a completed purchase", async () => {
     const t = setup();
     const slotId = await place(t);

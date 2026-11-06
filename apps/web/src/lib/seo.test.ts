@@ -40,7 +40,7 @@ describe("public SEO", () => {
     ]);
   });
 
-  it("describes the advertising service with matching URLs and country breadcrumbs", () => {
+  it("describes the publishing service with matching URLs and country breadcrumbs", () => {
     const head = pageHead("france", createI18n("fr").t, origin);
     const data = JSON.parse(head.scripts[0]!.children);
     const webPage = data["@graph"].find((node: { "@type": string }) => node["@type"] === "WebPage");

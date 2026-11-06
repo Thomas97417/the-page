@@ -38,8 +38,8 @@ export function publicPageHead({ title, description, path, siteUrl, locale }: Se
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
       { property: "og:image:alt", content: locale === "en_GB"
-        ? "the page — 50 places. One word. An exclusive advertising space."
-        : "the page — 50 places. Un mot. Un espace publicitaire à part." },
+        ? "the page — One word. One link. 50 places."
+        : "the page — Un mot. Un lien. 50 places." },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: title },
       { name: "twitter:description", content: description },

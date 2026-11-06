@@ -6,9 +6,9 @@ World reste la page par défaut sur `/`. Les pages nationales utilisent un slug 
 
 React 19, TanStack Start, Convex, Better Auth, Tailwind CSS et shadcn/ui (Base UI). Monorepo Bun / Turborepo.
 
-## Référencement et positionnement publicitaire
+## Référencement et publication de mots
 
-L’accueil et les pages pays affichent la composition des mots, le bouton « Prendre ma place » et la mention courte du prix. Leur titre H1 reste accessible aux lecteurs d’écran. La page publique `/about`, reliée depuis le footer, regroupe les explications françaises et anglaises sur le format publicitaire, la visibilité, la rareté et les 50 emplacements, ainsi que la FAQ sur les prix, les rachats et la durée d’affichage. Son annuaire repliable relie World et toutes les pages nationales dans le HTML rendu côté serveur.
+L’accueil et les pages pays affichent la composition des mots, le bouton « Prendre ma place » et la mention courte du prix. Leur titre H1 reste accessible aux lecteurs d’écran. Le positionnement français et anglais met en avant la publication d’un mot, la présentation d’un projet et le partage d’un lien parmi 50 places. Les titres SEO suivent « Publiez votre mot parmi 50 places | the page » pour World et « France : publiez votre mot | the page » pour les pays. La page publique `/about`, reliée depuis le footer, présente le concept et la FAQ sur les prix, les rachats et la durée d’affichage. Son annuaire repliable relie World et toutes les pages nationales dans le HTML rendu côté serveur.
 
 Chaque page publique possède un titre et une description spécifiques, une URL canonique absolue, des métadonnées Open Graph et Twitter, ainsi qu’un visuel PNG de partage de 1 200 × 630 pixels. Les sources SVG des deux visuels sont dans `apps/web/public/`. Les pages d’emplacements exposent aussi des données structurées JSON-LD `WebSite`, `WebPage` et `Service`, avec un fil d’Ariane pour les pays. Aucun prix de vente réel ni avis fictif n’est déclaré dans ces données. Les liens achetés conservent `rel="sponsored ugc nofollow noopener noreferrer"`.
 
@@ -90,29 +90,35 @@ Pour les déploiements de branches avec **Cloudflare Previews**, utiliser `cd ap
 Référence : [TanStack Start sur Cloudflare Workers](https://developers.cloudflare.com/workers/framework-guides/web-apps/tanstack-start/).
 Configuration des previews : [Cloudflare Previews](https://developers.cloudflare.com/workers/previews/configuration/).
 
-## Paiement Polar : sandbox uniquement
+## Paiement Polar : développement et production
 
-L’intégration utilise `@convex-dev/polar`, son endpoint signé **`/polar/events`** et le SDK Polar pour les prix fixes calculés côté serveur. Il n’existe aucun commutateur de production.
+L’intégration utilise `@convex-dev/polar`, son endpoint signé **`/polar/events`** et le SDK Polar pour les prix fixes calculés côté serveur. La variable **`POLAR_SERVER`**, définie séparément sur chaque déploiement Convex, sélectionne `sandbox` en développement et `production` pour les paiements réels. Sans cette variable, le mode reste `sandbox` ; toute autre valeur est refusée. Le mode ne dépend pas du build du frontend ni de `NODE_ENV`.
 
-**La politique de Polar exclut la publicité et le sponsoring.** Ce projet reste un prototype avec des paiements de test. Résoudre l’incompatibilité avec Polar avant toute mise en service commerciale : [Acceptable Use Policy](https://polar.sh/legal/acceptable-use-policy).
+Depuis `packages/backend`, configurer les déploiements :
 
-1. Ouvrir [Polar Sandbox](https://sandbox.polar.sh) et créer une organisation de test.
+```bash
+bunx --bun convex env set POLAR_SERVER sandbox
+bunx --bun convex env set POLAR_SERVER production --prod
+```
+
+1. Ouvrir [Polar Sandbox](https://sandbox.polar.sh) pour le développement et [Polar](https://polar.sh) pour la production. Utiliser l’organisation correspondant au mode choisi.
 2. Créer un produit **à paiement unique**, sans abonnement. Le prix du catalogue est remplacé à chaque checkout par un prix fixe en EUR, taxes incluses.
-3. Créer un token sandbox avec les droits `products:read`, `checkouts:read`, `checkouts:write`, `orders:read`, `refunds:read` et `refunds:write`.
-4. Ajouter un webhook pointant vers `https://affable-ptarmigan-378.eu-west-1.convex.site/polar/events` (adapter au déploiement utilisé), avec les événements **`order.paid`** et **`order.refunded`**.
+3. Créer un token dans chaque environnement avec les droits `products:read`, `checkouts:read`, `checkouts:write`, `orders:read`, `refunds:read` et `refunds:write`.
+4. Ajouter un webhook pointant vers l’URL `/polar/events` du déploiement Convex correspondant, avec les événements **`order.paid`** et **`order.refunded`**. En développement : `https://affable-ptarmigan-378.eu-west-1.convex.site/polar/events` ; en production : l’URL `CONVEX_SITE_URL` du déploiement de production suivie de `/polar/events`.
 5. Renseigner dans **les variables du déploiement Convex**, via son dashboard :
 
-| Variable                   | Valeur                                                        |
-| -------------------------- | ------------------------------------------------------------- |
-| `POLAR_ORGANIZATION_TOKEN` | Token de l’organisation **sandbox**                           |
-| `POLAR_WEBHOOK_SECRET`     | Secret du webhook sandbox                                     |
-| `POLAR_PRODUCT_ID`         | ID du produit à paiement unique sandbox                       |
-| `SITE_URL`                 | Origine de l’application, par exemple `http://localhost:3003` |
-| `BETTER_AUTH_URL`          | Même origine que `SITE_URL`                                   |
+| Variable                   | Valeur                                                         |
+| -------------------------- | -------------------------------------------------------------- |
+| `POLAR_SERVER`             | `sandbox` en développement, `production` en production           |
+| `POLAR_ORGANIZATION_TOKEN` | Token de l’organisation du mode choisi                          |
+| `POLAR_WEBHOOK_SECRET`     | Secret du webhook du mode choisi                                |
+| `POLAR_PRODUCT_ID`         | ID du produit à paiement unique du mode choisi                   |
+| `SITE_URL`                 | Origine de l’application, par exemple `http://localhost:3003` en dev |
+| `BETTER_AUTH_URL`          | Même origine que `SITE_URL`                                     |
 
-Les fichiers `.env.local` ne configurent pas automatiquement les variables du déploiement. Ne pas mettre de token dans une variable `VITE_*`, dans un commit ou dans une URL.
+Les fichiers `.env.local` ne configurent pas automatiquement les variables du déploiement. Les tokens, produits et secrets de webhook sandbox et production sont distincts : renseigner les identifiants du bon environnement sur chaque déploiement. Ne pas mettre de token dans une variable `VITE_*`, dans un commit ou dans une URL.
 
-Sans configuration Polar, la page reste consultable et l’achat affiche une indisponibilité. Aucun paiement fictif n’est enregistré. `payments:availability` permet de vérifier la configuration sans dévoiler les secrets.
+Sans configuration Polar, la page reste consultable et l’achat affiche une indisponibilité. Aucun paiement fictif n’est enregistré. `payments:availability` permet de vérifier la configuration et le mode sans dévoiler les secrets. La mention « Paiement de test » du formulaire s’affiche uniquement en sandbox ; en production, seule la mention « Taxes incluses » apparaît.
 
 ### Confirmation et récupération
 
@@ -137,7 +143,7 @@ Le frontend utilise `@posthog/react` et `posthog-js` ; le backend utilise le com
 
 Les événements métier sont planifiés dans la même mutation que leur changement d’état. Une transaction annulée ne produit pas de capture, et les commandes ou remboursements rejoués ne créent pas de nouvelle conversion. Les appels HTTP PostHog sont exécutés séparément par le composant, après la transaction.
 
-Chaque événement d’achat contient `purchase_id`, `checkout_id` et `order_id` lorsqu’ils sont disponibles, `page_id`, `slot_id`, `position`, `amount_cents`, `currency: "EUR"` et `acquisition_number` (à partir de 1). `purchase_type` vaut `initial` pour le premier achat d’un emplacement, puis `takeover` pour les suivants. Les remboursements ajoutent `refunded_amount_cents` et, lorsqu’il est disponible, `refund_id`. Les paiements portent toujours `payment_mode: "sandbox"`.
+Chaque événement d’achat contient `purchase_id`, `checkout_id` et `order_id` lorsqu’ils sont disponibles, `page_id`, `slot_id`, `position`, `amount_cents`, `currency: "EUR"` et `acquisition_number` (à partir de 1). `purchase_type` vaut `initial` pour le premier achat d’un emplacement, puis `takeover` pour les suivants. Les remboursements ajoutent `refunded_amount_cents` et, lorsqu’il est disponible, `refund_id`. `payment_mode` suit le serveur Polar configuré : `sandbox` ou `production`.
 
 Le navigateur appelle `identify()` avec le même ID Better Auth que `purchase.userId` côté serveur, puis réinitialise l’identité à la déconnexion ou au changement de compte. Le mot, la description, le lien de l’acheteur, son nom et son email ne sont pas ajoutés aux captures. Les paramètres et ancres des URL sont retirés des événements et des propriétés initiales de la personne. L’autocapture des interactions, les enregistrements de session et les enquêtes sont désactivés.
 

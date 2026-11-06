@@ -15,6 +15,7 @@ import { requireUser } from "./permissions";
 import { normalizePaidOrder } from "./lib/orders";
 import { DEFAULT_PAGE_ID, purchaseReturnPath } from "./lib/pages";
 import { rateLimiter } from "./lib/rateLimits";
+import { getPolarServer } from "./lib/polarEnvironment";
 
 const REQUEST_OPTIONS = {
   timeoutMs: 20_000,
@@ -23,7 +24,10 @@ const REQUEST_OPTIONS = {
 
 export const availability = query({
   args: {},
-  handler: () => ({ configured: paymentConfigured(), sandbox: true }),
+  handler: () => ({
+    configured: paymentConfigured(),
+    sandbox: getPolarServer() === "sandbox",
+  }),
 });
 
 export const verifyOrder = internalAction({
@@ -92,7 +96,7 @@ export const start = action({
         REQUEST_OPTIONS,
       );
       if (!product.ok || product.value.isRecurring || product.value.isArchived)
-        throw new Error("Invalid sandbox product");
+        throw new Error("Invalid Polar product");
       const siteUrl = new URL(process.env.SITE_URL!).origin;
       const returnUrl = `${siteUrl}${purchaseReturnPath(
         purchase.pageId ?? DEFAULT_PAGE_ID,
