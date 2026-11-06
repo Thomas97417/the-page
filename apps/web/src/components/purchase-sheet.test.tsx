@@ -10,7 +10,7 @@ import { BuySheet } from "./purchase-sheet";
 
 const mocks = vi.hoisted(() => ({
   ready: true,
-  sandbox: true,
+  testMode: true,
   purchases: [] as { current: boolean; slotId: string; word: string }[] | undefined,
   client: { capture: vi.fn() },
 }));
@@ -24,7 +24,7 @@ vi.mock("convex/react", () => ({
     switch (getFunctionName(reference)) {
       case "purchases:mine": return mocks.purchases;
       case "slots:list": return [];
-      default: return { configured: true, sandbox: mocks.sandbox };
+      default: return { configured: true, testMode: mocks.testMode };
     }
   },
   useAction: () => vi.fn(),
@@ -63,19 +63,19 @@ function app() {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.ready = true;
-  mocks.sandbox = true;
+  mocks.testMode = true;
   mocks.purchases = [];
 });
 afterEach(cleanup);
 
 describe("purchase payment mode", () => {
-  it("identifies sandbox payments as tests", () => {
+  it("identifies test payments as tests", () => {
     render(app());
     expect(screen.getByText("Paiement de test · Taxes incluses")).toBeDefined();
   });
 
   it("shows taxes without a test payment notice in production", () => {
-    mocks.sandbox = false;
+    mocks.testMode = false;
     render(app());
     expect(screen.getByText("Taxes incluses")).toBeDefined();
     expect(screen.queryByText(/Paiement de test/)).toBeNull();

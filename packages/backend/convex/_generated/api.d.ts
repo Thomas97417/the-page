@@ -23,16 +23,16 @@ import type * as lib_notificationEmail from "../lib/notificationEmail.js";
 import type * as lib_notifications from "../lib/notifications.js";
 import type * as lib_orders from "../lib/orders.js";
 import type * as lib_pages from "../lib/pages.js";
-import type * as lib_polarEnvironment from "../lib/polarEnvironment.js";
 import type * as lib_rateLimits from "../lib/rateLimits.js";
+import type * as lib_stripeEnvironment from "../lib/stripeEnvironment.js";
 import type * as notifications from "../notifications.js";
 import type * as payments from "../payments.js";
 import type * as permissions from "../permissions.js";
-import type * as polar from "../polar.js";
 import type * as privateData from "../privateData.js";
 import type * as purchases from "../purchases.js";
 import type * as sendEmails from "../sendEmails.js";
 import type * as slots from "../slots.js";
+import type * as stripe from "../stripe.js";
 
 import type {
   ApiFromModules,
@@ -56,16 +56,16 @@ declare const fullApi: ApiFromModules<{
   "lib/notifications": typeof lib_notifications;
   "lib/orders": typeof lib_orders;
   "lib/pages": typeof lib_pages;
-  "lib/polarEnvironment": typeof lib_polarEnvironment;
   "lib/rateLimits": typeof lib_rateLimits;
+  "lib/stripeEnvironment": typeof lib_stripeEnvironment;
   notifications: typeof notifications;
   payments: typeof payments;
   permissions: typeof permissions;
-  polar: typeof polar;
   privateData: typeof privateData;
   purchases: typeof purchases;
   sendEmails: typeof sendEmails;
   slots: typeof slots;
+  stripe: typeof stripe;
 }>;
 
 /**
@@ -97,7 +97,7 @@ export declare const internal: FilterApi<
 export declare const components: {
   betterAuth: import("@convex-dev/better-auth/_generated/component.js").ComponentApi<"betterAuth">;
   resend: import("@convex-dev/resend/_generated/component.js").ComponentApi<"resend">;
-  polar: import("@convex-dev/polar/_generated/component.js").ComponentApi<"polar">;
+  stripe: import("@convex-dev/stripe/_generated/component.js").ComponentApi<"stripe">;
   rateLimiter: import("@convex-dev/rate-limiter/_generated/component.js").ComponentApi<"rateLimiter">;
   posthog: import("@posthog/convex/_generated/component.js").ComponentApi<"posthog">;
 };

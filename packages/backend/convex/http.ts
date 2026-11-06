@@ -1,44 +1,50 @@
 import { httpRouter } from "convex/server";
-
+import { registerRoutes } from "@convex-dev/stripe";
 import { authComponent, createAuth } from "./auth";
-import { polar, paymentConfigured } from "./polar";
 import { httpAction } from "./_generated/server";
-import { internal } from "./_generated/api";
+import { components, internal } from "./_generated/api";
+import { getStripeMode, paymentConfigured } from "./lib/stripeEnvironment";
+import { PAYMENT_APP } from "./lib/orders";
 
 const http = httpRouter();
 
 authComponent.registerRoutes(http, createAuth);
 if (paymentConfigured())
-  polar.registerRoutes(http, {
+  registerRoutes(http, components.stripe, {
+    webhookPath: "/stripe/webhook",
+    onEvent: async (_ctx, event) => {
+      if (event.livemode !== (getStripeMode() === "live"))
+        throw new Error("Stripe event mode does not match this deployment");
+    },
     events: {
-      "order.paid": async (ctx, event) => {
-        if (!("runAction" in ctx))
-          throw new Error("Polar webhook requires an action context");
-        if (typeof event.data.metadata.purchaseId === "string") {
-          await ctx.runAction(internal.payments.verifyOrder, {
-            orderId: event.data.id,
+      "checkout.session.completed": async (ctx, event) => {
+        if (event.data.object.metadata?.app === PAYMENT_APP)
+          await ctx.runAction(internal.payments.verifyCheckout, {
+            checkoutId: event.data.object.id,
           });
-        }
       },
-      "order.refunded": async (ctx, event) => {
-        await ctx.runMutation(internal.purchases.markRefunded, {
-          orderId: event.data.id,
-          refundedAmount:
-            event.data.refundedAmount + event.data.refundedTaxAmount,
-          complete:
-            event.data.refundedAmount + event.data.refundedTaxAmount >=
-            event.data.totalAmount,
-        });
+      "checkout.session.async_payment_succeeded": async (ctx, event) => {
+        if (event.data.object.metadata?.app === PAYMENT_APP)
+          await ctx.runAction(internal.payments.verifyCheckout, {
+            checkoutId: event.data.object.id,
+          });
+      },
+      "charge.refunded": async (ctx, event) => {
+        const intent = event.data.object.payment_intent;
+        if (intent)
+          await ctx.runAction(internal.payments.verifyRefund, {
+            orderId: typeof intent === "string" ? intent : intent.id,
+          });
       },
     },
   });
 else
   http.route({
-    path: "/polar/events",
+    path: "/stripe/webhook",
     method: "POST",
     handler: httpAction(
       async () =>
-        new Response("Polar billing is not configured", { status: 503 }),
+        new Response("Stripe billing is not configured", { status: 503 }),
     ),
   });
 

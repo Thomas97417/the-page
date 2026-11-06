@@ -8,33 +8,16 @@ import { api, components, internal } from "../convex/_generated/api";
 import { validateContent } from "../convex/lib/content";
 import { DEFAULT_PAGE_ID, PAGES, type PageId } from "../convex/lib/pages";
 import type { Doc } from "../convex/_generated/dataModel";
-import { checkoutsGet } from "@polar-sh/sdk/funcs/checkoutsGet.js";
-import { ordersList } from "@polar-sh/sdk/funcs/ordersList.js";
-import { ordersGet } from "@polar-sh/sdk/funcs/ordersGet.js";
-import { refundsList } from "@polar-sh/sdk/funcs/refundsList.js";
-import { refundsCreate } from "@polar-sh/sdk/funcs/refundsCreate.js";
-import { checkoutsCreate } from "@polar-sh/sdk/funcs/checkoutsCreate.js";
-import { productsGet } from "@polar-sh/sdk/funcs/productsGet.js";
-
-vi.mock("@polar-sh/sdk/funcs/checkoutsGet.js", () => ({
-  checkoutsGet: vi.fn(),
-}));
-vi.mock("@polar-sh/sdk/funcs/checkoutsCreate.js", () => ({
-  checkoutsCreate: vi.fn(),
-}));
-vi.mock("@polar-sh/sdk/funcs/productsGet.js", () => ({ productsGet: vi.fn() }));
-vi.mock("@polar-sh/sdk/funcs/ordersList.js", () => ({ ordersList: vi.fn() }));
-vi.mock("@polar-sh/sdk/funcs/ordersGet.js", () => ({ ordersGet: vi.fn() }));
-vi.mock("@polar-sh/sdk/funcs/refundsList.js", () => ({ refundsList: vi.fn() }));
-vi.mock("@polar-sh/sdk/funcs/refundsCreate.js", () => ({
-  refundsCreate: vi.fn(),
-}));
+import Stripe from "stripe";
+import stripeTest from "@convex-dev/stripe/test";
+import { stripeMocks, checkoutSession, paymentIntent } from "./stripeMock";
 
 const modules = import.meta.glob("../convex/**/*.ts");
 function setup() {
   const t = convexTest(schema, modules);
   t.registerComponent("betterAuth", betterAuth.schema, betterAuth.modules);
   rateLimiterTest.register(t);
+  stripeTest.register(t);
   return t;
 }
 type Test = ReturnType<typeof setup>;
@@ -90,13 +73,19 @@ async function reserve(
     description,
   });
 }
+async function createPlace(t: Test, pageId: PageId = DEFAULT_PAGE_ID) {
+  return await t.run((ctx) => ctx.db.insert("slots", {
+    pageId, position: 1, acquisitions: 0, visibility: "visible",
+  }));
+}
+
 function order(p: Doc<"purchases">, overrides = {}) {
   return {
     id: `order-${p._id}`,
     checkoutId: `checkout-${p._id}`,
     purchaseId: p._id,
     userId: p.userId,
-    productId: "product",
+    livemode: process.env.STRIPE_MODE === "live",
     amount: p.amount,
     currency: "eur",
     refundedAmount: 0,
@@ -110,12 +99,12 @@ async function paid(t: Test, purchase: Doc<"purchases">) {
 }
 
 beforeEach(() => {
+  stripeMocks.keys.length = 0;
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-11-02T10:00:00Z"));
-  vi.stubEnv("POLAR_PRODUCT_ID", "product");
-  vi.stubEnv("POLAR_SERVER", "sandbox");
-  vi.stubEnv("POLAR_WEBHOOK_SECRET", "whsec_dGVzdC1zZWNyZXQ=");
-  vi.stubEnv("POLAR_ORGANIZATION_TOKEN", "sandbox-token");
+  vi.stubEnv("STRIPE_MODE", "test");
+  vi.stubEnv("STRIPE_WEBHOOK_SECRET", "whsec_test_secret");
+  vi.stubEnv("STRIPE_SECRET_KEY", "sk_test_example");
   vi.stubEnv("SITE_URL", "http://localhost:3003");
   vi.stubEnv("ADMIN_USER_IDS", "");
 });
@@ -220,6 +209,7 @@ describe("purchases and ownership", () => {
         reservedUntil: Date.now(),
       });
       const reservationId = await ctx.db.insert("purchases", {
+        paymentProvider: "stripe",
         slotId,
         position: 1,
         userId: "next-owner",
@@ -244,7 +234,7 @@ describe("purchases and ownership", () => {
     expect(await t.run((ctx) => ctx.db.get(legacy._id))).toEqual({ ...legacy, pageId: "world" });
     expect((await t.query(api.slots.list, {}))[0]).toEqual(before[0]);
     expect((await t.query(api.slots.list, { pageId: "france" }))[0]).toMatchObject({ price: 100, reserved: false });
-    // A checkout created before the migration can still publish to World.
+    // A Stripe checkout without a pageId can still publish to World.
     const pending = (await t.query(internal.purchases.get, { purchaseId: legacy.reservationId! }))!;
     await paid(t, pending);
     expect((await t.query(api.slots.list, {}))[0]).toMatchObject({ word: "Demain", price: 600 });
@@ -507,7 +497,7 @@ describe("purchases and ownership", () => {
     { amount: 1 },
     { currency: "usd" },
     { userId: "impostor" },
-    { productId: "another-product" },
+    { refundedAmount: 1 },
   ])("rejects and refunds mismatched order %j", async (invalid) => {
     const t = setup();
     await t.mutation(internal.slots.initialize);
@@ -529,7 +519,7 @@ describe("purchases and ownership", () => {
     await t.mutation(internal.purchases.attachCheckout, {
       purchaseId: p._id,
       checkoutId: "real",
-      checkoutUrl: "https://sandbox.polar.sh/checkout",
+      checkoutUrl: "https://checkout.stripe.com/c/pay/cs_test_example",
     });
     expect(await paid(t, p)).toBe("ignored");
     expect(
@@ -694,270 +684,362 @@ describe("reconciliation", () => {
   });
   it("finishes a full refund even when the received amount was incorrect", async () => {
     const t = setup();
-    await t.mutation(internal.slots.initialize);
+    await createPlace(t);
     const p = await reserve(t);
-    await t.mutation(internal.purchases.applyPaidOrder, {
-      order: order(p, { amount: 1 }),
-    });
-    vi.mocked(ordersGet).mockResolvedValue({
-      ok: true,
-      value: {
-        id: order(p).id,
-        totalAmount: 1,
-        refundedAmount: 1,
-        refundedTaxAmount: 0,
-      },
-    } as never);
+    await t.mutation(internal.purchases.applyPaidOrder, { order: order(p, { amount: 1 }) });
+    stripeMocks.intentsRetrieve.mockResolvedValue(paymentIntent(p, {
+      amount_received: 1,
+      latest_charge: { amount: 1, amount_refunded: 1 },
+    }));
     await t.action(internal.payments.refund, { purchaseId: p._id });
-    expect(
-      (await t.query(internal.purchases.get, { purchaseId: p._id }))?.status,
-    ).toBe("refunded");
+    expect((await t.query(internal.purchases.get, { purchaseId: p._id }))?.status).toBe("refunded");
+    expect(stripeMocks.refundsCreate).not.toHaveBeenCalled();
   });
-  it("re-reads an order.paid event so a previous refund cannot be ignored", async () => {
+
+  it("re-reads a completed event so an earlier refund cannot publish a word", async () => {
     const t = setup();
-    await t.mutation(internal.slots.initialize);
+    await createPlace(t);
     const p = await reserve(t);
-    const data = order(p);
-    vi.mocked(ordersGet).mockResolvedValue({
-      ok: true,
-      value: {
-        paid: true,
-        id: data.id,
-        checkoutId: data.checkoutId,
-        metadata: { purchaseId: p._id },
-        customer: { externalId: p.userId },
-        productId: "product",
-        totalAmount: 100,
-        currency: "eur",
-        refundedAmount: 83,
-        refundedTaxAmount: 17,
-      },
-    } as never);
-    await t.action(internal.payments.verifyOrder, { orderId: data.id });
-    expect((await t.query(api.slots.list, {}))[0]).toMatchObject({
-      acquisitions: 0,
-      price: 100,
-    });
-    expect(
-      (await t.query(internal.purchases.get, { purchaseId: p._id }))?.status,
-    ).toBe("refund_pending");
+    stripeMocks.sessionsRetrieve.mockResolvedValue(checkoutSession(p, {
+      payment_intent: paymentIntent(p, { latest_charge: { amount: 100, amount_refunded: 100 } }),
+    }));
+    await t.action(internal.payments.verifyCheckout, { checkoutId: order(p).checkoutId });
+    expect((await t.query(api.slots.list, {}))[0]).toMatchObject({ acquisitions: 0, price: 100 });
+    expect((await t.query(internal.purchases.get, { purchaseId: p._id }))?.status).toBe("refunded");
   });
-  it("verifies with Polar before releasing an expired checkout", async () => {
+
+  it("expires Stripe before releasing an expired reservation", async () => {
     const t = setup();
-    await t.mutation(internal.slots.initialize);
+    await createPlace(t);
     const p = await reserve(t);
     await t.mutation(internal.purchases.attachCheckout, {
-      purchaseId: p._id,
-      checkoutId: "checkout",
-      checkoutUrl: "https://sandbox.polar.sh/checkout",
+      purchaseId: p._id, checkoutId: order(p).checkoutId, checkoutUrl: "https://checkout.stripe.com/test",
     });
     vi.setSystemTime(Date.now() + 300_001);
-    vi.mocked(checkoutsGet).mockResolvedValue({
-      ok: true,
-      value: { status: "open" },
-    } as never);
+    stripeMocks.sessionsRetrieve.mockResolvedValue(checkoutSession(p, {
+      status: "open", payment_status: "unpaid", payment_intent: null,
+    }));
+    stripeMocks.sessionsExpire.mockResolvedValue({ status: "expired" });
     await t.action(internal.payments.reconcile, { purchaseId: p._id });
-    expect(checkoutsGet).toHaveBeenCalled();
-    expect((await t.query(api.slots.list, {}))[0]).toMatchObject({
-      reserved: false,
-      price: 100,
-    });
+    expect(stripeMocks.sessionsExpire).toHaveBeenCalledExactlyOnceWith(order(p).checkoutId);
+    expect((await t.query(api.slots.list, {}))[0]).toMatchObject({ reserved: false, price: 100 });
   });
-  it("retains a reservation during a provider outage or an unsettled payment", async () => {
+
+  it("recovers a payment that completes while the session is being expired", async () => {
     const t = setup();
-    await t.mutation(internal.slots.initialize);
+    await createPlace(t);
     const p = await reserve(t);
     await t.mutation(internal.purchases.attachCheckout, {
-      purchaseId: p._id,
-      checkoutId: "checkout",
-      checkoutUrl: "https://sandbox.polar.sh/checkout",
+      purchaseId: p._id, checkoutId: order(p).checkoutId, checkoutUrl: "https://checkout.stripe.com/test",
     });
     vi.setSystemTime(Date.now() + 300_001);
-    vi.mocked(checkoutsGet)
+    stripeMocks.sessionsRetrieve
+      .mockResolvedValueOnce(checkoutSession(p, { status: "open", payment_status: "unpaid", payment_intent: null }))
+      .mockResolvedValue(checkoutSession(p));
+    stripeMocks.sessionsExpire.mockRejectedValue(new Error("Session already completed"));
+    await t.action(internal.payments.reconcile, { purchaseId: p._id });
+    expect((await t.query(api.slots.list, {}))[0].reserved).toBe(true);
+    await t.action(internal.payments.reconcile, { purchaseId: p._id });
+    expect((await t.query(api.slots.list, {}))[0]).toMatchObject({ word: "Bonjour", price: 200, reserved: false });
+  });
+
+  it("retains a reservation during an outage or an unsettled payment", async () => {
+    const t = setup();
+    await createPlace(t);
+    const p = await reserve(t);
+    await t.mutation(internal.purchases.attachCheckout, {
+      purchaseId: p._id, checkoutId: order(p).checkoutId, checkoutUrl: "https://checkout.stripe.com/test",
+    });
+    vi.setSystemTime(Date.now() + 300_001);
+    stripeMocks.sessionsRetrieve
       .mockRejectedValueOnce(new Error("network"))
-      .mockResolvedValue({ ok: true, value: { status: "confirmed" } } as never);
+      .mockResolvedValue(checkoutSession(p, { payment_status: "unpaid" }));
     await t.action(internal.payments.reconcile, { purchaseId: p._id });
     await t.action(internal.payments.reconcile, { purchaseId: p._id });
     expect((await t.query(api.slots.list, {}))[0].reserved).toBe(true);
+    expect(stripeMocks.sessionsExpire).not.toHaveBeenCalled();
   });
-  it("recovers a succeeded payment when its webhook is missing", async () => {
+
+  it("recovers a paid session when its webhook is missing", async () => {
     const t = setup();
-    await t.mutation(internal.slots.initialize);
+    await createPlace(t);
     const p = await reserve(t);
-    const data = order(p);
     await t.mutation(internal.purchases.attachCheckout, {
-      purchaseId: p._id,
-      checkoutId: data.checkoutId,
-      checkoutUrl: "https://sandbox.polar.sh/checkout",
+      purchaseId: p._id, checkoutId: order(p).checkoutId, checkoutUrl: "https://checkout.stripe.com/test",
     });
-    vi.mocked(checkoutsGet).mockResolvedValue({
-      ok: true,
-      value: { status: "succeeded" },
-    } as never);
-    vi.mocked(ordersList).mockResolvedValue({
-      ok: true,
-      value: {
-        result: {
-          items: [
-            {
-              paid: true,
-              id: data.id,
-              checkoutId: data.checkoutId,
-              metadata: { purchaseId: p._id },
-              customer: { externalId: p.userId },
-              productId: "product",
-              totalAmount: 100,
-              currency: "eur",
-              refundedAmount: 0,
-              refundedTaxAmount: 0,
-            },
-          ],
-        },
-      },
-    } as never);
+    stripeMocks.sessionsRetrieve.mockResolvedValue(checkoutSession(p));
     await t.action(internal.payments.reconcile, { purchaseId: p._id });
-    expect((await t.query(api.slots.list, {}))[0]).toMatchObject({
-      word: "Bonjour",
-      price: 200,
-    });
+    await t.action(internal.payments.reconcile, { purchaseId: p._id });
+    expect((await t.query(api.slots.list, {}))[0]).toMatchObject({ word: "Bonjour", price: 200 });
+    expect(stripeMocks.sessionsRetrieve).toHaveBeenCalledOnce();
   });
-  it("refunds the untaxed remainder and never creates duplicate in-flight refunds", async () => {
+
+  it("refunds the charged remainder including tax without duplicate pending refunds", async () => {
     const t = setup();
-    await t.mutation(internal.slots.initialize);
+    await createPlace(t);
     const p = await reserve(t);
-    await t.mutation(internal.purchases.close, {
-      purchaseId: p._id,
-      reason: "expired",
-    });
+    await t.mutation(internal.purchases.close, { purchaseId: p._id, reason: "expired" });
     await paid(t, p);
-    vi.mocked(ordersGet).mockResolvedValue({
-      ok: true,
-      value: {
-        id: order(p).id,
-        totalAmount: 100,
-        netAmount: 83,
-        refundedAmount: 0,
-        refundedTaxAmount: 0,
-      },
-    } as never);
-    vi.mocked(refundsList).mockResolvedValue({
-      ok: true,
-      value: { result: { items: [] } },
-    } as never);
-    vi.mocked(refundsCreate).mockResolvedValue({
-      ok: true,
-      value: { id: "refund", status: "pending" },
-    } as never);
+    stripeMocks.intentsRetrieve.mockResolvedValue(paymentIntent(p, {
+      latest_charge: { amount: 100, amount_refunded: 20 },
+    }));
+    stripeMocks.refundsList
+      .mockResolvedValueOnce({ data: [] })
+      .mockResolvedValue({ data: [{ id: "re_test", status: "pending" }] });
+    stripeMocks.refundsCreate.mockResolvedValue({ id: "re_test", status: "pending", amount: 80 });
     await t.action(internal.payments.refund, { purchaseId: p._id });
     await t.action(internal.payments.refund, { purchaseId: p._id });
-    expect(refundsCreate).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(refundsCreate).mock.calls[0][1]).toMatchObject({
-      amount: 83,
-    });
+    vi.setSystemTime(Date.now() + 60_001);
+    await t.action(internal.payments.refund, { purchaseId: p._id });
+    expect(stripeMocks.refundsCreate).toHaveBeenCalledExactlyOnceWith({
+      payment_intent: order(p).id, amount: 80, metadata: { app: "the-page", purchaseId: p._id },
+    }, { idempotencyKey: `refund:${p._id}:20:initial` });
+    expect((await t.query(internal.purchases.get, { purchaseId: p._id }))?.status).toBe("refund_pending");
   });
-  it("rejects invalid webhook signatures", async () => {
-    const t = setup();
+
+  it("reuses the refund idempotency key after an ambiguous network failure", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
-    const response = await t.fetch("/polar/events", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "webhook-id": "fake",
-        "webhook-timestamp": String(Date.now() / 1000),
-        "webhook-signature": "v1,invalid",
-      },
-      body: JSON.stringify({ type: "order.paid", data: {} }),
-    });
-    expect(response.status).toBe(403);
-  });
-  it.each(PAGES)("builds a server-priced checkout returning to $id", async (page) => {
     const t = setup();
-    await t.mutation(internal.slots.initialize);
+    await createPlace(t);
+    const p = await reserve(t);
+    await t.mutation(internal.purchases.close, { purchaseId: p._id, reason: "expired" });
+    await paid(t, p);
+    stripeMocks.intentsRetrieve.mockResolvedValue(paymentIntent(p));
+    stripeMocks.refundsList.mockResolvedValue({ data: [] });
+    stripeMocks.refundsCreate
+      .mockRejectedValueOnce(new Error("timeout"))
+      .mockResolvedValue({ id: "re_test", status: "succeeded", amount: 100 });
+    await t.action(internal.payments.refund, { purchaseId: p._id });
+    vi.setSystemTime(Date.now() + 60_001);
+    await t.action(internal.payments.refund, { purchaseId: p._id });
+    expect(stripeMocks.refundsCreate.mock.calls.map((call) => call[1])).toEqual([
+      { idempotencyKey: `refund:${p._id}:0:initial` },
+      { idempotencyKey: `refund:${p._id}:0:initial` },
+    ]);
+    expect((await t.query(internal.purchases.get, { purchaseId: p._id }))?.status).toBe("refunded");
+  });
+
+  it("keeps refunding an overpayment partially refunded by the expected purchase amount", async () => {
+    const t = setup();
+    await createPlace(t);
+    const p = await reserve(t);
+    stripeMocks.sessionsRetrieve.mockResolvedValue(checkoutSession(p, {
+      amount_total: 200,
+      payment_intent: paymentIntent(p, {
+        amount_received: 200,
+        latest_charge: { amount: 200, amount_refunded: 100 },
+      }),
+    }));
+    await t.action(internal.payments.verifyCheckout, { checkoutId: order(p).checkoutId });
+    expect(await t.query(internal.purchases.get, { purchaseId: p._id })).toMatchObject({
+      status: "refund_pending", refundedAmount: 100,
+    });
+    stripeMocks.intentsRetrieve.mockResolvedValue(paymentIntent(p, {
+      amount_received: 200,
+      latest_charge: { amount: 200, amount_refunded: 100 },
+    }));
+    stripeMocks.refundsList.mockResolvedValue({ data: [] });
+    stripeMocks.refundsCreate.mockResolvedValue({ id: "re_remainder", amount: 100, status: "succeeded" });
+    await t.action(internal.payments.refund, { purchaseId: p._id });
+    expect(await t.query(internal.purchases.get, { purchaseId: p._id })).toMatchObject({
+      status: "refunded", refundedAmount: 200,
+    });
+    expect((await t.query(api.slots.list, {}))[0].acquisitions).toBe(0);
+  });
+
+  it.each([
+    { amount_total: 1 },
+    { currency: "usd" },
+    { client_reference_id: "another-buyer" },
+  ])("refunds inconsistent Stripe checkout data: %j", async (invalid) => {
+    const t = setup();
+    await createPlace(t);
+    const p = await reserve(t);
+    stripeMocks.sessionsRetrieve.mockResolvedValue(checkoutSession(p, invalid));
+    await t.action(internal.payments.verifyCheckout, { checkoutId: order(p).checkoutId });
+    expect((await t.query(internal.purchases.get, { purchaseId: p._id }))?.status).toBe("refund_pending");
+    expect((await t.query(api.slots.list, {}))[0].acquisitions).toBe(0);
+  });
+
+  it("rejects invalid webhook signatures", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const t = setup();
+    const response = await t.fetch("/stripe/webhook", {
+      method: "POST", headers: { "stripe-signature": "t=1,v1=bad" }, body: "{}",
+    });
+    expect(response.status).toBe(400);
+    expect(stripeMocks.sessionsRetrieve).not.toHaveBeenCalled();
+  });
+
+  it("processes and replays signed webhooks through the official component", async () => {
+    const t = setup();
+    await createPlace(t);
+    const p = await reserve(t);
+    const session = checkoutSession(p, { payment_intent: order(p).id });
+    stripeMocks.sessionsRetrieve.mockResolvedValue(checkoutSession(p));
+    const payload = JSON.stringify({
+      id: "evt_test", object: "event", type: "checkout.session.completed", livemode: false,
+      created: Math.floor(Date.now() / 1000), data: { object: session },
+    });
+    const signature = new Stripe("sk_test_example").webhooks.generateTestHeaderString({
+      payload, secret: "whsec_test_secret", timestamp: Math.floor(Date.now() / 1000),
+    });
+    for (let i = 0; i < 2; i++) {
+      expect((await t.fetch("/stripe/webhook", {
+        method: "POST", headers: { "stripe-signature": signature }, body: payload,
+      })).status).toBe(200);
+    }
+    expect((await t.query(api.slots.list, {}))[0]).toMatchObject({ word: "Bonjour", price: 200 });
+    expect(await t.query(components.stripe.public.getCheckoutSession, {
+      stripeCheckoutSessionId: session.id,
+    })).toMatchObject({ stripeCheckoutSessionId: session.id, status: "complete" });
+  });
+
+  it("re-reads charge.refunded and removes only the current refunded word", async () => {
+    const t = setup();
+    await createPlace(t);
+    const p = await reserve(t);
+    await paid(t, p);
+    stripeMocks.intentsRetrieve.mockResolvedValue(paymentIntent(p, {
+      latest_charge: { amount: 100, amount_refunded: 100 },
+    }));
+    await t.action(internal.payments.verifyRefund, { orderId: order(p).id });
+    const slot = (await t.query(api.slots.list, {}))[0];
+    expect(slot.word).toBeUndefined();
+    expect(slot.price).toBe(200);
+    expect((await t.query(internal.purchases.get, { purchaseId: p._id }))?.status).toBe("refunded");
+  });
+
+  it.each(PAGES)("builds a server-priced Stripe checkout returning to $id", async (page) => {
+    const t = setup();
+    await createPlace(t, page.id);
     const buyer = await account(t, "buyer");
-    vi.mocked(productsGet).mockResolvedValue({
-      ok: true,
-      value: { isRecurring: false, isArchived: false },
-    } as never);
-    vi.mocked(checkoutsCreate).mockResolvedValue({
-      ok: true,
-      value: { id: "checkout", url: "https://sandbox.polar.sh/checkout" },
-    } as never);
+    stripeMocks.sessionsCreate.mockResolvedValue({ id: "cs_test_example", url: "https://checkout.stripe.com/test" });
     const slot = (await t.query(api.slots.list, { pageId: page.id }))[0];
-    await buyer.client.action(api.payments.start, {
-      slotId: slot.id,
-      acquisition: 0,
-      word: "Mot",
-      description: "Une histoire à partager.",
+    const result = await buyer.client.action(api.payments.start, {
+      slotId: slot.id, acquisition: 0, word: "Mot", description: "Une histoire à partager.", language: "en",
     });
-    expect((await buyer.client.query(api.purchases.mine))[0].description).toBe(
-      "Une histoire à partager.",
-    );
-    const call = vi.mocked(checkoutsCreate).mock.calls[0];
     const purchase = (await buyer.client.query(api.purchases.mine))[0];
-    const expectedPath = page.id === DEFAULT_PAGE_ID ? "/" : `/${page.slug}`;
-    expect(call[1]).toMatchObject({
-      successUrl: `http://localhost:3003${expectedPath}?purchase=${encodeURIComponent(purchase.id)}`,
-      returnUrl: `http://localhost:3003${expectedPath}?purchase=${encodeURIComponent(purchase.id)}`,
+    const path = page.id === DEFAULT_PAGE_ID ? "/" : `/${page.slug}`;
+    const metadata = { app: "the-page", purchaseId: purchase.id, userId: buyer.id };
+    expect(stripeMocks.sessionsCreate).toHaveBeenCalledExactlyOnceWith({
+      mode: "payment",
+      success_url: `http://localhost:3003${path}?purchase=${encodeURIComponent(purchase.id)}`,
+      cancel_url: `http://localhost:3003${path}?purchase=${encodeURIComponent(purchase.id)}`,
+      metadata,
+      payment_intent_data: { metadata },
+      client_reference_id: buyer.id,
+      customer_email: "buyer@example.com",
+      payment_method_types: ["card"],
+      allow_promotion_codes: false,
+      locale: "en",
+      line_items: [{ quantity: 1, price_data: {
+        currency: "eur", unit_amount: 100, tax_behavior: "inclusive",
+        product_data: { name: `the page · ${page.id} · #${slot.position}` },
+      } }],
     });
-    expect(call[1]).toMatchObject({
-      externalCustomerId: buyer.id,
-      allowDiscountCodes: false,
-      prices: {
-        product: [
-          {
-            priceAmount: 100,
-            priceCurrency: "eur",
-            amountType: "fixed",
-            taxBehavior: "inclusive",
-          },
-        ],
-      },
+    expect(purchase.description).toBe("Une histoire à partager.");
+    expect(result.url).toBe("https://checkout.stripe.com/test");
+    // A repeat request resumes the existing session without charging twice.
+    await buyer.client.action(api.payments.start, {
+      slotId: slot.id, acquisition: 0, word: "Mot", description: "Une histoire à partager.", language: "en",
     });
-    expect(call[0]._options.server).toBe("sandbox");
+    expect(stripeMocks.sessionsCreate).toHaveBeenCalledOnce();
+  });
+
+  it("replaces a legacy checkout without losing historical purchases", async () => {
+    const t = setup();
+    await createPlace(t);
+    const p = await reserve(t);
+    await t.run((ctx) => ctx.db.patch(p._id, {
+      paymentProvider: undefined, checkoutId: "legacy-checkout", checkoutUrl: "https://legacy.example/checkout", status: "pending",
+    }));
+    const replacement = await reserve(t);
+    expect(replacement._id).not.toBe(p._id);
+    expect(replacement.paymentProvider).toBe("stripe");
+    expect(replacement.checkoutUrl).toBeUndefined();
+    expect(await t.query(internal.purchases.get, { purchaseId: p._id })).toMatchObject({
+      status: "failed", failureReason: "payment_provider_replaced",
+    });
+    expect(stripeMocks.sessionsRetrieve).not.toHaveBeenCalled();
+  });
+
+  it("hides legacy resume links while preserving an existing owner's edit rights", async () => {
+    const t = setup();
+    await createPlace(t);
+    const buyer = await account(t, "legacy-buyer");
+    const p = await reserve(t, buyer.id);
+    await t.run((ctx) => ctx.db.patch(p._id, {
+      paymentProvider: undefined, status: "pending", checkoutUrl: "https://legacy.example/checkout",
+    }));
+    expect((await buyer.client.query(api.purchases.mine))[0].checkoutUrl).toBeUndefined();
+    await t.action(internal.payments.reconcile, { purchaseId: p._id });
+    expect((await t.query(api.slots.list, {}))[0].reserved).toBe(false);
+    const current = await reserve(t, buyer.id);
+    await paid(t, current);
+    await t.run((ctx) => ctx.db.patch(current._id, { paymentProvider: undefined }));
+    await buyer.client.mutation(api.slots.updateContent, {
+      slotId: current.slotId, purchaseId: current._id, word: "Toujours",
+    });
+    expect((await t.query(api.slots.list, {}))[0].word).toBe("Toujours");
+    expect(stripeMocks.sessionsRetrieve).not.toHaveBeenCalled();
   });
 });
 
-describe("Polar environments", () => {
+describe("Stripe environments", () => {
   it.each([
-    { configuredServer: undefined, expectedServer: "sandbox" },
-    { configuredServer: "sandbox", expectedServer: "sandbox" },
-    { configuredServer: "production", expectedServer: "production" },
-  ] as const)("routes checkout and reports its mode with POLAR_SERVER=$configuredServer", async ({ configuredServer, expectedServer }) => {
-    vi.stubEnv("POLAR_SERVER", configuredServer);
-    vi.resetModules();
+    { mode: undefined, key: "sk_test_example", testMode: true },
+    { mode: "test", key: "sk_test_example", testMode: true },
+    { mode: "live", key: "sk_live_example", testMode: false },
+  ])("uses $key with STRIPE_MODE=$mode", async ({ mode, key, testMode }) => {
+    vi.stubEnv("STRIPE_MODE", mode);
+    vi.stubEnv("STRIPE_SECRET_KEY", key);
     const t = setup();
-    await t.mutation(internal.slots.initialize);
+    await createPlace(t);
     const buyer = await account(t, "environment-buyer");
-    vi.mocked(productsGet).mockResolvedValue({
-      ok: true,
-      value: { isRecurring: false, isArchived: false },
-    } as never);
-    const checkoutUrl = `https://${expectedServer === "sandbox" ? "sandbox." : ""}polar.sh/checkout`;
-    vi.mocked(checkoutsCreate).mockResolvedValue({
-      ok: true,
-      value: { id: "checkout", url: checkoutUrl },
-    } as never);
-
-    expect(await t.query(api.payments.availability)).toEqual({
-      configured: true,
-      sandbox: expectedServer === "sandbox",
+    stripeMocks.sessionsCreate.mockResolvedValue({ id: "cs_example", url: "https://checkout.stripe.com/example" });
+    expect(await t.query(api.payments.availability)).toEqual({ configured: true, testMode });
+    await buyer.client.action(api.payments.start, {
+      slotId: (await t.query(api.slots.list, {}))[0].id, acquisition: 0, word: "Bonjour",
     });
-    const slot = (await t.query(api.slots.list, { pageId: "world" }))[0];
-    const result = await buyer.client.action(api.payments.start, {
-      slotId: slot.id,
-      acquisition: 0,
-      word: "Bonjour",
-    });
-    expect(result.url).toBe(checkoutUrl);
-    expect(vi.mocked(productsGet).mock.calls[0][0]._options.server).toBe(expectedServer);
-    expect(vi.mocked(checkoutsCreate).mock.calls[0][0]._options.server).toBe(expectedServer);
+    expect(stripeMocks.keys).toEqual([key]);
   });
 
-  it("rejects an invalid server instead of starting a payment", async () => {
-    vi.stubEnv("POLAR_SERVER", "prod");
-    vi.resetModules();
+  it.each([
+    { mode: undefined, key: "sk_live_example" },
+    { mode: "test", key: "sk_live_example" },
+    { mode: "live", key: "sk_test_example" },
+    { mode: "test", key: "pk_test_example" },
+    { mode: "test", key: "" },
+  ])("disables payments for mismatched keys: $mode / $key", async ({ mode, key }) => {
+    vi.stubEnv("STRIPE_MODE", mode);
+    vi.stubEnv("STRIPE_SECRET_KEY", key);
     const t = setup();
-    await expect(t.query(api.payments.availability)).rejects.toThrow("POLAR_SERVER must be sandbox or production");
-    expect(checkoutsCreate).not.toHaveBeenCalled();
+    await createPlace(t);
+    const buyer = await account(t, "misconfigured-buyer");
+    expect(await t.query(api.payments.availability)).toMatchObject({ configured: false });
+    await expect(buyer.client.action(api.payments.start, {
+      slotId: (await t.query(api.slots.list, {}))[0].id, acquisition: 0, word: "Bonjour",
+    })).rejects.toThrow("momentanément indisponible");
+    expect(await t.run((ctx) => ctx.db.query("purchases").collect())).toEqual([]);
+    expect(stripeMocks.sessionsCreate).not.toHaveBeenCalled();
+  });
+
+  it("rejects an invalid mode instead of opening a payment", async () => {
+    vi.stubEnv("STRIPE_MODE", "production");
+    const t = setup();
+    await expect(t.query(api.payments.availability)).rejects.toThrow("STRIPE_MODE must be test or live");
+    expect(stripeMocks.sessionsCreate).not.toHaveBeenCalled();
+  });
+
+  it("rejects a payment from the other mode before publishing", async () => {
+    const t = setup();
+    await createPlace(t);
+    const p = await reserve(t);
+    stripeMocks.sessionsRetrieve.mockResolvedValue(checkoutSession(p, { livemode: true }));
+    await expect(t.action(internal.payments.verifyCheckout, {
+      checkoutId: order(p).checkoutId,
+    })).rejects.toThrow("mode does not match");
+    expect((await t.query(api.slots.list, {}))[0].acquisitions).toBe(0);
   });
 });

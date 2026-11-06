@@ -45,7 +45,7 @@ function order(purchase: Doc<"purchases">) {
     checkoutId: `checkout-${purchase._id}`,
     purchaseId: purchase._id,
     userId: purchase.userId,
-    productId: "product",
+    livemode: process.env.STRIPE_MODE === "live",
     amount: purchase.amount,
     currency: "eur",
     refundedAmount: 0,
@@ -76,8 +76,7 @@ async function events(t: Test) {
 
 beforeEach(() => {
   vi.useFakeTimers();
-  vi.stubEnv("POLAR_PRODUCT_ID", "product");
-  vi.stubEnv("POLAR_SERVER", "sandbox");
+  vi.stubEnv("STRIPE_MODE", "test");
   vi.stubEnv("POSTHOG_PROJECT_TOKEN", "phc_test");
   vi.stubEnv("POSTHOG_ENVIRONMENT", "test");
 });
@@ -90,13 +89,13 @@ afterEach(() => {
 
 describe("purchase analytics", () => {
   it("labels real purchases with the production payment mode", async () => {
-    vi.stubEnv("POLAR_SERVER", "production");
+    vi.stubEnv("STRIPE_MODE", "live");
     const t = setup();
     const purchase = await reserve(t, await place(t), "production-buyer");
     await publish(t, purchase);
     expect(await events(t)).toMatchObject([{
       event: "purchase_completed",
-      properties: { payment_mode: "production" },
+      properties: { payment_mode: "live" },
     }]);
   });
 
@@ -107,7 +106,7 @@ describe("purchase analytics", () => {
     const args = {
       purchaseId: purchase._id,
       checkoutId: order(purchase).checkoutId,
-      checkoutUrl: "https://sandbox.polar.sh/checkout",
+      checkoutUrl: "https://checkout.stripe.com/c/pay/cs_test_example",
     };
     await t.mutation(internal.purchases.attachCheckout, args);
     await t.mutation(internal.purchases.attachCheckout, args);
@@ -143,7 +142,7 @@ describe("purchase analytics", () => {
         slot_id: slotId,
         order_id: order(initial).id,
         environment: "test",
-        payment_mode: "sandbox",
+        payment_mode: "test",
       },
     });
     expect(captured[1]).toMatchObject({
@@ -196,7 +195,7 @@ describe("purchase analytics", () => {
     await t.mutation(internal.purchases.attachCheckout, {
       purchaseId: purchase._id,
       checkoutId: order(purchase).checkoutId,
-      checkoutUrl: "https://sandbox.polar.sh/checkout",
+      checkoutUrl: "https://checkout.stripe.com/c/pay/cs_test_example",
     });
     expect(await publish(t, purchase)).toBe("published");
     await t.mutation(internal.purchases.markRefunded, {

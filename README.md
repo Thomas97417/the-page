@@ -75,7 +75,7 @@ Configurer les variables publiques **au moment du build**, avec les URL du dépl
 
 Pour un build local destiné à la production, renseigner ces valeurs dans `apps/web/.env.production.local` afin de remplacer les valeurs de développement de `.env`. Les variables `VITE_*` sont intégrées au bundle : toute modification nécessite un nouveau build.
 
-Ajouter **`AUTH_PROXY_SECRET`** aux secrets du Worker et configurer la même valeur côté Convex, comme décrit dans « IP des visiteurs sur Cloudflare ». Ce secret privé de 32 caractères minimum est lu à l’exécution ; il ne doit jamais devenir une variable `VITE_*`. Pour le runtime local Cloudflare, y compris `bun run dev:web` et `bun run --cwd apps/web preview`, le renseigner dans `apps/web/.env.local` ou `apps/web/.dev.vars` (ignorés par Git), avec la même valeur dans le déploiement Convex de développement. Si `.dev.vars` existe, Wrangler utilise ce fichier pour les secrets et ignore les fichiers `.env*`. Redémarrer le serveur après un changement de configuration. Côté Convex, régler `SITE_URL` et `BETTER_AUTH_URL` sur l’origine HTTPS publiée, puis adapter les callbacks OAuth et le webhook Polar au déploiement choisi.
+Ajouter **`AUTH_PROXY_SECRET`** aux secrets du Worker et configurer la même valeur côté Convex, comme décrit dans « IP des visiteurs sur Cloudflare ». Ce secret privé de 32 caractères minimum est lu à l’exécution ; il ne doit jamais devenir une variable `VITE_*`. Pour le runtime local Cloudflare, y compris `bun run dev:web` et `bun run --cwd apps/web preview`, le renseigner dans `apps/web/.env.local` ou `apps/web/.dev.vars` (ignorés par Git), avec la même valeur dans le déploiement Convex de développement. Si `.dev.vars` existe, Wrangler utilise ce fichier pour les secrets et ignore les fichiers `.env*`. Redémarrer le serveur après un changement de configuration. Côté Convex, régler `SITE_URL` et `BETTER_AUTH_URL` sur l’origine HTTPS publiée, puis adapter les callbacks OAuth et le webhook Stripe au déploiement choisi.
 
 Après connexion à Cloudflare avec Wrangler, la commande suivante reconstruit et déploie le frontend :
 
@@ -90,44 +90,51 @@ Pour les déploiements de branches avec **Cloudflare Previews**, utiliser `cd ap
 Référence : [TanStack Start sur Cloudflare Workers](https://developers.cloudflare.com/workers/framework-guides/web-apps/tanstack-start/).
 Configuration des previews : [Cloudflare Previews](https://developers.cloudflare.com/workers/previews/configuration/).
 
-## Paiement Polar : développement et production
+## Paiement Stripe : développement et production
 
-L’intégration utilise `@convex-dev/polar`, son endpoint signé **`/polar/events`** et le SDK Polar pour les prix fixes calculés côté serveur. La variable **`POLAR_SERVER`**, définie séparément sur chaque déploiement Convex, sélectionne `sandbox` en développement et `production` pour les paiements réels. Sans cette variable, le mode reste `sandbox` ; toute autre valeur est refusée. Le mode ne dépend pas du build du frontend ni de `NODE_ENV`.
+L’intégration utilise le [composant Convex officiel Stripe](https://www.convex.dev/components/stripe), `@convex-dev/stripe`, pour créer les checkouts et vérifier/synchroniser les webhooks sur **`/stripe/webhook`**. Le SDK Stripe relit les paiements et gère les expirations et remboursements. Les prix sont calculés côté serveur en EUR, taxes incluses, puis transmis comme prix ponctuels (`price_data`) : aucun produit ni prix de catalogue n’est à configurer dans Stripe. Le checkout accepte les cartes, dont les wallets proposés par Stripe pour ce moyen de paiement.
 
-Depuis `packages/backend`, configurer les déploiements :
+La variable **`STRIPE_MODE`**, définie séparément sur chaque déploiement Convex, vaut `test` en développement et `live` en production. Sans cette variable, le mode reste `test`. Une autre valeur est refusée ; une clé d’un mode différent désactive les achats avant toute réservation. Le mode ne dépend ni du frontend ni de `NODE_ENV`.
+
+Depuis `packages/backend`, configurer les modes :
 
 ```bash
-bunx --bun convex env set POLAR_SERVER sandbox
-bunx --bun convex env set POLAR_SERVER production --prod
+bunx --bun convex env set STRIPE_MODE test
+bunx --bun convex env set STRIPE_MODE live --prod
 ```
 
-1. Ouvrir [Polar Sandbox](https://sandbox.polar.sh) pour le développement et [Polar](https://polar.sh) pour la production. Utiliser l’organisation correspondant au mode choisi.
-2. Créer un produit **à paiement unique**, sans abonnement. Le prix du catalogue est remplacé à chaque checkout par un prix fixe en EUR, taxes incluses.
-3. Créer un token dans chaque environnement avec les droits `products:read`, `checkouts:read`, `checkouts:write`, `orders:read`, `refunds:read` et `refunds:write`.
-4. Ajouter un webhook pointant vers l’URL `/polar/events` du déploiement Convex correspondant, avec les événements **`order.paid`** et **`order.refunded`**. En développement : `https://affable-ptarmigan-378.eu-west-1.convex.site/polar/events` ; en production : l’URL `CONVEX_SITE_URL` du déploiement de production suivie de `/polar/events`.
-5. Renseigner dans **les variables du déploiement Convex**, via son dashboard :
+Dans le [dashboard Stripe](https://dashboard.stripe.com), utiliser un environnement de test pour le développement et le mode réel pour la production. Renseigner les variables suivantes dans **chaque déploiement Convex**, via son dashboard ou `convex env set` :
 
-| Variable                   | Valeur                                                         |
-| -------------------------- | -------------------------------------------------------------- |
-| `POLAR_SERVER`             | `sandbox` en développement, `production` en production           |
-| `POLAR_ORGANIZATION_TOKEN` | Token de l’organisation du mode choisi                          |
-| `POLAR_WEBHOOK_SECRET`     | Secret du webhook du mode choisi                                |
-| `POLAR_PRODUCT_ID`         | ID du produit à paiement unique du mode choisi                   |
-| `SITE_URL`                 | Origine de l’application, par exemple `http://localhost:3003` en dev |
-| `BETTER_AUTH_URL`          | Même origine que `SITE_URL`                                     |
+| Variable | Développement | Production |
+| --- | --- | --- |
+| `STRIPE_MODE` | `test` | `live` |
+| `STRIPE_SECRET_KEY` | Clé secrète `sk_test_…` | Clé secrète `sk_live_…` |
+| `STRIPE_WEBHOOK_SECRET` | Secret `whsec_…` de l’endpoint de test | Secret `whsec_…` de l’endpoint réel |
+| `SITE_URL` | Origine du frontend, par exemple `http://localhost:3003` | Origine HTTPS publiée |
+| `BETTER_AUTH_URL` | Même origine que `SITE_URL` | Même origine que `SITE_URL` |
 
-Les fichiers `.env.local` ne configurent pas automatiquement les variables du déploiement. Les tokens, produits et secrets de webhook sandbox et production sont distincts : renseigner les identifiants du bon environnement sur chaque déploiement. Ne pas mettre de token dans une variable `VITE_*`, dans un commit ou dans une URL.
+Créer un endpoint webhook dans **chaque environnement Stripe** :
 
-Sans configuration Polar, la page reste consultable et l’achat affiche une indisponibilité. Aucun paiement fictif n’est enregistré. `payments:availability` permet de vérifier la configuration et le mode sans dévoiler les secrets. La mention « Paiement de test » du formulaire s’affiche uniquement en sandbox ; en production, seule la mention « Taxes incluses » apparaît.
+- Développement : `https://affable-ptarmigan-378.eu-west-1.convex.site/stripe/webhook`.
+- Production : `CONVEX_SITE_URL` du déploiement de production, suivi de `/stripe/webhook`.
+- Événements : `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `payment_intent.succeeded`, `payment_intent.payment_failed`, `charge.refunded`, `customer.created`, `customer.updated` et `customer.deleted`. Les événements de paiement et de client alimentent aussi les tables du composant officiel. Aucun abonnement n’est utilisé.
+
+Les fichiers `.env.local` ne configurent pas automatiquement le déploiement distant. Les clés et secrets de webhook de test et de production sont distincts. Tous les secrets restent côté Convex ; aucune clé Stripe, même publique, n’est nécessaire dans le frontend pour la redirection vers Checkout. Ne jamais utiliser de variable `VITE_*` pour ces secrets.
+
+Sans configuration complète et cohérente, la page reste consultable et l’achat affiche une indisponibilité ; aucun paiement fictif n’est enregistré. `payments:availability` expose uniquement `configured` et `testMode`. La mention « Paiement de test » s’affiche uniquement en mode `test` ; en mode `live`, la mention « Taxes incluses » apparaît.
 
 ### Confirmation et récupération
 
 - Un checkout réserve sa place cinq minutes. L’ancien mot reste visible et le prix reste inchangé jusqu’à confirmation.
-- Chaque utilisateur est limité à une réservation en cours. Le quota de nouvelles réservations accepte cinq créations rapprochées, puis récupère une place toutes les deux minutes.
-- Le webhook signé relit la commande Polar et vérifie commande, checkout, produit, utilisateur, devise et montant. La publication et l’augmentation de prix sont atomiques et idempotentes.
-- Avant de libérer une réservation expirée, le backend vérifie Polar. Une panne ou un paiement encore en cours conserve la réservation pendant la vérification.
-- Un paiement reçu après libération est remboursé ; il ne peut jamais écraser un achat plus récent. Une tâche planifiée toutes les cinq minutes récupère les paiements et remboursements interrompus.
-- Les remboursements complets retirent uniquement le mot correspondant s’il est encore actuel. Ils ne diminuent pas le prix d’un emplacement.
+- Chaque utilisateur est limité à une réservation en cours. Le quota accepte cinq nouvelles réservations rapprochées, puis récupère une place toutes les deux minutes. Une nouvelle tentative identique réutilise son checkout.
+- Le webhook signé relit la session, le PaymentIntent et sa charge chez Stripe. Il vérifie le mode, les identifiants, les métadonnées de l’application et de l’utilisateur, la devise, le montant effectivement reçu et les remboursements. La publication et l’augmentation de prix sont atomiques et idempotentes. `orderId` conserve le PaymentIntent Stripe pour les nouveaux achats.
+- Avant de libérer une place, le backend expire explicitement sa session Stripe : l’expiration automatique Stripe a un minimum de trente minutes. Une panne, un paiement non réglé ou une course entre paiement et expiration conserve la réservation jusqu’à la prochaine vérification.
+- Un paiement reçu après libération est remboursé ; il ne peut pas écraser un achat plus récent. Les remboursements couvrent le montant effectivement encaissé, taxes incluses, avec une clé d’idempotence et une vérification des remboursements en cours. Une tâche toutes les cinq minutes récupère les paiements et remboursements interrompus.
+- Un remboursement complet retire uniquement le mot correspondant s’il est encore actuel, sans diminuer le prix de la place.
+
+### Migration depuis Polar
+
+Les dépendances et webhooks Polar sont retirés. Les anciens achats publiés restent dans l’historique et leurs propriétaires conservent leurs droits d’édition. Les réservations de l’ancien prestataire sont clôturées lors d’une nouvelle réservation ou par la récupération planifiée ; elles ne renvoient jamais vers un ancien checkout. Les anciens identifiants ne sont jamais envoyés à Stripe. Si des paiements Polar ont réellement été encaissés auparavant, leurs éventuels remboursements restent à effectuer chez Polar. Après déploiement, retirer l’ancien endpoint et les variables `POLAR_*` du dashboard.
 
 ## Analytique PostHog (EU)
 
@@ -137,13 +144,13 @@ Le frontend utilise `@posthog/react` et `posthog-js` ; le backend utilise le com
 | --- | --- |
 | `$pageview` | Premier affichage et chaque changement de chemin côté navigateur ; les changements de paramètres ou d’ancre ne créent pas une nouvelle vue. |
 | `purchase_form_opened` | Ouverture du formulaire depuis un emplacement ou une action de rachat. |
-| `checkout_created` | Première association d’un checkout Polar à l’achat dans Convex. |
+| `checkout_created` | Première association d’un checkout Stripe à l’achat dans Convex. |
 | `purchase_completed` | Commande validée et achat publié, depuis le webhook ou la récupération du paiement. |
 | `purchase_refunded` | Premier passage de l’achat à l’état entièrement remboursé. |
 
 Les événements métier sont planifiés dans la même mutation que leur changement d’état. Une transaction annulée ne produit pas de capture, et les commandes ou remboursements rejoués ne créent pas de nouvelle conversion. Les appels HTTP PostHog sont exécutés séparément par le composant, après la transaction.
 
-Chaque événement d’achat contient `purchase_id`, `checkout_id` et `order_id` lorsqu’ils sont disponibles, `page_id`, `slot_id`, `position`, `amount_cents`, `currency: "EUR"` et `acquisition_number` (à partir de 1). `purchase_type` vaut `initial` pour le premier achat d’un emplacement, puis `takeover` pour les suivants. Les remboursements ajoutent `refunded_amount_cents` et, lorsqu’il est disponible, `refund_id`. `payment_mode` suit le serveur Polar configuré : `sandbox` ou `production`.
+Chaque événement d’achat contient `purchase_id`, `checkout_id` et `order_id` lorsqu’ils sont disponibles, `page_id`, `slot_id`, `position`, `amount_cents`, `currency: "EUR"` et `acquisition_number` (à partir de 1). `purchase_type` vaut `initial` pour le premier achat d’un emplacement, puis `takeover` pour les suivants. Les remboursements ajoutent `refunded_amount_cents` et, lorsqu’il est disponible, `refund_id`. `payment_mode` suit le mode Stripe configuré : `test` ou `live`.
 
 Le navigateur appelle `identify()` avec le même ID Better Auth que `purchase.userId` côté serveur, puis réinitialise l’identité à la déconnexion ou au changement de compte. Le mot, la description, le lien de l’acheteur, son nom et son email ne sont pas ajoutés aux captures. Les paramètres et ancres des URL sont retirés des événements et des propriétés initiales de la personne. L’autocapture des interactions, les enregistrements de session et les enquêtes sont désactivés.
 
@@ -236,13 +243,13 @@ Le composant [Convex Rate Limiter](https://www.convex.dev/components/rate-limite
 | Modération | 60 / minute | 30 |
 | Notifications lues, seules ou en lot | 60 / minute | 30 |
 
-Les actions de paiement consomment leur quota avant de réserver ou d’appeler Polar, même en cas d’échec ultérieur. Les mutations consomment leur quota dans la même transaction que leurs modifications. Réutiliser une réservation existante ne consomme pas une nouvelle réservation.
+Les actions de paiement consomment leur quota avant de réserver ou d’appeler Stripe, même en cas d’échec ultérieur. Les mutations consomment leur quota dans la même transaction que leurs modifications. Réutiliser une réservation existante ne consomme pas une nouvelle réservation.
 
 Un dépassement renvoie l’erreur structurée `RateLimited` du composant, avec le nom du quota et `retryAfter` en millisecondes. L’interface affiche le message traduit « Trop de demandes. Réessayez dans un instant. ». Les lectures publiques, les webhooks signés et les tâches internes de récupération restent disponibles. Le composant est installé sur le déploiement lors du prochain `bun run dev:server` ou déploiement Convex ; aucune variable d’environnement supplémentaire n’est nécessaire.
 
 ## Pages légales
 
-Le footer commun aux pages publiques donne accès à `/privacy` et `/terms`. Les anciennes URL `/mentions-legales` et `/conditions-utilisation` redirigent vers ces routes avec un statut 301, en conservant les paramètres et l’ancre. Les textes français et anglais sont dans `apps/web/src/locales`, avec TOMA comme éditeur, `contact@thepage.com` comme contact et Cloudflare comme hébergeur. Les conditions reflètent le fonctionnement actuel du prototype et ses paiements de test.
+Le footer commun aux pages publiques donne accès à `/privacy` et `/terms`. Les anciennes URL `/mentions-legales` et `/conditions-utilisation` redirigent vers ces routes avec un statut 301, en conservant les paramètres et l’ancre. Les textes français et anglais sont dans `apps/web/src/locales`, avec TOMA comme éditeur, `contact@thepage.com` comme contact et Cloudflare comme hébergeur. Les conditions décrivent le fonctionnement des emplacements ; le formulaire indique explicitement les paiements de test en développement.
 
 L’adresse postale de l’éditeur et les éventuelles informations d’immatriculation restent à compléter selon son statut avant publication. Références : [mentions obligatoires — Service Public](https://entreprendre.service-public.gouv.fr/vosdroits/F37351?lang=fr), [coordonnées de Cloudflare](https://www.cloudflare.com/website-terms/), [téléphone de Cloudflare — rapport annuel](https://www.sec.gov/Archives/edgar/data/1477333/000147733326000026/cloud-20251231.htm), [cookies — CNIL](https://www.cnil.fr/fr/cookies-et-autres-traceurs/que-dit-la-loi).
 
@@ -254,11 +261,11 @@ bun run check-types
 bun run build
 ```
 
-Les tests Vitest/Convex utilisent une base en mémoire et des appels Polar simulés : ils ne créent ni utilisateur réel, ni paiement, ni mot sur le déploiement distant. Ils vérifient l’isolation des pages, la migration de World, les retours après connexion et paiement, les prix indépendants, la propriété, l’édition, les réservations concurrentes, la modération, les signatures invalides, les commandes incohérentes et la récupération des paiements/remboursements. Les tests de limitation vérifient les quotas par utilisateur, leur partage entre pages et points d’entrée, leur recharge et le blocage avant les effets de bord.
+Les tests Vitest/Convex utilisent une base en mémoire et des appels Stripe simulés : ils ne créent ni utilisateur réel, ni paiement, ni mot sur le déploiement distant. Ils vérifient l’isolation des pages, la migration de World, les retours après connexion et paiement, les prix indépendants, la propriété, l’édition, les réservations concurrentes, la modération, les signatures invalides, les commandes incohérentes et la récupération des paiements/remboursements. Les tests de limitation vérifient les quotas par utilisateur, leur partage entre pages et points d’entrée, leur recharge et le blocage avant les effets de bord.
 
 Les tests HTTP Better Auth couvrent aussi la persistance entre invocations, l’isolation des IP, les appels simultanés, le délai de reprise et l’absence d’email ou de token supplémentaire après un refus. Les tests du proxy Cloudflare vérifient les signatures, leur expiration et le rejet des en-têtes modifiés.
 
-Pour valider l’intégration réelle après configuration : acheter une place avec les moyens de paiement de test documentés par Polar ; vérifier `order.paid`, le mot publié et l’augmentation d’un euro ; racheter avec un second compte ; vérifier que le premier compte ne peut plus modifier la place. Tester aussi un checkout abandonné, un événement rejoué et un paiement après expiration. N’utiliser aucune carte réelle dans ce prototype.
+Pour valider l’intégration en développement, utiliser les [cartes de test Stripe](https://docs.stripe.com/testing), par exemple `4242 4242 4242 4242`, une date future et un CVC de trois chiffres. Vérifier `checkout.session.completed`, la synchronisation du composant, le mot publié et l’augmentation d’un euro ; racheter avec un second compte ; vérifier que le premier ne peut plus modifier la place. Tester aussi un checkout abandonné, une signature invalide, un événement rejoué, un paiement pendant l’expiration et un remboursement. Les clés de test ne déplacent pas de fonds. En production, les clés `sk_live_…` et le webhook réel servent les achats réels.
 
 ## Structure
 

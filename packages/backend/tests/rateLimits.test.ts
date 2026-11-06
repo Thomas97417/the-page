@@ -3,13 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { convexTest } from "convex-test";
 import betterAuth from "@convex-dev/better-auth/test";
 import rateLimiterTest from "@convex-dev/rate-limiter/test";
-import { checkoutsCreate } from "@polar-sh/sdk/funcs/checkoutsCreate.js";
-import { productsGet } from "@polar-sh/sdk/funcs/productsGet.js";
+import { stripeMocks } from "./stripeMock";
 import schema from "../convex/schema";
 import { api, components, internal } from "../convex/_generated/api";
-
-vi.mock("@polar-sh/sdk/funcs/checkoutsCreate.js", () => ({ checkoutsCreate: vi.fn() }));
-vi.mock("@polar-sh/sdk/funcs/productsGet.js", () => ({ productsGet: vi.fn() }));
 
 const modules = import.meta.glob("../convex/**/*.ts");
 function setup() {
@@ -39,7 +35,7 @@ async function own(t: Test, userId: string, pageId: "world" | "france") {
   const slotId = await slot(t, pageId);
   const purchase = await t.mutation(internal.purchases.reserve, { slotId, userId, acquisition: 0, word: "Initial" });
   await t.mutation(internal.purchases.applyPaidOrder, {
-    order: { id: `order-${purchase._id}`, checkoutId: `checkout-${purchase._id}`, purchaseId: purchase._id, userId, productId: "product", amount: purchase.amount, currency: "eur", refundedAmount: 0 },
+    order: { id: `order-${purchase._id}`, checkoutId: `checkout-${purchase._id}`, purchaseId: purchase._id, userId, livemode: process.env.STRIPE_MODE === "live", amount: purchase.amount, currency: "eur", refundedAmount: 0 },
   });
   return { slotId, purchaseId: purchase._id };
 }
@@ -52,9 +48,8 @@ async function expectRateLimit(request: Promise<unknown>, name: string, retryAft
 beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-11-03T10:00:00Z"));
-  vi.stubEnv("POLAR_PRODUCT_ID", "product");
-  vi.stubEnv("POLAR_ORGANIZATION_TOKEN", "sandbox-token");
-  vi.stubEnv("POLAR_WEBHOOK_SECRET", "whsec_dGVzdC1zZWNyZXQ=");
+  vi.stubEnv("STRIPE_SECRET_KEY", "sk_test_example");
+  vi.stubEnv("STRIPE_WEBHOOK_SECRET", "whsec_test_secret");
   vi.stubEnv("SITE_URL", "https://the-page.example");
 });
 
@@ -67,26 +62,24 @@ afterEach(() => {
 });
 
 describe("application rate limits", () => {
-  it("counts failed checkout actions and blocks before creating a reservation or calling Polar", async () => {
+  it("counts failed checkout actions and blocks before creating a reservation or calling Stripe", async () => {
     const t = setup();
     const first = await account(t, "first");
     const second = await account(t, "second");
     const world = await slot(t);
     const france = await slot(t, "france");
-    vi.mocked(productsGet).mockResolvedValue({ ok: true, value: { isRecurring: false, isArchived: false } } as never);
-    vi.mocked(checkoutsCreate).mockResolvedValue({ ok: false, error: new Error("Polar unavailable") } as never);
+    stripeMocks.sessionsCreate.mockRejectedValue(new Error("Stripe unavailable"));
     const start = (client = first.client, slotId = world) => client.action(api.payments.start, { slotId, acquisition: 0, word: "Bonjour" });
 
     for (let i = 0; i < 3; i++) await expect(start()).rejects.toThrow("Le paiement n’a pas pu être ouvert");
     await expectRateLimit(start(first.client, france), "checkoutStart", 6_000);
     expect(await t.run((ctx) => ctx.db.query("purchases").collect())).toHaveLength(3);
-    expect(checkoutsCreate).toHaveBeenCalledTimes(3);
-    expect(productsGet).toHaveBeenCalledTimes(3);
+    expect(stripeMocks.sessionsCreate).toHaveBeenCalledTimes(3);
 
     await expect(start(second.client, france)).rejects.toThrow("Le paiement n’a pas pu être ouvert");
     vi.setSystemTime(Date.now() + 6_000);
     await expect(start()).rejects.toThrow("Le paiement n’a pas pu être ouvert");
-    expect(checkoutsCreate).toHaveBeenCalledTimes(5);
+    expect(stripeMocks.sessionsCreate).toHaveBeenCalledTimes(5);
   });
 
   it("limits payment refreshes independently and keeps public queries readable", async () => {

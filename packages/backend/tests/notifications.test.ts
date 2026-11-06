@@ -40,7 +40,7 @@ async function reserve(t: Test, slotId: Id<"slots">, userId: string, word = "Bon
 }
 
 function order(purchase: Doc<"purchases">) {
-  return { id: `order-${purchase._id}`, checkoutId: `checkout-${purchase._id}`, purchaseId: purchase._id, userId: purchase.userId, productId: "product", amount: purchase.amount, currency: "eur", refundedAmount: 0 };
+  return { id: `order-${purchase._id}`, checkoutId: `checkout-${purchase._id}`, purchaseId: purchase._id, userId: purchase.userId, livemode: process.env.STRIPE_MODE === "live", amount: purchase.amount, currency: "eur", refundedAmount: 0 };
 }
 async function publish(t: Test, purchase: Doc<"purchases">) {
   return await t.mutation(internal.purchases.applyPaidOrder, { order: order(purchase) });
@@ -50,7 +50,6 @@ const inbox = (t: Test) => t.run((ctx) => ctx.db.query("notifications").collect(
 beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-11-03T10:00:00Z"));
-  vi.stubEnv("POLAR_PRODUCT_ID", "product");
   vi.stubEnv("SITE_URL", "https://the-page.example");
   vi.stubEnv("EMAIL_FROM", "the page <hello@the-page.example>");
   vi.stubEnv("RESEND_API_KEY", "test-key");

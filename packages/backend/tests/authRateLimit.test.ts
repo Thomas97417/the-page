@@ -49,7 +49,7 @@ beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-11-03T10:00:00Z"));
   vi.stubEnv("BETTER_AUTH_SECRET", "test-only-secret-for-auth-rate-limit-0123456789");
-  vi.stubEnv("POLAR_ORGANIZATION_TOKEN", "");
+  vi.stubEnv("STRIPE_SECRET_KEY", "");
 });
 afterEach(() => {
   vi.clearAllTimers();

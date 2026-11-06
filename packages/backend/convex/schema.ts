@@ -37,6 +37,8 @@ export default defineSchema({
     .index("by_position", ["position"])
     .index("by_page_position", ["pageId", "position"]),
   purchases: defineTable({
+    // Absent on historical purchases made before the Stripe migration.
+    paymentProvider: v.optional(v.literal("stripe")),
     pageId: v.optional(pageIdValidator),
     slotId: v.id("slots"),
     position: v.number(),
@@ -50,6 +52,7 @@ export default defineSchema({
     reservedUntil: v.number(),
     checkoutId: v.optional(v.string()),
     checkoutUrl: v.optional(v.string()),
+    // Stripe PaymentIntent ID; historical provider IDs are preserved.
     orderId: v.optional(v.string()),
     refundId: v.optional(v.string()),
     publishedAt: v.optional(v.number()),

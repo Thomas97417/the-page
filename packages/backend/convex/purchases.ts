@@ -9,6 +9,7 @@ import { DEFAULT_PAGE_ID } from "./lib/pages";
 import { notifyPurchase } from "./lib/notifications";
 import { rateLimiter } from "./lib/rateLimits";
 import { capturePurchaseEvent } from "./lib/analytics";
+import { getStripeMode } from "./lib/stripeEnvironment";
 
 async function release(ctx: MutationCtx, purchase: Doc<"purchases">) {
   const slot = await ctx.db.get(purchase.slotId);
@@ -18,6 +19,19 @@ async function release(ctx: MutationCtx, purchase: Doc<"purchases">) {
       reservedUntil: undefined,
     });
   }
+}
+
+async function retireLegacyCheckout(ctx: MutationCtx, purchase: Doc<"purchases">) {
+  if (
+    purchase.paymentProvider === "stripe" ||
+    !["creating", "pending"].includes(purchase.status)
+  )
+    return;
+  await ctx.db.patch(purchase._id, {
+    status: "failed",
+    failureReason: "payment_provider_replaced",
+  });
+  await release(ctx, purchase);
 }
 
 export const mine = query({
@@ -62,6 +76,7 @@ export const mine = query({
           current,
           hidden: current && slot.visibility !== "visible",
           checkoutUrl:
+            purchase.paymentProvider === "stripe" &&
             purchase.status === "pending" && purchase.reservedUntil > Date.now()
               ? purchase.checkoutUrl
               : undefined,
@@ -125,7 +140,7 @@ export const reserve = internalMutation({
   },
   handler: async (ctx, args): Promise<Doc<"purchases">> => {
     const content = validateContent(args.word, args.url, args.description);
-    const slot = await ctx.db.get(args.slotId);
+    let slot = await ctx.db.get(args.slotId);
     if (!slot) throw new ConvexError("Emplacement introuvable.");
     if (slot.currentPurchaseId) {
       const owner = await ctx.db.get(slot.currentPurchaseId);
@@ -141,9 +156,19 @@ export const reserve = internalMutation({
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .order("desc")
       .take(10);
-    const active = recent.find(
+    let active = recent.find(
       (p) => p.status === "creating" || p.status === "pending",
     );
+    // Never send a buyer back to a checkout from the retired provider.
+    if (active && active.paymentProvider !== "stripe") {
+      await retireLegacyCheckout(ctx, active);
+      active = undefined;
+    }
+    if (slot.reservationId) {
+      const reservation = await ctx.db.get(slot.reservationId);
+      if (reservation) await retireLegacyCheckout(ctx, reservation);
+      slot = (await ctx.db.get(slot._id))!;
+    }
     if (active) {
       if (
         active.slotId === slot._id &&
@@ -169,6 +194,7 @@ export const reserve = internalMutation({
     });
     const reservedUntil = Date.now() + RESERVATION_MS;
     const id = await ctx.db.insert("purchases", {
+      paymentProvider: "stripe",
       slotId: slot._id,
       pageId: slot.pageId ?? DEFAULT_PAGE_ID,
       position: slot.position,
@@ -236,7 +262,7 @@ export const paidOrder = v.object({
   checkoutId: v.string(),
   purchaseId: v.string(),
   userId: v.string(),
-  productId: v.string(),
+  livemode: v.boolean(),
   amount: v.number(),
   currency: v.string(),
   refundedAmount: v.number(),
@@ -250,7 +276,8 @@ export const applyPaidOrder = internalMutation({
   ): Promise<"published" | "refund_pending" | "ignored"> => {
     const id = ctx.db.normalizeId("purchases", order.purchaseId);
     const purchase = id ? await ctx.db.get(id) : null;
-    if (!purchase) return "ignored";
+    if (!purchase || purchase.paymentProvider !== "stripe") return "ignored";
+    if (order.livemode !== (getStripeMode() === "live")) return "ignored";
     // Never let unrelated orders overwrite an already bound order or checkout.
     if (
       (purchase.orderId && purchase.orderId !== order.id) ||
@@ -271,7 +298,6 @@ export const applyPaidOrder = internalMutation({
     const slot = await ctx.db.get(purchase.slotId);
     const valid =
       order.userId === purchase.userId &&
-      order.productId === process.env.POLAR_PRODUCT_ID &&
       order.amount === purchase.amount &&
       order.currency === "eur" &&
       order.refundedAmount === 0;
@@ -337,7 +363,9 @@ export const markRefunded = internalMutation({
       refundedAmount: args.refundedAmount,
       refundId: args.refundId ?? purchase.refundId,
     });
-    if (!args.complete && args.refundedAmount < purchase.amount) return;
+    // When Stripe supplies completion, compare with the amount actually charged,
+    // which may differ from our expected amount on an invalid payment.
+    if (!(args.complete ?? args.refundedAmount >= purchase.amount)) return;
     await ctx.db.patch(purchase._id, { status: "refunded" });
     await release(ctx, purchase);
     const slot = await ctx.db.get(purchase.slotId);

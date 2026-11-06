@@ -3,7 +3,7 @@ import { components } from "../_generated/api";
 import type { Doc } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { DEFAULT_PAGE_ID } from "./pages";
-import { getPolarServer } from "./polarEnvironment";
+import { getStripeMode } from "./stripeEnvironment";
 
 const posthog = new PostHog(components.posthog);
 
@@ -37,7 +37,7 @@ export async function capturePurchaseEvent(
       amount_cents: purchase.amount,
       currency: "EUR",
       environment: process.env.POSTHOG_ENVIRONMENT?.trim() || "development",
-      payment_mode: getPolarServer(),
+      payment_mode: getStripeMode(),
       ...(event === "purchase_refunded"
         ? {
             refunded_amount_cents: purchase.refundedAmount,

@@ -67,7 +67,7 @@ export const list = query({
       word: slot.visibility === "visible" ? slot.word : undefined,
       url: slot.visibility === "visible" ? slot.url : undefined,
       description: slot.visibility === "visible" ? slot.description : undefined,
-      // Expiry is reconciled with Polar before a reservation is released.
+      // Expiry is reconciled with Stripe before a reservation is released.
       reserved: !!slot.reservationId,
     }));
   },

@@ -257,7 +257,7 @@ export function BuySheet({
               {t("purchase.replacementNotice")}
               <br />
               <span className="text-[11px]">
-                {t(availability?.sandbox ? "purchase.testNotice" : "purchase.taxNotice")}
+                {t(availability?.testMode ? "purchase.testNotice" : "purchase.taxNotice")}
               </span>
             </p>
           </div>
