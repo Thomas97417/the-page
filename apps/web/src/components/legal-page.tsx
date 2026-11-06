@@ -56,7 +56,7 @@ export function LegalPage({ document }: { document: LegalDocument }) {
               {t(`legal.${document}.description`)}
             </p>
             <p className="mt-5 font-mono text-[10px] text-muted-foreground">
-              <time dateTime="2026-11-03">{t("legal.updated")}</time>
+              <time dateTime="2026-11-06">{t("legal.updated")}</time>
             </p>
           </header>
 

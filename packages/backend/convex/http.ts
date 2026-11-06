@@ -38,7 +38,7 @@ else
     method: "POST",
     handler: httpAction(
       async () =>
-        new Response("Sandbox billing is not configured", { status: 503 }),
+        new Response("Polar billing is not configured", { status: 503 }),
     ),
   });
 

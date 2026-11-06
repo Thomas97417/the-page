@@ -112,7 +112,7 @@
     "toggle": "{{current}} theme. Switch to {{next}} theme"
   },
   "page": {
-    "participate": "Choose an advertising space",
+    "participate": "Choose a place for my word",
     "write": "Claim my place",
     "allReserved": "All places are currently reserved.",
     "footerNavigation": "Footer navigation",
@@ -132,36 +132,36 @@
     "terms": "Terms of use"
   },
   "marketing": {
-    "eyebrow": "Limited edition advertising",
+    "eyebrow": "One word to claim your place",
     "worldTitle": "One word. A place apart.",
-    "countryTitle": "{{page}}. Your brand, in a word.",
-    "worldIntro": "Your brand, your project, your signature. One word and a link to your website, among just {{count}} advertising spaces on a unique page.",
-    "countryIntro": "On the {{page}} page, your brand speaks in a single word. Add your description and link to an advertising space limited to {{count}} places.",
+    "countryTitle": "{{page}}. Your project, in a word.",
+    "worldIntro": "A word for your project, a description to tell its story, a link to explore further. Choose your place among the {{count}} words on a page written together.",
+    "countryIntro": "On the {{page}} page, introduce your project in a single word. Add your description and link, then take your place among the {{count}} words in this shared composition.",
     "edition": "{{page}} · {{count}} spaces",
     "startingPrice": "From {{price}} · One word, your link",
     "principlesTitle": "Rarity makes the difference.",
     "features": {
       "visibility": {
-        "title": "Your word, your showcase.",
+        "title": "Your project, in a word.",
         "description": "A brand name, a project or an idea. Pair your word with a description and a link to your website: each space becomes an invitation to discover you."
       },
       "rarity": {
         "title": "Just {{count}} places.",
-        "description": "Each page brings together {{count}} spaces, shared by its advertisers. Choose an empty space or buy an occupied one: your word joins a composition that evolves with every purchase."
+        "description": "Each page brings together {{count}} places for as many words and stories. Choose an empty place or buy an occupied one: your word joins a composition that evolves with every purchase."
       },
       "prestige": {
-        "title": "The prestige of simplicity.",
-        "description": "A considered layout, a distinctive presence, the strength of a single word. Give your brand a place apart in an advertising format that is as understated as it is distinctive."
+        "title": "The strength of simplicity.",
+        "description": "A considered layout, the strength of a single word. Share your project, idea or signature in a composition where every place counts."
       }
     },
     "faqTitle": "A rare place. Clear rules.",
     "faq": {
-      "advertising": {
-        "question": "How can I promote my brand on the page?",
+      "publishing": {
+        "question": "How can I publish my word on the page?",
         "answer": "Choose a space and publish a single word of 1 to 24 characters, without spaces: your brand, project or signature. You can add a description and an HTTPS link to your website, available in the word’s details."
       },
       "price": {
-        "question": "How much does an advertising space cost?",
+        "question": "How much does a place on the page cost?",
         "answer": "Each space starts at {{price}}, including taxes. Its price increases by {{price}} with every confirmed purchase. The current amount is shown before payment. You can edit your word, description and link for free while the space is yours."
       },
       "duration": {
@@ -174,12 +174,12 @@
       }
     },
     "explore": "World and {{count}} country pages",
-    "directoryLabel": "Explore advertising spaces by country",
-    "serviceName": "the page advertising spaces · {{page}}",
-    "serviceType": "Limited edition online advertising"
+    "directoryLabel": "Explore word pages by country",
+    "serviceName": "Word publishing on the page · {{page}}",
+    "serviceType": "Word and link publishing"
   },
   "legal": {
-    "updated": "Updated on November 3, 2026",
+    "updated": "Updated on November 6, 2026",
     "notice": {
       "title": "Legal notice.",
       "description": "The essentials about the page, its publisher and your data.",
@@ -213,7 +213,7 @@
       },
       "places": {
         "title": "Your place, your word",
-        "body": "Each place starts at €1, including taxes. Its price increases by €1 with every confirmed purchase. The amount is shown before confirmation. You can edit your word, description and link for free while you hold the place.\n\nA new purchase replaces the previous word, with no compensation for its author. No display duration or audience is guaranteed.\n\nThe site currently operates in test mode: payments take place in the payment provider’s test environment."
+        "body": "Each place starts at €1, including taxes. Its price increases by €1 with every confirmed purchase. The amount is shown before confirmation. You can edit your word, description and link for free while you hold the place.\n\nA new purchase replaces the previous word, with no compensation for its author. No display duration or audience is guaranteed."
       },
       "content": {
         "title": "What you publish",
@@ -227,7 +227,7 @@
   },
   "rules": {
     "title": "How does it work?",
-    "description": "Limited edition advertising. A World page and country pages, with 50 spaces each.",
+    "description": "One word, a description, a link. A World page and country pages, with 50 places each.",
     "choose": "Choose a space for your brand, project or signature. Write a word, then add a description and a link if you wish. Each page is independent; you can join whichever you choose.",
     "price": "Each place starts at {{price}}. Its price increases by {{price}} with every purchase.",
     "replace": "A new purchase replaces your word, without compensation. While the place is yours, you can edit your word for free.",
@@ -258,19 +258,20 @@
     "editFree": "You can edit your word, description and link for free.",
     "position": "{{page}} · PLACE {{position}}",
     "title": "Your place apart.",
-    "description": "One word to represent your brand or project. Add a description and a link if you wish, then confirm your advertising space.",
+    "description": "One word to represent your brand or project. Add a description and a link if you wish, then confirm your place on the page.",
     "yourWord": "Your word",
     "placeholder": "Unforgettable",
     "link": "A link",
     "yourPlace": "Your place",
     "priceChanged": "The price has changed. Confirm the new amount.",
-    "unavailable": "Test payments are temporarily unavailable.",
+    "unavailable": "Payments are temporarily unavailable.",
     "opening": "Opening checkout",
     "accept": "Accept {{price}}",
     "pay": "Pay {{price}}",
     "signIn": "Sign in to buy",
     "replacementNotice": "Your word can be replaced as soon as the place is purchased again.",
-    "testNotice": "Test payment · Taxes included"
+    "testNotice": "Test payment · Taxes included",
+    "taxNotice": "Taxes included"
   },
   "payment": {
     "published": "Your word is live on {{page}}, place {{position}}.",
@@ -442,10 +443,10 @@
   "meta": {
     "about": "How it works: one word, one link, 50 places — the page",
     "locale": "en_GB",
-    "worldTitle": "the page — Exclusive advertising, {{count}} spaces",
-    "pageTitle": "{{page}}: exclusive advertising | the page",
-    "worldDescription": "One word for your brand, a link to your website. Discover a unique advertising space, limited to {{count}} places per page. Claim your place apart.",
-    "countryDescription": "{{page}}: {{count}} advertising spaces on a unique page. Showcase your brand with one word, a description and a link to your website.",
+    "worldTitle": "Publish your word among {{count}} places | the page",
+    "pageTitle": "{{page}}: publish your word | the page",
+    "worldDescription": "Publish a word, introduce your project and share your link among {{count}} places. Explore World and the country pages, then choose your place.",
+    "countryDescription": "{{page}}: {{count}} places to publish your word, introduce your project and share your link. Join a page that is rewritten with every purchase.",
     "signIn": "Sign in — the page",
     "signInDescription": "Sign in to the page.",
     "signUp": "Sign up — the page",

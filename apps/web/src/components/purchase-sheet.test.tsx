@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { StrictMode, type ReactNode } from "react";
 import { I18nextProvider } from "react-i18next";
 import { getFunctionName } from "convex/server";
@@ -10,6 +10,7 @@ import { BuySheet } from "./purchase-sheet";
 
 const mocks = vi.hoisted(() => ({
   ready: true,
+  sandbox: true,
   purchases: [] as { current: boolean; slotId: string; word: string }[] | undefined,
   client: { capture: vi.fn() },
 }));
@@ -23,7 +24,7 @@ vi.mock("convex/react", () => ({
     switch (getFunctionName(reference)) {
       case "purchases:mine": return mocks.purchases;
       case "slots:list": return [];
-      default: return { configured: true };
+      default: return { configured: true, sandbox: mocks.sandbox };
     }
   },
   useAction: () => vi.fn(),
@@ -62,9 +63,24 @@ function app() {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.ready = true;
+  mocks.sandbox = true;
   mocks.purchases = [];
 });
 afterEach(cleanup);
+
+describe("purchase payment mode", () => {
+  it("identifies sandbox payments as tests", () => {
+    render(app());
+    expect(screen.getByText("Paiement de test · Taxes incluses")).toBeDefined();
+  });
+
+  it("shows taxes without a test payment notice in production", () => {
+    mocks.sandbox = false;
+    render(app());
+    expect(screen.getByText("Taxes incluses")).toBeDefined();
+    expect(screen.queryByText(/Paiement de test/)).toBeNull();
+  });
+});
 
 describe("purchase form analytics", () => {
   it("captures an opened or restored draft once, using only purchase metadata", () => {

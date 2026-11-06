@@ -113,6 +113,7 @@ beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-11-02T10:00:00Z"));
   vi.stubEnv("POLAR_PRODUCT_ID", "product");
+  vi.stubEnv("POLAR_SERVER", "sandbox");
   vi.stubEnv("POLAR_WEBHOOK_SECRET", "whsec_dGVzdC1zZWNyZXQ=");
   vi.stubEnv("POLAR_ORGANIZATION_TOKEN", "sandbox-token");
   vi.stubEnv("SITE_URL", "http://localhost:3003");
@@ -913,5 +914,50 @@ describe("reconciliation", () => {
       },
     });
     expect(call[0]._options.server).toBe("sandbox");
+  });
+});
+
+describe("Polar environments", () => {
+  it.each([
+    { configuredServer: undefined, expectedServer: "sandbox" },
+    { configuredServer: "sandbox", expectedServer: "sandbox" },
+    { configuredServer: "production", expectedServer: "production" },
+  ] as const)("routes checkout and reports its mode with POLAR_SERVER=$configuredServer", async ({ configuredServer, expectedServer }) => {
+    vi.stubEnv("POLAR_SERVER", configuredServer);
+    vi.resetModules();
+    const t = setup();
+    await t.mutation(internal.slots.initialize);
+    const buyer = await account(t, "environment-buyer");
+    vi.mocked(productsGet).mockResolvedValue({
+      ok: true,
+      value: { isRecurring: false, isArchived: false },
+    } as never);
+    const checkoutUrl = `https://${expectedServer === "sandbox" ? "sandbox." : ""}polar.sh/checkout`;
+    vi.mocked(checkoutsCreate).mockResolvedValue({
+      ok: true,
+      value: { id: "checkout", url: checkoutUrl },
+    } as never);
+
+    expect(await t.query(api.payments.availability)).toEqual({
+      configured: true,
+      sandbox: expectedServer === "sandbox",
+    });
+    const slot = (await t.query(api.slots.list, { pageId: "world" }))[0];
+    const result = await buyer.client.action(api.payments.start, {
+      slotId: slot.id,
+      acquisition: 0,
+      word: "Bonjour",
+    });
+    expect(result.url).toBe(checkoutUrl);
+    expect(vi.mocked(productsGet).mock.calls[0][0]._options.server).toBe(expectedServer);
+    expect(vi.mocked(checkoutsCreate).mock.calls[0][0]._options.server).toBe(expectedServer);
+  });
+
+  it("rejects an invalid server instead of starting a payment", async () => {
+    vi.stubEnv("POLAR_SERVER", "prod");
+    vi.resetModules();
+    const t = setup();
+    await expect(t.query(api.payments.availability)).rejects.toThrow("POLAR_SERVER must be sandbox or production");
+    expect(checkoutsCreate).not.toHaveBeenCalled();
   });
 });

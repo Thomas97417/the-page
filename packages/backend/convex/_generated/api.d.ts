@@ -23,6 +23,7 @@ import type * as lib_notificationEmail from "../lib/notificationEmail.js";
 import type * as lib_notifications from "../lib/notifications.js";
 import type * as lib_orders from "../lib/orders.js";
 import type * as lib_pages from "../lib/pages.js";
+import type * as lib_polarEnvironment from "../lib/polarEnvironment.js";
 import type * as lib_rateLimits from "../lib/rateLimits.js";
 import type * as notifications from "../notifications.js";
 import type * as payments from "../payments.js";
@@ -55,6 +56,7 @@ declare const fullApi: ApiFromModules<{
   "lib/notifications": typeof lib_notifications;
   "lib/orders": typeof lib_orders;
   "lib/pages": typeof lib_pages;
+  "lib/polarEnvironment": typeof lib_polarEnvironment;
   "lib/rateLimits": typeof lib_rateLimits;
   notifications: typeof notifications;
   payments: typeof payments;

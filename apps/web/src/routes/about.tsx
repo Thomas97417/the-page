@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { ArrowUpRight } from "lucide-react";
 import { SLOT_COUNT } from "@my-better-t-app/backend/convex/lib/content";
-import { AdvertisingDetails } from "@/components/advertising-details";
+import { ConceptDetails } from "@/components/concept-details";
 import { Footer } from "@/components/footer";
 import { publicPageHead } from "@/lib/seo";
 
@@ -41,7 +41,7 @@ function AboutPage() {
             <ArrowUpRight aria-hidden="true" className="size-3.5" strokeWidth={1.5} />
           </Link>
         </header>
-        <AdvertisingDetails />
+        <ConceptDetails />
       </main>
       <Footer />
     </>

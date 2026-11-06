@@ -6,15 +6,15 @@ import { DEFAULT_PAGE_ID, PAGES } from "@my-better-t-app/backend/convex/lib/page
 import { euros } from "@/lib/page";
 
 const features = ["visibility", "rarity", "prestige"] as const;
-const questions = ["advertising", "price", "duration", "countries"] as const;
+const questions = ["publishing", "price", "duration", "countries"] as const;
 
-export function AdvertisingDetails() {
+export function ConceptDetails() {
   const { t, i18n } = useTranslation();
 
   return (
     <div className="mx-auto w-full max-w-184 pb-14 sm:pb-20">
-      <section aria-labelledby="advertising-title" className="border-t py-10 sm:py-14">
-        <h2 id="advertising-title" className="font-serif text-3xl tracking-tight sm:text-4xl">
+      <section aria-labelledby="concept-title" className="border-t py-10 sm:py-14">
+        <h2 id="concept-title" className="font-serif text-3xl tracking-tight sm:text-4xl">
           {t("marketing.principlesTitle")}
         </h2>
         <div className="mt-8 grid gap-8 sm:grid-cols-3 sm:gap-6">
@@ -34,8 +34,8 @@ export function AdvertisingDetails() {
         </div>
       </section>
 
-      <section aria-labelledby="advertising-faq" className="border-t py-10 sm:py-14">
-        <h2 id="advertising-faq" className="mb-6 font-serif text-3xl tracking-tight sm:text-4xl">
+      <section aria-labelledby="concept-faq" className="border-t py-10 sm:py-14">
+        <h2 id="concept-faq" className="mb-6 font-serif text-3xl tracking-tight sm:text-4xl">
           {t("marketing.faqTitle")}
         </h2>
         {questions.map((question) => (

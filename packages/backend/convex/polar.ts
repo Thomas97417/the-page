@@ -1,10 +1,10 @@
 import { Polar } from "@convex-dev/polar";
 import { api, components } from "./_generated/api";
 import { ConvexError } from "convex/values";
+import { getPolarServer } from "./lib/polarEnvironment";
 
-// Deliberately no production switch: advertising is excluded by Polar's AUP.
 export const polar: Polar = new Polar(components.polar, {
-  server: "sandbox",
+  server: getPolarServer(),
   getUserInfo: async (ctx): Promise<{ userId: string; email: string }> => {
     const user = await ctx.runQuery(api.auth.getCurrentUser, {});
     if (!user) throw new ConvexError("Connectez-vous pour continuer.");
